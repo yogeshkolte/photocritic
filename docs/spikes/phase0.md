@@ -1,65 +1,81 @@
 # Phase 0 results
 
-Status of each Phase 0 item (design: Implementation order, file 67).
-**Pass/fail** is filled in with evidence (device, build, date). Spike code
-lives in `src/spikes/`, `src/app/spike.tsx` and `spikes/`, and is deleted when
-Phase 0 ends.
+Status of each Phase 0 item for the native apps (design: Detailed
+Implementation Plan, Implementation order and file 50). **Result** is filled
+in with evidence (device, build, date).
 
-## Done on 2026-11-15
+## Setup
 
 | Item | Result |
 | --- | --- |
-| Scaffold (Expo SDK 58, Expo Router, TypeScript strict, `src/app/`) | Done |
-| Exact version pin, `docs/VERSIONS.md` | Done; `expo install --check` and `expo-doctor` (20/20) pass |
-| Platform minimums (Q2): iOS 17, Android API 24 | Set in `app.config.ts`; confirmed allowed by the installed React Native, Expo and Firebase |
-| Firebase collection-off keys (file 7) | Key names verified against installed sources; set in `firebase.json` |
-| Tuning constants (§8a) | `src/platform/config/tuning.ts`; seven values PROVISIONAL |
-| Lint layering rules, Jest, CI workflow | `npm run typecheck`, `npm run lint`, `npm test` pass locally |
+| Expo stack removed (file 1); `shared/tuning.json` created from `src/platform/config/tuning.ts` at `a1f4c49` | Done 2026-11-17 |
+| Firebase service files moved to `android/app/src/{dev,prod}/` and `ios/Config/{Dev,Prod}/`; rules, indexes and CLI config moved to `firebase/` | Done 2026-11-17 |
+| Toolchain: JDK 17 (Zulu), Android command-line tools with platform-tools, platforms 36 and 37.0, build-tools 36.1.0; Xcode 27.2; XcodeGen 2.47.0; SwiftLint 0.65.1 | Installed 2026-11-17 |
+| Android scaffold (files 16–22): builds, lint and one test pass | Done 2026-11-17: `assembleDevDebug`, ktlint, detekt, `checkLayering`, `:core:test` (2), `koverVerify`, `testDevDebugUnitTest` (1, Robolectric SDK 35), `checkPermissions` |
+| iOS scaffold (files 41–44): builds, lint and one test pass | Partly, 2026-11-17: `swift test` (2) and `swiftlint --strict` pass; the app builds for the simulator with Firebase 13.1.1 and the dev plist. App and UI tests not run: no simulator runtime installed |
+| CI for both apps (file 3) | Written 2026-11-17; not yet run on GitHub |
+| `shared/` README, fixture schema, prompts, Remote Config schema and template; `tools/` validate and record scripts | Done except `record-fixture.ts` (step 4): `config:validate` passes the template and rejects all 6 invalid samples |
+| Expo project on expo.dev deleted (author, D1) | Pending: needs the author's password on expo.dev |
 
-## Needs the author
+## Wire formats (§3a, Q1)
 
-| Item | What is needed |
-| --- | --- |
-| Git repository and GitHub remote | `git init`, first commit, push; CI then runs `.github/workflows/ci.yml` |
-| Firebase projects `photocritic-dev`, `photocritic-prod` | Done 2026-11-16: both registered as `com.yk.photocritic`; service files in `firebase/dev/` and `firebase/prod/`, checked against `app.config.ts` |
-| Expo account and EAS | Done 2026-11-16: project `@yogeshkolte/photocritic`, ID in `app.config.ts` (`extra.eas.projectId`) |
-| Apple Developer account | Needed for device builds and TestFlight |
-| One API key per provider, with a spend cap | For the AI SDK checks below |
-| A physical iPhone and Android phone (API 24–27 device if possible) | Device checks below |
-
-## AI SDK setup checks (Q1)
-
-Run on a release build: `eas build --profile spike`, open the app, tap "Open
-AI SDK setup checks". A first pass can run under Node:
-`SPIKE_PROVIDER=gemini SPIKE_MODEL=<id> SPIKE_API_KEY=<key> npm run spike:ai`.
-A failure is worked around inside the AI SDK setup (AR1).
+Recordings go to `shared/provider-*` (file 13). Record the date and model.
 
 | Check | Gemini | Anthropic | OpenAI |
 | --- | --- | --- | --- |
-| Custom fetch used, allowlisted host, key not in URL | | | |
-| No Origin header reaches the provider | | | |
-| Streaming with an image | | | |
-| Request ID header readable (record the header name) | | | |
-| Image detail or resolution reaches the request body | | n/a | |
-| Stop (abort) ends the stream | | | |
-| Invalid key gives a readable error, one request only | | | |
-| `redirect: 'error'` honored by `expo/fetch` | | (same) | (same) |
-| Mid-stream error event readable (manual: cut the network mid-answer) | | | |
-| Gemini API surface and version used | | | |
-| OpenAI API used (Responses is the v7 default) | | | |
+| Endpoint, key header and image fields as in §3a | | | |
+| Text, end and failure event names as in §3a | | | |
+| Request ID location | Body `responseId`; no header; failed calls carry none (2026-11-17, Node run below) | | |
+| Refusal and content-filter shapes | | | |
+| OpenAI `store: false` accepted | n/a | n/a | |
 
-## Other Phase 0 checks
+## Client acceptance tests on a phone (Gemini client, both platforms)
+
+| Test | Android | iOS |
+| --- | --- | --- |
+| Key only in its header; never in the URL, logs or `detail` | | |
+| Text streams in more than one delta | | |
+| Image carries the model's detail or resolution setting | | |
+| Disallowed host and any redirect refused before data is sent | | |
+| Exactly one request per question, including on errors | | |
+| Stop ends the stream and the request | | |
+| Errors carry status, provider code and request ID where sent | | |
+| Recorded streams give the expected events | | |
+
+## Firebase and platform checks
 
 | Check | Result |
 | --- | --- |
-| Q3 sheet library: both candidates on the pinned SDK, drag, keyboard, FlashList inside, Reanimated 4 | |
-| Q5 image-size accuracy (text extraction at several long-edge sizes) | |
-| Q5 history cap value (sets `HISTORY_TURNS_CAP`) | |
-| Anthropic automatic caching fields | |
+| Collection-off key names (Android manifest, iOS `Info.plist`) | |
 | `getAppInstanceId` with collection off and on | |
 | Crashlytics unsent reports before opt-in (Q10) | |
-| Firestore persistence off leaves no report text on disk | |
-| Atomic file move (write temp, rename) on both platforms | |
-| HEIC and AVIF on Android API 24–27 show the generic error | |
-| Analytics reserved event names | |
-| Timeouts: `CONNECT_TIMEOUT_MS`, `REQUEST_TIMEOUT_MS` from measured first-token and total times | |
+| Firestore memory cache leaves no report text on disk | |
+| Server timestamp plus offset for `expireAt` (file 36) | |
+| Analytics reserved event names (file 33) | |
+| Merged-manifest permission list (file 17) | Done 2026-11-17: `INTERNET`, `ACCESS_NETWORK_STATE`, `WAKE_LOCK`, `BIND_GET_INSTALL_REFERRER_SERVICE`, `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` |
+| Atomic file writes on both platforms | |
+| HEIC on API 24–27 and AVIF on API 24–30 give `image-error` (Q2) | |
+| Harness output compared with the Android pipeline (file 40) | |
+
+## Measurements
+
+| Item | Result |
+| --- | --- |
+| Image-size accuracy (Q5) | |
+| `HISTORY_TURNS_CAP` | |
+| Token estimates per provider (`shared/token-estimates.json`) | |
+| Anthropic automatic caching fields | |
+| `CONNECT_TIMEOUT_MS`, `REQUEST_TIMEOUT_MS` from measured first-token and total times | |
+| `REPORT_WRITE_TIMEOUT_MS` | |
+
+## Historical note: Expo-era AI SDK check (2026-11-17)
+
+Before the move to native apps, the Vercel AI SDK checks ran under Node
+against Gemini `gemini-4-hydrogen`; all 8 passed after two fixes. Findings
+that carry over to the native clients:
+
+- Gemini sends no request-ID header; the body `responseId` is the only ID,
+  and failed calls carry none.
+- An invalid Gemini key returns 400 `INVALID_ARGUMENT` with "API key not
+  valid".
+- First text arrived after 2.5–5.7 seconds for a tiny image.

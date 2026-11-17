@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/yogeshkolte/photocritic/shared/fixture.schema.json",
+  "title": "Recorded provider response (design file 13)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["recordedAt", "provider", "model", "status", "headers", "expected"],
+  "oneOf": [{ "required": ["sseLines"] }, { "required": ["body"] }],
+  "$defs": {
+    "event": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false, "required": ["type", "delta"],
+          "properties": { "type": { "const": "text" }, "delta": { "type": "string" } }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["type", "finishReason", "servedModel", "requestId"],
+          "properties": {
+            "type": { "const": "done" },
+            "finishReason": { "enum": ["stop", "length"] },
+            "servedModel": { "type": ["string", "null"] },
+            "requestId": { "type": ["string", "null"] }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["type", "error"],
+          "properties": {
+            "type": { "const": "error" },
+            "error": {
+              "type": "object", "additionalProperties": false,
+              "required": ["phase", "httpStatus", "providerCode", "requestId"],
+              "properties": {
+                "phase": { "enum": ["before-response", "mid-stream", "finish"] },
+                "httpStatus": { "type": ["integer", "null"] },
+                "providerCode": { "type": ["string", "null"] },
+                "requestId": { "type": ["string", "null"] }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "properties": {
+    "recordedAt": { "type": "string", "format": "date-time" },
+    "provider": { "enum": ["openai", "anthropic", "gemini"] },
+    "model": { "type": "string" },
+    "note": { "type": "string" },
+    "status": { "type": "integer" },
+    "headers": {
+      "type": "object",
+      "description": "Response headers, lower-case names. Keys and request IDs replaced by placeholders such as <request-id>.",
+      "additionalProperties": { "type": "string" }
+    },
+    "sseLines": { "type": "array", "items": { "type": "string" }, "description": "Raw server-sent-event lines, in order, blank lines kept." },
+    "body": { "type": "string", "description": "Raw error or non-streaming body." },
+    "expected": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/event" },
+      "description": "The TurnEvents the client must produce. An error's detail is not compared; it must contain no key."
+    }
+  }
+}

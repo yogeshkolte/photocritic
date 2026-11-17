@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PhotoCritic</string>
+    <string name="phase0_placeholder">Phase 0 build</string>
+</resources>

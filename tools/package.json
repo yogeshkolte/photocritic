@@ -1,0 +1,20 @@
+{
+  "name": "photocritic-tools",
+  "private": true,
+  "type": "module",
+  "description": "Author scripts: Remote Config validation and publishing, fixture recording, report purge (design file 15).",
+  "scripts": {
+    "config:validate": "tsx validate-config.ts",
+    "fixture:record": "tsx record-fixture.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3"
+  }
+}

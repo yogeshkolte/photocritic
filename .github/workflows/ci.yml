@@ -1,24 +1,82 @@
+# Design file 3: lint, unit, contract and build checks for both apps on every
+# push; the manual checks are in the Verification Plan.
 name: CI
 
 on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  check:
+  android:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
-          node-version: 22
+          distribution: zulu
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Lint, test, build
+        run: >
+          ./gradlew --console=plain
+          ktlintCheck detekt checkLayering
+          :core:test :core:koverVerify
+          :app:testDevDebugUnitTest :app:assembleDevDebug :app:checkPermissions
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install XcodeGen and SwiftLint (versions in docs/VERSIONS.md)
+        run: |
+          curl -sSL -o /tmp/xcodegen.zip https://github.com/yonaskolb/XcodeGen/releases/download/2.47.0/xcodegen.zip
+          unzip -q /tmp/xcodegen.zip -d /tmp/xcodegen
+          echo "/tmp/xcodegen/xcodegen/bin" >> "$GITHUB_PATH"
+          curl -sSL -o /tmp/swiftlint.zip https://github.com/realm/SwiftLint/releases/download/0.65.1/portable_swiftlint.zip
+          unzip -q /tmp/swiftlint.zip -d /tmp/swiftlint
+          echo "/tmp/swiftlint" >> "$GITHUB_PATH"
+      - name: Prompt copy matches shared/prompts
+        run: diff -r shared/prompts ios/Core/Sources/PhotoCriticCore/Resources/prompts
+      - name: SwiftLint
+        working-directory: ios
+        run: swiftlint --strict
+      - name: Core package tests
+        working-directory: ios/Core
+        run: swift test
+      - name: Generate project and build
+        working-directory: ios
+        run: |
+          xcodegen
+          xcodebuild build -project PhotoCritic.xcodeproj -scheme PhotoCritic-Dev \
+            -destination 'generic/platform=iOS Simulator' -quiet
+      - name: App and UI tests
+        working-directory: ios
+        run: |
+          xcodebuild test -project PhotoCritic.xcodeproj -scheme PhotoCritic-Dev \
+            -destination "$(scripts/sim-destination.sh)" -quiet
+
+  shared:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
           cache: npm
+          cache-dependency-path: tools/package-lock.json
       - run: npm ci
       - run: npm run typecheck
-      - run: npm run lint
-      - run: npm test -- --ci
-      - run: npx expo install --check
-      # Added as their inputs land (design file 11):
-      #   Phase 1: npm run config:validate
-      #   Phase 1: npm run check:permissions (needs expo prebuild and Firebase files)
-      #   Phase 4: npm run test:rules (Firestore emulator, needs Java)
+      - run: npm run config:validate

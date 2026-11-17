@@ -1,0 +1,94 @@
+{
+  "config_meta": {
+    "configVersion": 1,
+    "publishedAt": "2026-11-17T00:00:00Z"
+  },
+  "kill_switch": {
+    "appDisabled": false,
+    "message": "",
+    "minSupportedAppVersion": "0.1.0",
+    "updateUrl": "",
+    "disabledProviders": [],
+    "disabledModels": [],
+    "bannerMessage": "",
+    "reportsDisabled": false
+  },
+  "providers": {
+    "openai": {
+      "enabled": true,
+      "displayName": "OpenAI",
+      "baseUrl": "https://api.openai.com",
+      "keyHelpUrl": "https://platform.openai.com/api-keys",
+      "consentTextVersion": 1
+    },
+    "anthropic": {
+      "enabled": true,
+      "displayName": "Anthropic",
+      "baseUrl": "https://api.anthropic.com",
+      "keyHelpUrl": "https://console.anthropic.com/settings/keys",
+      "consentTextVersion": 1
+    },
+    "gemini": {
+      "enabled": true,
+      "displayName": "Google Gemini",
+      "baseUrl": "https://generativelanguage.googleapis.com",
+      "keyHelpUrl": "https://aistudio.google.com/apikey",
+      "consentTextVersion": 1
+    }
+  },
+  "models": [
+    {
+      "provider": "gemini",
+      "id": "gemini-4-hydrogen",
+      "displayName": "Gemini 4 Hydrogen",
+      "label": "Fast",
+      "maxLongEdgePx": 2048,
+      "maxBytes": 4000000,
+      "imageDetail": "MEDIA_RESOLUTION_HIGH",
+      "maxOutputTokens": 2048,
+      "contextTokens": 1000000,
+      "status": "active",
+      "replacementId": "",
+      "minAppVersion": "0.1.0"
+    },
+    {
+      "provider": "gemini",
+      "id": "gemini-4-argon",
+      "displayName": "Gemini 4 Argon",
+      "label": "Best",
+      "maxLongEdgePx": 2048,
+      "maxBytes": 4000000,
+      "imageDetail": "MEDIA_RESOLUTION_HIGH",
+      "maxOutputTokens": 2048,
+      "contextTokens": 1000000,
+      "status": "active",
+      "replacementId": "",
+      "minAppVersion": "0.1.0"
+    }
+  ],
+  "consent_texts": {
+    "openai": {
+      "version": 1,
+      "effectiveDate": "2026-11-17",
+      "summary": [
+        "Your photo and question are sent to OpenAI with your API key.",
+        "PhotoCritic asks OpenAI not to store the response (store: false).",
+        "OpenAI may keep request logs for up to 30 days for abuse monitoring, or longer where required by law."
+      ],
+      "policyUrl": "https://openai.com/policies/privacy-policy"
+    },
+    "gemini": {
+      "version": 1,
+      "effectiveDate": "2026-11-17",
+      "summary": [
+        "Your photo and question are sent to Google with your API key.",
+        "Google's Gemini API terms for paid services apply. Do not use a free-tier key."
+      ],
+      "policyUrl": "https://ai.google.dev/gemini-api/terms"
+    }
+  },
+  "privacy_policy": {
+    "version": 1,
+    "url": ""
+  }
+}

@@ -1,0 +1,31 @@
+# Layering and redaction rules (design §2, file 44). Run from ios/.
+included:
+  - Core/Sources
+  - Core/Tests
+  - PhotoCritic
+  - PhotoCriticTests
+  - PhotoCriticUITests
+custom_rules:
+  telemetry_only_analytics:
+    name: "Analytics and Crashlytics only in Platform/Telemetry"
+    regex: '^import\s+(FirebaseAnalytics|FirebaseCrashlytics)\b'
+    excluded: 'PhotoCritic/Platform/Telemetry/'
+    message: "Only Platform/Telemetry may import Analytics or Crashlytics (G16)."
+    severity: error
+  net_only_urlsession:
+    name: "URLSession only in Core Net"
+    regex: '\bURLSession\('
+    excluded: 'Core/Sources/PhotoCriticCore/Net/'
+    message: "Only Core/Net may create a URLSession (design §2)."
+    severity: error
+  no_console_output:
+    name: "No console output"
+    regex: '\b(print|NSLog)\('
+    excluded: ['PhotoCritic/Platform/Telemetry/', 'Core/Tests/', 'PhotoCriticTests/', 'PhotoCriticUITests/']
+    message: "No console output; log through Platform/Telemetry (G16)."
+    severity: error
+disabled_rules:
+  # Trailing commas are the house style in both apps.
+  - trailing_comma
+identifier_name:
+  excluded: [bg, id]

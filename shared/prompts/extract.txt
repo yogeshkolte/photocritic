@@ -1,0 +1,1 @@
+Copy all readable text in this photo exactly as written, in reading order, inside a ```text block. Do not correct spelling. If some text is unreadable, write [unreadable] in its place. After the block, add one short line saying what kind of document or sign it is.

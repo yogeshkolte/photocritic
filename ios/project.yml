@@ -1,0 +1,136 @@
+# XcodeGen spec (design file 41). Run `xcodegen` in ios/; the generated
+# PhotoCritic.xcodeproj is not committed.
+name: PhotoCritic
+options:
+  bundleIdPrefix: com.yk
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+configs:
+  Debug-Dev: debug
+  Release-Dev: release
+  Release-Prod: release
+configFiles:
+  Debug-Dev: Config/Dev.xcconfig
+  Release-Dev: Config/Dev.xcconfig
+  Release-Prod: Config/Prod.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    CODE_SIGN_STYLE: Automatic
+packages:
+  PhotoCriticCore:
+    path: Core
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    exactVersion: 13.1.1
+targets:
+  PhotoCritic:
+    type: application
+    platform: iOS
+    sources:
+      - path: PhotoCritic
+        excludes: ["Info.plist"]
+    info:
+      path: PhotoCritic/Info.plist
+      properties:
+        CFBundleDisplayName: PhotoCritic
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIUserInterfaceStyle: Dark
+        UIRequiresFullScreen: false
+        UISupportedInterfaceOrientations:
+          [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UISupportedInterfaceOrientations~ipad:
+          [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        NSCameraUsageDescription: PhotoCritic uses the camera to take the photo you ask questions about.
+        ITSAppUsesNonExemptEncryption: false
+        # G16: collection off until the user turns on "Share usage and crash data"
+        # (key names checked in Phase 0, docs/spikes/phase0.md).
+        FIREBASE_ANALYTICS_COLLECTION_ENABLED: false
+        FirebaseCrashlyticsCollectionEnabled: false
+        GOOGLE_ANALYTICS_IDFV_COLLECTION_ENABLED: false
+        GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE: false
+        GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA: false
+        GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS: false
+        FirebaseAutomaticScreenReportingEnabled: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yk.photocritic
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: NO
+        DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+    dependencies:
+      - package: PhotoCriticCore
+      - package: Firebase
+        product: FirebaseAnalytics
+      - package: Firebase
+        product: FirebaseCrashlytics
+      - package: Firebase
+        product: FirebaseRemoteConfig
+      - package: Firebase
+        product: FirebaseFirestore
+    postBuildScripts:
+      - name: Copy GoogleService-Info.plist
+        basedOnDependencyAnalysis: false
+        script: |
+          # PC_ENV comes from Config/Dev.xcconfig or Config/Prod.xcconfig.
+          cp "${SRCROOT}/Config/${PC_ENV}/GoogleService-Info.plist" "${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/GoogleService-Info.plist"
+      - name: Upload Crashlytics symbols (release only)
+        basedOnDependencyAnalysis: false
+        script: |
+          [ "${CONFIGURATION#Release}" = "${CONFIGURATION}" ] && exit 0
+          "${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run"
+        inputFiles:
+          - ${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}
+          - ${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}
+          - ${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist
+          - $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist
+          - $(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)
+  PhotoCriticTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [PhotoCriticTests]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.yk.photocritic.tests
+    dependencies:
+      - target: PhotoCritic
+  PhotoCriticUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [PhotoCriticUITests]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.yk.photocritic.uitests
+        TEST_TARGET_NAME: PhotoCritic
+    dependencies:
+      - target: PhotoCritic
+schemes:
+  PhotoCritic-Dev:
+    build:
+      targets:
+        PhotoCritic: all
+    run:
+      config: Debug-Dev
+    test:
+      config: Debug-Dev
+      targets: [PhotoCriticTests, PhotoCriticUITests]
+    archive:
+      config: Release-Dev
+  PhotoCritic-Prod:
+    build:
+      targets:
+        PhotoCritic: all
+    run:
+      config: Release-Prod
+    archive:
+      config: Release-Prod

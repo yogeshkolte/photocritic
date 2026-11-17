@@ -1,0 +1,32 @@
+# Layering and redaction rules (design §2, file 20). The okhttp3 rule is the
+# root checkLayering task, because detekt allows one ForbiddenImport list.
+style:
+  ForbiddenImport:
+    active: true
+    imports:
+      - value: 'com.google.firebase.analytics.*'
+        reason: 'Only platform/telemetry may use Analytics (G16).'
+      - value: 'com.google.firebase.crashlytics.*'
+        reason: 'Only platform/telemetry may use Crashlytics (G16).'
+    excludes: ['**/platform/telemetry/**', '**/test/**']
+  ForbiddenMethodCall:
+    active: true
+    methods:
+      - value: 'kotlin.io.println'
+        reason: 'No console output; log through platform/telemetry (G16).'
+      - value: 'android.util.Log.d'
+      - value: 'android.util.Log.i'
+      - value: 'android.util.Log.w'
+      - value: 'android.util.Log.e'
+      - value: 'android.util.Log.v'
+    excludes: ['**/platform/telemetry/**', '**/test/**', '**/harness/**']
+  MagicNumber:
+    active: true
+    # Design tokens and constants are named properties.
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    excludes: ['**/test/**']
+naming:
+  FunctionNaming:
+    # Compose functions are PascalCase.
+    ignoreAnnotated: ['Composable']

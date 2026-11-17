@@ -1,0 +1,3 @@
+// Production Firebase project (photocritic-prod).
+PC_ENV = Prod
+#include? "Signing.xcconfig"
