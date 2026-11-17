@@ -1,8 +1,8 @@
 # PhotoCritic: Ask Questions About a Photo
 
 - **Author:** yogeshkolte (yogeshkolte@gmail.com)
-- **Status:** Proposed
-- **Date:** 2026-11-15
+- **Status:** Proposed (revised for native apps, 2026-11-17)
+- **Date:** 2026-11-15; revised 2026-11-17
 - **Source:** [concepts_brief.md](../../concepts_brief.md) (decisions 1–37), [clickable mockup](https://claude.ai/artifact/QMFTwpETHLVAHHHyySA9e7) (private; copy in [`mockup/`](../../mockup/))
 
 ---
@@ -25,8 +25,11 @@ and the Google Play internal testing track (Android) (decisions 15–16). Apple
 expects TestFlight apps to be intended for public release, so the tester build
 must work as a complete app.
 
-The app is built with Expo (development build), React Native with the New
-Architecture, and TypeScript. It has no backend of its own. Firebase supplies
+The app is built as two native apps: Kotlin with Jetpack Compose on
+Android and Swift with SwiftUI on iOS, with no shared code module (author
+decision, 2026-11-17, replacing the earlier Expo and React Native plan). The
+two apps share test data, the Remote Config schema, the tuning values and the
+prompts, not code. The app has no backend of its own. Firebase supplies
 remote configuration, opt-in usage and crash data, and a store for text-only
 answer reports.
 
@@ -71,8 +74,8 @@ models perform on a phone before investing in on-device models:
 the photo fills the screen and a pull-up conversation sheet sits over it.
 Answers stream in and can be stopped. Text found in the photo appears in its
 own card with Copy and Share. Each request goes through PhotoCritic's own
-provider interface, implemented with the Vercel AI SDK, directly from the
-phone to the provider. Remote Config controls models, limits, error text and
+provider interface, implemented as a thin hand-written client per provider
+in each app, directly from the phone to the provider. Remote Config controls models, limits, error text and
 consent text without a store release. Keys stay in the device's secure store.
 
 ## Goals
@@ -119,16 +122,18 @@ consent text without a store release. Keys stay in the device's secure store.
   The user always chooses both provider and model, at first launch and in
   Settings, from a curated list of vision models in Remote Config. "Fast" and
   "Best" are labels next to model names only (decision 36, final).
-- **G10. Keys stay on the device.** Keys are kept in `expo-secure-store`,
-  readable only while the device is unlocked and never synced or backed up.
+- **G10. Keys stay on the device.** Keys are kept in the iOS Keychain and,
+  on Android, in a file encrypted with an Android Keystore key; readable
+  only while the device is unlocked (iOS) and never synced or backed up.
   They are deleted on the first launch after a reinstall. Each key is checked
   when entered (decision 21). The setup screen explains, before key entry,
   that usage is billed to the user's provider account and that the key must
   be re-entered after reinstalling.
 - **G11. One provider interface for cloud now and on-device later.** The
-  screens talk only to PhotoCritic's own interface. Cloud providers are
-  built on the Vercel AI SDK, which is final: no other provider layer is
-  evaluated (author decision after review, 2026-11-15). The interface reports
+  screens talk only to PhotoCritic's own interface. Each cloud provider is a
+  thin hand-written client in each app (six clients), with no provider SDK
+  and no third-party AI library (author decision, 2026-11-17; this replaces
+  the Vercel AI SDK, which exists only for JavaScript). The interface reports
   what each model can do (for example, whether it accepts images) so an
   on-device provider can be added later without screen changes (decision 35).
 
@@ -150,7 +155,9 @@ consent text without a store release. Keys stay in the device's secure store.
   The record stores provider, text version and time (decisions 17, 36 D33).
 - **G14. Privacy policy and store forms.** A privacy policy in the app and in
   the store fields that require it, covering each provider's retention and
-  training terms and every piece of data Firebase collects. 18+ age rating.
+  training terms and every piece of data Firebase collects. OpenAI requests
+  are sent with `store: false`, so OpenAI keeps no application state for
+  them (§3a). 18+ age rating.
 - **G15. Report an answer.** Each answer has a Report action. The report is
   text only (the user's note, the question, the answer and the model name; no
   photo) and is written to Cloud Firestore with create-only rules; there is
@@ -243,8 +250,10 @@ consent text without a store release. Keys stay in the device's secure store.
 - **Provider caching APIs and file-upload APIs.**
 - **Choosing models by tier** (decision 36, final).
 - **Low-data mode.** One send size per model in v1 (decided during drafting).
-- **Over-the-air JavaScript updates** (EAS Update). Every fix ships as a new
-  tester build (decided during drafting).
+- **Over-the-air updates.** Every fix ships as a new tester build (decided
+  during drafting).
+- **Shared code between the two apps** (Kotlin Multiplatform or similar).
+  Only data is shared (author decision, 2026-11-17).
 - **Older phones and OS versions** below the minimums set in D9.
 
 ## Open Questions
@@ -252,23 +261,26 @@ consent text without a store release. Keys stay in the device's secure store.
 These are carried from the brief without decisions. The author deferred
 several of them to development (decision 27). They stay open until decided.
 
-- **Q1. Resolved: provider layer (D3).** The Vercel AI SDK is final; no
-  other option is evaluated (author decision after review, 2026-11-15).
-  Phase 0 still runs setup checks on a release build (custom fetch,
-  streaming, abort, request-ID header, mid-answer errors, Gemini API surface
-  and version). A problem found there is fixed inside the AI SDK setup, not
-  by changing the provider layer.
-- **Q2. Minimum OS and platform setup (D9).** Recommended iOS 17. Android
-  minSdk 24 (Android 7.0), decided by the author after review (2026-11-15):
-  the lowest the current Expo SDK and React Native allow. Android cannot
-  decode HEIC below API 28 or AVIF below API 31, so on those phones such
-  photos show the generic error message (G12). The Expo SDK version is
-  pinned at Phase 0 (D26).
-- **Q3. Sheet library (D26).** `@gorhom/bottom-sheet` or
-  `react-native-true-sheet`, chosen by a Phase 0 test on the pinned SDK.
-- **Q4. Session lifecycle (D8).** What happens when the app is backgrounded,
-  the process is killed, the Android camera activity is recreated, or the
-  device rotates while an answer is arriving.
+- **Q1. Resolved: provider layer (D3).** Thin hand-written clients, one per
+  provider in each app (author decision, 2026-11-17). Phase 0 confirms the
+  wire formats in §3a against live responses (endpoints, event names, end
+  and error events, request-ID location, image fields) and records them in
+  `shared/` before the clients are written. The Gemini request-ID location
+  (body `responseId`, no header) was confirmed on 2026-11-17.
+- **Q2. Minimum OS and platform setup (D9).** iOS 17. Android minSdk 24
+  (Android 7.0), decided by the author after review (2026-11-15); Jetpack
+  Compose would allow 21, but 24 is kept. Android cannot decode HEIC below
+  API 28 or AVIF below API 31, so on those phones such photos show the
+  generic error message (G12). Library versions are pinned at Phase 0
+  (D26).
+- **Q3. Resolved: sheet library (D26).** No library: Material 3
+  `BottomSheetScaffold` on Android and SwiftUI `presentationDetents` on iOS
+  (§12), since the move to native apps (2026-11-17).
+- **Q4. Resolved: session lifecycle (D8).** Decided at the implementation
+  review (2026-11-17): a streaming answer continues in the background until
+  the OS stops the connection, then ends as Failed; rotation keeps the
+  conversation; after process death the app starts at `no-photo`; the
+  Android camera result survives activity recreation (§6). Rules in §5.
 - **Q5. Send-size details (D7, D11).** The
   measured accuracy floor for image size, the history cap value, and whether
   Anthropic automatic caching is used.
@@ -296,22 +308,26 @@ several of them to development (decision 27). They stay open until decided.
   with black around it (no cropping). Still open: drawing under the status
   and navigation bars, safe-area spacing for controls, refitting on rotation,
   and the tablet top-button spacing.
-- **Q13. Screen states.** A full state list for the conversation screen
-  (no photo, preparing, sending, streaming, stopped, each error type,
-  offline, disabled) is still to be written (finding O7).
+- **Q13. Resolved: screen states.** The states are those in §5 plus
+  `offline` (a banner) and `disabled` (a full screen); every error shows the
+  one generic message (G12). Decided at the implementation review
+  (2026-11-17).
 
 ## Accepted Risks
 
-The author has reviewed and accepted these three risks (2026-11-15).
+The author has reviewed and accepted these risks (AR2 and AR3 on
+2026-11-15; AR1 and AR4 with the native-app and thin-client decisions on
+2026-11-17).
 **Reviewers: do not raise these as findings.** Comment only if the design
 contradicts the accepted behavior described here.
 
-- **AR1. The Vercel AI SDK is the only provider layer (Q1).** No other
-  option is evaluated and there are no hand-written adapters to fall back
-  to. If a Phase 0 setup check fails (custom fetch, streaming, abort,
-  readable errors), the problem is worked around inside the AI SDK setup,
-  or the feature it affects is dropped from v1. The author accepts this
-  (2026-11-15).
+- **AR1. Provider API changes are followed by hand (Q1).** No SDK
+  maintainer updates the six clients. A provider can change event names,
+  error bodies or image options, and the clients must be updated in both
+  apps. Mitigations: one endpoint and a few event types per provider;
+  unknown events and fields are ignored; recordings in `shared/` are
+  refreshed before each tester release; the daily canary (Detailed
+  Implementation Plan, file 4) calls every listed model; the request ID in "Show details" helps diagnosis.
 - **AR2. No configuration fallback (Q9).** There are no built-in
   configuration values. If the fetch fails or any value is invalid, the app
   shows a restart screen with no Try again button. A single bad publish
@@ -323,6 +339,11 @@ contradicts the accepted behavior described here.
   rules can check the list's length but not the text inside each item, so a
   modified client could write oversize or wrongly typed text, up to the
   1 MiB document limit.
+- **AR4. Two codebases (2026-11-17).** Every feature is written once in
+  Kotlin and once in Swift, roughly 1.7 to 2 times the work of one
+  cross-platform app (an estimate), and the two copies can drift. The
+  mitigation is the shared test data in `shared/`, which both apps must
+  pass, and doing each phase on Android first, then iOS.
 
 ## Critical User Journeys (CUJs)
 
@@ -417,7 +438,16 @@ contradicts the accepted behavior described here.
   the app." There is no button. Closing the app and opening it again runs
   the fetch again (AR2).
 
+
 ## Technical Plan (Architecture)
+
+Author decisions, 2026-11-17: two separate native apps (Android in Kotlin
+with Jetpack Compose, iOS in Swift with SwiftUI), with no shared code
+module; providers are called through thin hand-written clients, one per
+provider per platform. The two apps share only data: the test vectors,
+the Remote Config schema, the tuning values and the system prompt in
+`shared/` (§2). Both apps follow every rule in this section; where the
+platforms differ, both mechanisms are named.
 
 ### 1. Shape of the system
 
@@ -427,7 +457,7 @@ PhotoCritic server.
 ```text
                        ┌──────────────────────── Phone ────────────────────────┐
                        │                                                        │
-  Camera / Photos ───▶ │  Screens (Expo Router)                                 │
+  Camera / Photos ───▶ │  Screens (Jetpack Compose / SwiftUI)                   │
                        │     │  setup · home · settings · consent · report      │
                        │     ▼                                                  │
                        │  Features                                              │
@@ -435,10 +465,10 @@ PhotoCritic server.
                        │     │                                                  │
                        │     ▼                                                  │
                        │  providers/  PhotoCritic Provider interface            │
-                       │     │  openai · anthropic · gemini (AI SDK)            │
-                       │     │  (local adapters added in a later phase)         │
+                       │     │  openai · anthropic · gemini (thin clients)      │
+                       │     │  (on-device providers added in a later phase)    │
                        │     ▼                                                  │
-                       │  platform/net  one fetch wrapper (host allowlist)      │
+                       │  platform/net  one HTTP client (OkHttp / URLSession)   │
                        │  platform/config · storage · telemetry                 │
                        └─────┬──────────────────┬──────────────────┬────────────┘
                              │ photo + question │ config / reports │ opt-in only
@@ -457,66 +487,95 @@ PhotoCritic server.
 
 ### 2. Code layout
 
+Each app has two parts: a **core** with no user interface and no Firebase
+(providers, network, session logic, config validation, consent and report
+rules), and the **app** (screens, platform services, Firebase). The core
+builds and tests without a device or simulator.
+
 ```text
-src/
-  app/                 Expo Router screens: setup, home, settings
-                       (consent and report are sheets opened from home)
-  design/              tokens.ts, components (Button, Chip, Sheet, TextCard,
-                       Banner, Dialog), icons (copied Lucide SVG components)
-  features/
-    session/           one-photo conversation: state machine, neutral history
-    providers/         Provider interface, capability data, adapters, error
-                       conversion, extracted-text parser
-    image/             original → edits (empty in v1) → send copy
-    consent/           consent records and the send gate
-    report/            report form logic and Firestore write
-  platform/
-    net/               the single fetch wrapper all provider calls use
-    config/            Remote Config load, validation, session snapshot,
-                       tuning constants
-    storage/           secure store (keys), plain files (settings, consent,
-                       install marker, report counter)
-    telemetry/         one logging wrapper for Analytics and Crashlytics
+android/
+  core/                pure Kotlin (JVM) module: no Android or Firebase imports
+    net/               allowlist, the one OkHttp client, server-sent-events parser
+    providers/         Provider interface, types, gemini/ anthropic/ openai/
+                       clients, fake/, shared/ (system prompt, history trim,
+                       extracted-text parser, PcError conversion, redaction)
+    config/            Remote Config models, validator, snapshot, kill switch,
+                       tuning constants, app-version comparison
+    session/           one-photo conversation state machine, neutral history
+    consent/, report/  consent gate rules, report document builder, daily limit
+  app/                 Android application module
+    platform/          storage (keys, files), config (Remote Config fetch),
+                       telemetry, net (connectivity)
+    features/          image (pick, pipeline, cleanup), report (Firestore write),
+                       session (ViewModel)
+    ui/                screens, sheets, design tokens and components
+  harness/             JVM command-line tool using core/ (§G23)
+ios/
+  Core/                local Swift package PhotoCriticCore: Foundation only,
+                       same folders and responsibilities as android/core
+  PhotoCritic/         app target: Platform/, Features/, UI/ as on Android
+shared/                data both apps read or test against; no code
+  provider-streams/    recorded streams per provider
+  provider-errors/     recorded error responses
+  provider-requests/   expected request bodies
+  remote-config/       JSON Schema, template, valid and invalid samples
+  redaction/           redaction cases
+  prompts/             system prompt and prompt-kind texts
+  tuning.json          §8a values
+firebase/              Firestore rules, indexes, rules tests
+tools/                 author scripts (Node): config validate and publish,
+                       fixture recording, report purge
 ```
 
 Rules:
 
 - Screens call features; features never import screens. `platform/` has no
   user interface.
-- Only `providers/` knows vendor names, vendor request formats and AI SDK
-  types. Nothing from the AI SDK (messages, usage objects, stream parts,
-  errors) leaves an adapter. This keeps vendor details in one folder and lets
-  on-device providers be added in Phase 5 behind the same interface.
-- Only `platform/telemetry` calls Firebase Analytics or Crashlytics. A lint
-  rule bans direct imports elsewhere.
-- Only `platform/net` performs network calls to providers.
-- Imports go to source files directly, not through `index.ts` barrel files.
+- The core has no user interface, Android, UIKit, SwiftUI or Firebase
+  imports. The Gradle module and the Swift package boundary enforce this:
+  the core cannot see those libraries.
+- Only `providers/` knows vendor names, vendor request formats and vendor
+  JSON types. Nothing vendor-specific (request bodies, event types, error
+  bodies) leaves a client. This keeps vendor details in one folder per app
+  and lets on-device providers be added in Phase 5 behind the same
+  interface.
+- Only `core/net` creates an HTTP client, and only `providers/` calls it.
+  Only `platform/telemetry` imports Firebase Analytics or Crashlytics.
+  detekt `ForbiddenImport` rules (Android) and SwiftLint custom rules (iOS)
+  enforce both.
+- The system prompt and prompt-kind texts live once, in `shared/prompts/`,
+  and are bundled into both apps at build time, so both apps send identical
+  prompts.
 
 ### 3. Provider interface (author decision: each provider builds its own messages)
 
-`session/` keeps a provider-neutral history. Each provider adapter turns that
+`session/` keeps a provider-neutral history. Each provider client turns that
 history into its own request, places the image where its model needs it, and
 applies its own length limit measured in tokens. The code constant
 `HISTORY_TURNS_CAP` is an upper bound, not the rule.
 
-Interface (TypeScript-style pseudocode, not implementation code):
+Interface (language-neutral pseudocode; Kotlin and Swift follow the same
+shape):
 
 ```text
 interface Provider {
   id: 'openai' | 'anthropic' | 'gemini'          // local ids added later
   capabilities(modelId): Capabilities
   getAvailability(): Available | NeedsKey | NeedsDownload | Unsupported
-  prepare(onProgress?): Promise<void>            // no-op for cloud
-  dispose(): Promise<void>                       // no-op for cloud
-  checkKey(key, modelId, signal): Promise<KeyCheckResult>
-  send(request: TurnRequest, signal: AbortSignal): AsyncIterable<TurnEvent>
+  prepare(onProgress?)                           // no-op for cloud
+  dispose()                                      // no-op for cloud
+  checkKey(key, modelId): KeyCheckResult         // suspend / async, cancellable
+  send(request: TurnRequest, key): stream of TurnEvent
+    // Kotlin: Flow<TurnEvent>; cancelling the collector cancels the call.
+    // Swift: AsyncThrowingStream<TurnEvent, Error>; cancelling the task
+    //        cancels the URLSession task.
 }
 
 Capabilities {
   acceptsImages: boolean
   imagePlacement: 'any-turn' | 'final-turn-only'
   maxImageLongEdgePx, maxImageBytes
-  contextTokens
+  contextTokens, maxOutputTokens
   streaming: 'tokens' | 'whole'
   usageReporting: boolean
   dataLeavesDevice: boolean        // consent gate keys on this
@@ -538,53 +597,80 @@ TurnEvent =
   | { type: 'error', error: PcError }       // also used for mid-stream errors
 ```
 
-What each cloud adapter does inside `send`:
+What each cloud client does inside `send`:
 
-1.  Build the system prompt from a fixed base prompt (identical on every turn,
-    so the start of the request stays the same) plus the prompt-kind text. The
-    base prompt tells the model to wrap verbatim text from the photo in a
-    fenced block tagged `text` (D36).
+1.  Build the system prompt from the fixed base prompt in `shared/prompts/`
+    (identical on every turn, so the start of the request stays the same)
+    plus the prompt-kind text. The base prompt tells the model to wrap
+    verbatim text from the photo in a fenced block tagged `text` (D36).
 2.  Put the image in the first user message, then earlier turns, then the new
     question. Drop the oldest turns until the estimated token count fits the
     model's `contextTokens` and `HISTORY_TURNS_CAP`.
-3.  Call the AI SDK's `streamText` with the provider factory configured with
-    the `platform/net` fetch wrapper, `maxRetries: 0` (no automatic retries
-    anywhere, G12), and the per-model image detail setting.
-4.  Translate AI SDK stream parts to `TurnEvent`s. Compare the served model
+3.  Build the provider's JSON request (§3a) and send it through the
+    `core/net` client (§4). There is no retry code anywhere (G12).
+4.  Parse the server-sent events into `TurnEvent`s. Compare the served model
     with the requested one. Convert every error, before the response, inside
     the stream, or as a failing finish reason, into a `PcError` (§7).
+    Unknown event types and unknown JSON fields are ignored, so an additive
+    provider change does not break the client.
 
-`checkKey`: OpenAI and Anthropic list models (no tokens used). Gemini makes a
-minimal inference call, because a working model list does not prove inference
-is enabled; the setup screen says this uses a few tokens.
+`checkKey`: OpenAI and Anthropic list models (`GET /v1/models`, no tokens
+used). Gemini makes a minimal inference call, because a working model list
+does not prove inference is enabled; the setup screen says this uses a few
+tokens.
 
-A shared test suite runs against every adapter with recorded fixtures, so the
-three copies of the message-building logic cannot drift apart unnoticed.
+**Shared test vectors keep the six clients in step.** Every client, on both
+platforms, runs the same contract tests against the recordings in
+`shared/provider-streams/` and `shared/provider-errors/`, and compares its
+request body with `shared/provider-requests/`. A recording carries its
+date, and `tools/record-fixture.ts` refreshes them before each tester
+release.
 
-**Extracted text.** A parser in `providers/` (shared by all adapters) splits
-answer text into normal text and `text` cards. It runs on the finished answer
-and on each streamed update, and shows an unfinished fence as normal text until
-it closes.
+**Extracted text.** A parser in `providers/shared` splits answer text into
+normal text and `text` cards. It runs on the finished answer and on each
+streamed update, and shows an unfinished fence as normal text until it
+closes.
 
-### 4. Network wrapper (`platform/net`)
+#### 3a. Wire formats
 
-Every provider request passes through one `fetch` function given to the AI SDK
-provider factories through their `fetch` option (confirmed in the Phase 0
-setup checks, Q1). It:
+Confirmed against live responses in Phase 0 (Q1) before the clients are
+written; the Gemini row was checked on 2026-11-17.
 
-- refuses any host not in the in-code allowlist (`api.openai.com`,
-  `api.anthropic.com`, `generativelanguage.googleapis.com`; decision 23);
-- refuses redirects (`redirect: 'error'`);
-- removes any `Origin` header (Anthropic answers an `Origin` header with a
-  CORS 401);
-- sends keys only in headers: OpenAI `Authorization: Bearer`, Anthropic
-  `x-api-key`, Gemini `x-goog-api-key` (never `?key=` in the URL);
-- applies a connect timeout and a total timeout from the tuning constants
-  (`CONNECT_TIMEOUT_MS`, `REQUEST_TIMEOUT_MS`), combined with the user's
-  Stop signal;
-- records the provider's request-ID header for "show details".
+| | OpenAI | Anthropic | Gemini |
+| --- | --- | --- | --- |
+| Endpoint | `POST https://api.openai.com/v1/responses` | `POST https://api.anthropic.com/v1/messages` | `POST https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse` |
+| Key header | `Authorization: Bearer <key>` | `x-api-key: <key>`, plus `anthropic-version: 2023-06-01` | `x-goog-api-key: <key>` |
+| Image | `input_image` part, `data:image/jpeg;base64,…`, `detail` from the model entry | `image` block, `source.type: base64`, `media_type: image/jpeg` | `inline_data` part, `mime_type: image/jpeg`; `mediaResolution` in `generationConfig` |
+| Required fields | `stream: true`; **`store: false`**, because the Responses API otherwise keeps response data for 30 days ([OpenAI data controls](../../research/openai-your-data.txt)); `max_output_tokens` | `stream: true`; `max_tokens` (required by the API) | `generationConfig.maxOutputTokens`; no sampling parameters |
+| Text events | `response.output_text.delta` | `content_block_delta` with `text_delta` | each `data:` object: `candidates[0].content.parts[].text` |
+| End and failure events | `response.completed`; `response.incomplete` (length or content filter); `response.refusal.delta` (refusal text); `response.failed`; `error` | `message_delta` (`stop_reason`), `message_stop`; `error` event after a 200 | `finishReason` on the last object (`STOP`, `MAX_TOKENS`, `SAFETY`, …); `promptFeedback.blockReason` |
+| Request ID | `x-request-id` header | `request-id` header | No header; body `responseId`. Failed calls carry none |
 
-### 5. Session state machine (`features/session`)
+All three providers receive the model's `maxOutputTokens` from Remote
+Config (§8), so answers have the same length limit everywhere.
+
+### 4. Network client (`core/net`)
+
+Every provider request goes through one HTTP client per app, built once in
+`core/net`. Provider clients cannot create their own.
+
+| Rule | Android (OkHttp) | iOS (URLSession) |
+| --- | --- | --- |
+| Host allowlist (`api.openai.com`, `api.anthropic.com`, `generativelanguage.googleapis.com`; decision 23) | Application interceptor refuses any other host before a connection is made | Checked before the task is created, and again in the redirect delegate |
+| No redirects | `followRedirects(false)`, `followSslRedirects(false)`; a 3xx response is a failure | Delegate `willPerformHTTPRedirection` returns `nil`; a 3xx response is a failure |
+| No retries | `retryOnConnectionFailure(false)`; no retry code anywhere | No retry code anywhere |
+| Timeouts | `connectTimeout(CONNECT_TIMEOUT_MS)`, `callTimeout(REQUEST_TIMEOUT_MS)` | `timeoutIntervalForRequest`, `timeoutIntervalForResource` from the same constants |
+| No local traces | No cache, no cookie jar | `URLSessionConfiguration.ephemeral`: no cache, cookies or credential storage |
+| Keys | Only in the provider's header; never in the URL (no `?key=`); never logged | Same |
+| Stop | Cancelling the coroutine cancels the OkHttp `Call` | Cancelling the task cancels the `URLSessionDataTask` |
+| Request ID | Read from the response header named in §3a | Same |
+
+The server-sent-events parser (one per app) reads `event:` and `data:`
+lines, ends an event at a blank line, and treats `data: [DONE]` as the end
+of the stream. Native HTTP clients do not send an `Origin` header, so the
+React Native plan's Origin-removal rule is no longer needed.
+
+### 5. Session state machine (`core/session`)
 
 One conversation, one photo. The state drives what the sheet, the input and
 the starter buttons show.
@@ -613,15 +699,26 @@ the starter buttons show.
 - A stopped answer, and the partial text of an answer that failed, stay in
   the visible list (labelled "Stopped" or "Failed") but are never added to
   `history`.
-- The state store is Zustand with selectors, so a streaming answer
-  re-renders only the message being written.
-- What happens to the state on backgrounding, process death and rotation
-  mid-stream is Open Question Q4.
+- The state machine is plain code in the core (a reducer plus a controller
+  that runs the provider stream), tested without a device. Android exposes
+  it through a `ViewModel` with `StateFlow`; iOS through an `@Observable`
+  model. Messages have stable IDs, so a streaming answer redraws only the
+  message being written.
+- `image-error` shows the generic message with Dismiss and "Show
+  details"; Dismiss returns to `no-photo`.
+- A failed consent write shows the generic message; the question is not
+  sent and stays in the composer.
+- Lifecycle (Q4): a streaming answer keeps running while the app is in the
+  background and the process lives; if the OS stops the connection (iOS
+  suspends network work shortly after backgrounding), the answer ends as
+  Failed with its partial text. Rotation and window resizing keep the
+  conversation and the stream. After process death the conversation is
+  gone and the app starts at `no-photo`; nothing is restored.
 
 ### 6. Image pipeline (`features/image`)
 
 ```text
-picker / camera ──▶ original (URI, never changed, displayed full quality)
+picker / camera ──▶ original (file or content URI, never changed, displayed full quality)
                        │
                        ▼
                     edits (list of operations; empty in v1)
@@ -632,15 +729,20 @@ picker / camera ──▶ original (URI, never changed, displayed full quality)
                     encode JPEG (quality from JPEG_QUALITY) ─▶ no metadata kept
 ```
 
-- Picking uses `expo-image-picker` through the system picker, with
-  microphone permission off and no broad storage permission.
-- Conversion uses `expo-image-manipulator` with decode-time downsampling, so
-  a 48–200 MP photo is never fully loaded into memory.
-- Display uses `expo-image` with its cache set to memory only, so photos are
-  not written to the disk cache.
-- Android camera recovery uses `ImagePicker.getPendingResultAsync` when the
-  activity was destroyed during capture.
-- The send copy and temporary files are deleted when the conversation ends.
+| Step | Android | iOS |
+| --- | --- | --- |
+| Pick | Photo Picker (`PickVisualMedia`, image only; the Google Play services backport below API 30); no storage or media permission | `PhotosPicker` (runs out of process; no photo-library permission) |
+| Camera | `TakePicture` into a `FileProvider` file in the app cache; the target URI is kept in `SavedStateHandle`, so the result survives the activity being destroyed during capture; no `CAMERA` permission declared | `UIImagePickerController` with `.camera`, wrapped for SwiftUI; camera usage string |
+| Decode with downsampling | `ImageDecoder` with a target size (API 28+); `BitmapFactory` with `inSampleSize` below API 28, which cannot decode HEIC (Q2) | ImageIO `CGImageSourceCreateThumbnailAtIndex` with `kCGImageSourceThumbnailMaxPixelSize` |
+| Orientation | `ImageDecoder` applies it; on the `BitmapFactory` path, read with AndroidX `ExifInterface` and rotate | `kCGImageSourceCreateThumbnailWithTransform` |
+| Encode, no metadata | `Bitmap.compress(JPEG, quality)` writes no EXIF | `CGImageDestination` JPEG with `kCGImageDestinationLossyCompressionQuality`; no source properties copied |
+| Display | Decoded to the view size times the zoom limit, kept in memory only; pinch to zoom | Same, with a `UIScrollView`-based zoom view |
+
+- A 48–200 MP photo is never fully decoded into memory: every decode is
+  downsampled.
+- Photos are never written to an image disk cache.
+- The send copy and temporary files (including camera captures) are deleted
+  when the conversation ends and at launch.
 - Each send copy has an `imageVersionId`, so later image editing can start a
   new conversation instead of changing the image under old answers.
 
@@ -652,16 +754,21 @@ message:
 
 > Something went wrong. Please try again.
 
-with Dismiss and "Show details". Nothing is retried automatically, in
-PhotoCritic or in the AI SDK (`maxRetries: 0`).
+with Dismiss and "Show details". Nothing is retried automatically: there is
+no retry code, and OkHttp's connection retry is off (§4).
 
 A failure is caught at one of three points, and the point is recorded as
 `phase` in the details:
 
-- `before-response`: the request failed or returned a non-2xx status;
-- `mid-stream`: an error event arrived after a 200;
-- `finish`: the answer ended with finish reason `error` or `content-filter`.
-  Any other finish reason ends the answer normally.
+- `before-response`: the request failed, was refused by the network client,
+  or returned a non-2xx status;
+- `mid-stream`: an error event arrived after a 200 (OpenAI `error` or
+  `response.failed`, Anthropic `error`, or a stream that ended without an
+  end event);
+- `finish`: the answer ended with a failing finish reason (OpenAI
+  `response.incomplete` for a content filter or a response with refusal
+  content, Anthropic `stop_reason` `refusal`, Gemini `SAFETY` or another blocking reason, or
+  `promptFeedback.blockReason`). A length limit ends the answer normally.
 
 Each failure becomes a `PcError` with `phase`, `httpStatus`, `providerCode`
 (the provider's error code or type string, if any), `requestId` and a
@@ -672,11 +779,14 @@ that cannot be read. The offline state is not an error: it is a banner, and
 Send is disabled.
 
 If text had already arrived, it stays on screen labelled "Failed" and is
-not added to `history`, the same as a stopped answer.
+not added to `history`, the same as a stopped answer. A refusal's text is
+kept the same way, with `providerCode` `refusal`.
 
-### 8. Remote configuration (`platform/config`)
+### 8. Remote configuration (`core/config`, `platform/config`)
 
-Parameters (shapes as in brief section I.3, with round-4 changes):
+Parameters (shapes as in brief section I.3, with round-4 changes). The JSON
+Schema in `shared/remote-config/schema.json` is the reference; each app's
+validator is tested against the valid and invalid samples next to it.
 
 | Parameter             | Holds                                                                                                                                                                                                                       |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -685,7 +795,12 @@ Parameters (shapes as in brief section I.3, with round-4 changes):
 | `providers`           | per provider: `enabled`, `displayName`, `baseUrl` (must match the allowlist), `keyHelpUrl`, `consentTextVersion`                                                                                                            |
 | `models`              | per model: `provider`, `id`, `displayName`, `label` (`Fast`/`Best`, display only), `maxLongEdgePx`, `maxBytes`, `imageDetail`, `maxOutputTokens`, `contextTokens`, `status`, `replacementId`, `minAppVersion`              |
 | `consent_texts`       | per provider: `version`, `effectiveDate`, `summary[]`, `policyUrl`                                                                                                                                                          |
-| `privacy_policy`      | `url`, `version`                                                                                                                                                                                                            |
+| `privacy_policy`      | `version` (of the policy bundled in the app), optional `url` (empty until a hosted copy exists)                                                                                                                             |
+
+`consent_texts.<p>.version` is the consent version the send gate compares;
+the validator requires `providers.<p>.consentTextVersion` to equal it. How
+`status`, `replacementId`, `minAppVersion`, `bannerMessage` and `updateUrl`
+are shown is in the Detailed Implementation Plan, file 26.
 
 Changes from the brief: `models.tier` becomes `label` (display only) and the
 `defaults` parameter is removed, because the user always picks the model
@@ -697,11 +812,13 @@ constants (§8a); `report_policy.enabled` becomes `kill_switch.reportsDisabled`;
 `error_map` is removed (§7); `models.fallbackId` is removed, because the
 kill switch applies only at start and the user always picks the model.
 
-#### 8a. Tuning constants (`src/platform/config/tuning.ts`)
+#### 8a. Tuning constants (`core/config/Tuning.kt`, `Core/Config/Tuning.swift`)
 
-These are TypeScript constants, changed only by a new build. Values marked
-"Phase 0" are set from the Phase 0 measurements and recorded in this table
-before Phase 1 ends.
+These are constants in code, changed only by a new build. Both apps hold the
+same values; `shared/tuning.json` lists them, and a unit test in each app
+fails if its constants differ from that file. Values marked "Phase 0" are
+set from the Phase 0 measurements and recorded in this table before Phase 1
+ends.
 
 | Constant                         | v1 value | Used by                                |
 | -------------------------------- | -------- | -------------------------------------- |
@@ -710,21 +827,24 @@ before Phase 1 ends.
 | `JPEG_QUALITY`                   | 0.8      | send copy encoding                     |
 | `HISTORY_TURNS_CAP`              | Phase 0  | history trimming upper bound (§3)      |
 | `MAX_QUESTION_CHARS`             | Phase 0  | composer input limit                   |
-| `CONNECT_TIMEOUT_MS`             | Phase 0  | `platform/net`                         |
-| `REQUEST_TIMEOUT_MS`             | Phase 0  | `platform/net`                         |
+| `CONNECT_TIMEOUT_MS`             | Phase 0  | `core/net`                             |
+| `REQUEST_TIMEOUT_MS`             | Phase 0  | `core/net`                             |
 | `MAX_REPORT_CONVERSATION_CHARS`  | Phase 0  | report text cap (§10), Firestore rules |
-| `REPORT_DAILY_LIMIT_PER_INSTALL` | Phase 0  | `reportLimit`                          |
+| `REPORT_DAILY_LIMIT_PER_INSTALL` | Phase 0  | report daily limit                     |
 | `REPORT_RETENTION_DAYS`          | Phase 0  | report `expireAt` (Q6)                 |
-| `REPORT_WRITE_TIMEOUT_MS`        | Phase 0  | `reportService` (§10)                  |
+| `REPORT_WRITE_TIMEOUT_MS`        | Phase 0  | report service (§10)                   |
 
-Because the report limits are code constants, `firestore.rules` uses the same
-literal numbers; a unit test reads both and fails if they differ.
+Because the report limits are code constants, `firestore.rules` uses the
+same literal numbers where rules can check them (`HISTORY_TURNS_CAP` for the
+conversation list length, `REPORT_RETENTION_DAYS` for `expireAt`);
+`MAX_REPORT_CONVERSATION_CHARS` is enforced by the apps only. A test reads
+`shared/tuning.json` and the rules file and fails if they differ.
 
-Load order (brief K.4):
+Load order (brief K.4), the same on both platforms:
 
-1.  At cold start, show the launch screen and call `fetchAndActivate` with
-    `minimumFetchIntervalMillis: 0` and a 10-second timeout. There are no
-    bundled default values.
+1.  At cold start, show the launch screen and fetch and activate Remote
+    Config with a minimum fetch interval of 0 and a 10-second timeout. There
+    are no in-app default values.
 2.  If the fetch fails or times out, show the config-unavailable screen
     (AR2, CUJ 9). If Firebase reports the fetch as throttled, use the values
     activated by this install's last successful fetch, if there are any;
@@ -734,28 +854,34 @@ Load order (brief K.4):
     show the same screen; there is no per-value fallback (Q9). A `baseUrl`
     outside the allowlist counts as invalid.
 4.  Build the in-memory session snapshot. Screens read only the snapshot.
-5.  Evaluate the kill switch once. There is no live-update listener: a
+5.  Evaluate the kill switch once. There is no real-time update listener: a
     change published while the app runs takes effect at the next cold start
     (G18).
 
 ### 9. Local storage (`platform/storage`)
 
-| Item                   | Where                                                                | Contents                                                                                                                |
-| ---------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `pc.apikey.<provider>` | `expo-secure-store`, `WHEN_UNLOCKED_THIS_DEVICE_ONLY` on every write | API key only                                                                                                            |
-| `install.json`         | app document directory                                               | `installedAt`, `appVersionAtInstall`                                                                                    |
-| `settings.json`        | app document directory                                               | `schemaVersion`, selected provider, selected model per provider, analytics opt-in, `onboardingCompletedAt`, `updatedAt` |
-| `consent.json`         | app document directory                                               | per provider: current record and up to 10 earlier ones (`consentTextVersion`, `decision`, `recordedAt` UTC)             |
-| `reports.json`         | app document directory                                               | sent report IDs and the daily counter                                                                                   |
+| Item                   | Android                                                                                         | iOS                                                                                   | Contents                                                                                                                |
+| ---------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| API key per provider   | File in `noBackupFilesDir`, encrypted with AES-GCM using a non-exportable Android Keystore key | Keychain item, `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, not synchronizable    | API key only                                                                                                            |
+| `install.json`         | `filesDir`                                                                                      | Application Support                                                                   | `installedAt`, `appVersionAtInstall`                                                                                    |
+| `settings.json`        | `filesDir`                                                                                      | Application Support                                                                   | `schemaVersion`, selected provider, selected model per provider, analytics opt-in, `onboardingCompletedAt`, `updatedAt` |
+| `consent.json`         | `filesDir`                                                                                      | Application Support                                                                   | per provider: current record and up to 10 earlier ones (`consentTextVersion`, `decision`, `recordedAt` UTC)             |
+| `reports.json`         | `filesDir`                                                                                      | Application Support                                                                   | sent report IDs and the daily counter                                                                                   |
 
-- At launch, if `install.json` is missing, delete every key in the fixed
-  list of key names, then write the marker. A read error is not treated as
-  "missing". No backup restore is supported (Q8).
-- Files are written to a temporary file, then renamed.
+- **Backup (Q8):** Android sets `allowBackup="false"` and data-extraction
+  rules that exclude everything; iOS marks the Application Support folder
+  `isExcludedFromBackup`. Keychain items use a "this device only" class.
+- **Reinstall:** at launch, if `install.json` is missing, delete every key
+  (on iOS, all Keychain items for the app's service name, which survive
+  uninstall; on Android, the key files and the Keystore key), then write the
+  marker. A read error is not treated as "missing". No backup restore is
+  supported.
+- Files are written to a temporary file, then renamed (Android
+  `AtomicFile`; iOS `Data.write(options: .atomic)`).
 - Sending is blocked unless `consent.json` has a granted record for the
   provider at or above the current `consentTextVersion`.
 
-### 10. Reports (`features/report`)
+### 10. Reports (`core/report`, `features/report`)
 
 A report is one Firestore document `reports/{reportId}` with the fields in
 brief K.6: IDs and times, app and device info, `configVersion`, provider,
@@ -764,21 +890,26 @@ detail, not the image), the conversation as a list of `{role, text}` up to
 `MAX_REPORT_CONVERSATION_CHARS` in total,
 the reported turn, category, the user's note, an optional redacted error, and
 `instanceId` only when sharing is on. Security rules allow `create` only and
-check every field. There is no App Check. Firestore offline persistence is
-turned off, so report text is never cached on the device. Send report is
-disabled while offline; a write the server has not confirmed within
-`REPORT_WRITE_TIMEOUT_MS` is shown as failed (author decisions after review,
-2026-11-15).
+check every field. There is no App Check. Firestore uses its memory-only
+cache (`MemoryCacheSettings` on both platforms), so report text is never
+cached on the device. Send report is disabled while offline; a write the
+server has not confirmed within `REPORT_WRITE_TIMEOUT_MS` is shown as failed
+(author decisions after review, 2026-11-15). The document is built in the
+core (tested on both platforms against the same expected fields); only the
+write is platform code.
 
 ### 11. Telemetry (`platform/telemetry`)
 
-Analytics and Crashlytics collection is off in the build configuration and
-turned on only by the "Share usage and crash data" switch. Events and
-parameters are those in brief K.5, with `tier` removed from `session_start`.
-The wrapper removes any text, key, image path or provider error body before
-logging. When sharing turns on, the app reads the Analytics app instance ID and
-sets it as the user ID for Analytics and Crashlytics; when it turns off, the
-user ID is cleared. iOS builds upload debug symbols for Crashlytics.
+Analytics and Crashlytics collection is off in the build configuration
+(Android manifest `<meta-data>`, iOS `Info.plist` keys; exact names checked
+in Phase 0) and turned on only by the "Share usage and crash data" switch.
+Advertising-ID collection is off on both platforms. Events and parameters
+are those in brief K.5, with `tier` removed from `session_start`. The
+wrapper removes any text, key, image path or provider error body before
+logging. When sharing turns on, the app reads the Analytics app instance ID
+and sets it as the user ID for Analytics and Crashlytics; when it turns off,
+the user ID is cleared. Android release builds upload the R8 mapping file
+and iOS builds upload debug symbols for Crashlytics.
 
 ### 12. Screens and look
 
@@ -786,35 +917,49 @@ user ID is cleared. iOS builds upload debug symbols for Crashlytics.
   buttons, model list with Fast/Best labels, key field with checking and
   error states, the sharing switch (first launch only).
 - **Home**: photo full screen; top bar with Settings and New photo only. A
-  bottom sheet (library chosen by the Phase 0 test, Q3) with two heights:
-  collapsed, sized to content up to a limit, and expanded. Tint of at least
-  72% under text when collapsed and 94% when expanded; controls on the photo
-  use at least 65%. Solid when Reduce Transparency is on, and on Android
-  devices without blur. The conversation list uses FlashList v2. The input
-  uses the sheet library's keyboard-aware text input.
-- **Wide windows** (over about 700 points, with a margin to prevent
+  persistent bottom sheet with two heights: collapsed, sized to content up
+  to a limit, and expanded. Android uses Material 3 `BottomSheetScaffold`
+  with two anchors; iOS uses `.sheet` with two `presentationDetents`,
+  `presentationBackgroundInteraction(.enabled)` and interactive dismissal
+  off. Tint of at least 72% under text when collapsed and 94% when expanded;
+  controls on the photo use at least 65%. Solid when Reduce Transparency is
+  on, and on Android devices without blur. The conversation list is a
+  `LazyColumn` (Android) or a `LazyVStack` in a `ScrollView` (iOS). The
+  input moves above the keyboard (`imePadding` on Android; the sheet's
+  keyboard avoidance on iOS).
+- **Wide windows** (over about 700 points or dp, with a margin to prevent
   flipping): photo pane on the left, a fixed-width conversation pane on the
-  right. Layout follows `useWindowDimensions`, not device type.
+  right. Layout follows the measured window width, not device type.
 - **Settings**: provider, model, key (replace), sharing switch, privacy
   policy, support ID (only when sharing is on), app version.
-- **Design tokens** (`design/tokens.ts`): colors `bg #0F1012`, `surface
-#17181B`, `field #1C1D21`, `text #F4F4F2`, `muted` (text at 68%), `accent
-#F5B13D`, `accentOnLight #8A5A00`, `onAccent #1A1206`, `danger #FF8A7A`;
-  radii 12 / 14–16 / 24 / 999; spacing 4–32; system fonts with Dynamic Type
-  scaling; touch targets at least 44 points.
+- **Design tokens** (`ui/design/Tokens.kt`, `UI/Design/Tokens.swift`, same
+  values): colors `bg #0F1012`, `surface #17181B`, `field #1C1D21`, `text
+  #F4F4F2`, `muted` (text at 68%), `accent #F5B13D`, `accentOnLight
+  #8A5A00`, `onAccent #1A1206`, `danger #FF8A7A`; radii 12 / 14–16 / 24 /
+  999; spacing 4–32; system fonts that scale with the system text size (sp
+  units on Android, Dynamic Type text styles on iOS); touch targets at least
+  44 points (48 dp on Android, the Material minimum).
+- **Icons**: Lucide SVGs converted to Android vector drawables and added to
+  the iOS asset catalog as SVG (ISC licence).
 
 ### 13. Libraries and versions
 
-Exact versions are pinned at Phase 0 (D26) and recorded in a version table in
-the repository. Fixed choices: Expo (latest stable SDK at Phase 0, dev client,
-New Architecture), Expo Router (native stack), React Compiler on, Zustand,
-FlashList v2, `expo-image-picker`, `expo-image-manipulator`, `expo-image`,
-`expo-secure-store`, `expo-file-system`, Vercel AI SDK with
-`@ai-sdk/openai`, `@ai-sdk/anthropic` and `@ai-sdk/google`, React Native
-Firebase (Remote Config, Analytics, Crashlytics, Firestore),
-`react-native-svg` for icons, React Native Testing Library. The sheet library
-is chosen in Phase 0 (Q3). Android release builds use R8, and every native
-library is checked for 16 KB page alignment.
+Exact versions are pinned at Phase 0 and recorded in
+[docs/VERSIONS.md](../VERSIONS.md). Fixed choices:
+
+- **Android:** Kotlin 2.x, Android Gradle Plugin with a version catalog,
+  Jetpack Compose (BOM) with Material 3, Navigation Compose, Lifecycle
+  `ViewModel`, kotlinx.coroutines, kotlinx.serialization, OkHttp, AndroidX
+  Activity (Photo Picker) and ExifInterface, the Firebase Android BoM (Remote
+  Config, Analytics, Crashlytics, Firestore). Tests: JUnit, Turbine, OkHttp
+  `MockWebServer`, Robolectric, Compose UI tests. Tools: ktlint, detekt.
+  minSdk 24; targetSdk the latest Play requires. Release builds use R8, and
+  every native library is checked for 16 KB page alignment.
+- **iOS:** Swift 6 language mode, SwiftUI, iOS 17 deployment target, the
+  Firebase Apple SDK through Swift Package Manager (the same four products;
+  Analytics without the advertising-ID product). No other runtime
+  libraries. Tests: Swift Testing, XCUITest. Tools: XcodeGen, SwiftLint.
+- **Neither app** uses a provider SDK or a third-party AI library.
 
 ## Alternatives Considered
 
@@ -824,16 +969,38 @@ decision numbers refer to [concepts_brief.md](../../concepts_brief.md).
 
 ### Platform and framework
 
-#### Alternative A1: Flutter, Kotlin Multiplatform, or fully native apps
+Chosen (author decision, 2026-11-17): two native apps, Kotlin with Jetpack
+Compose and Swift with SwiftUI, with no shared code module. This reverses
+the brainstorm choice of Expo and React Native (answer 7).
 
-- **Pros**: Native apps get the newest platform AI features first; Flutter
-  gives one rendering engine on both platforms.
-- **Cons**: Two codebases for fully native; a different language from the
-  author's TypeScript and React Native skills for all three.
-- **Reason for Rejection**: Rejected by author: the team works in TypeScript
-  and React Native (answer 7). Expo was chosen over the bare React Native
-  workflow because a development build still gives full native-module
-  access, which llama.rn and ExecuTorch need later.
+#### Alternative A1: Expo and React Native (the earlier choice)
+
+- **Pros**: One TypeScript codebase for both platforms; the Vercel AI SDK
+  for the provider layer; a Phase 0 scaffold already existed (commit
+  `a1f4c49`).
+- **Cons**: A JavaScript bridge and native-module dependencies for camera,
+  secure storage, Firebase and the sheet; the sheet library still to be
+  chosen (Q3); on-device models in Phase 5 through React Native wrappers
+  (llama.rn, ExecuTorch) instead of the platform frameworks.
+- **Reason for Rejection**: Rejected by author (2026-11-17), in favor of
+  native apps.
+
+#### Alternative A3: Kotlin Multiplatform shared core with native UI
+
+- **Pros**: Provider clients, session, config and report logic written
+  once in Kotlin and used by both apps; native UI on each platform.
+- **Cons**: iOS builds need the Kotlin Multiplatform toolchain, and Swift
+  calls Kotlin through a generated bridge.
+- **Reason for Rejection**: Rejected by author (2026-11-17): two separate
+  apps; only data is shared (`shared/`).
+
+#### Alternative A4: Flutter
+
+- **Pros**: One codebase and one rendering engine on both platforms.
+- **Cons**: A third language and UI toolkit; platform AI frameworks
+  reached through plugins.
+- **Reason for Rejection**: Rejected by author during brainstorming
+  (answer 7); not reconsidered.
 
 #### Alternative A2: On-device model first in v1
 
@@ -894,16 +1061,31 @@ decision numbers refer to [concepts_brief.md](../../concepts_brief.md).
 
 ### Provider layer
 
-#### Alternative C1: Thin hand-written adapters instead of the Vercel AI SDK
+Chosen (author decision, 2026-11-17): thin hand-written clients, one per
+provider in each app (§3, §3a, §4).
 
-- **Pros**: Full control of requests, headers, streaming parsing and error
-  bodies; no dependency on whether the AI SDK supports direct calls from
-  the phone.
-- **Cons**: Three streaming parsers and three request formats to write and
-  keep current; no shared path to Callstack's on-device providers.
-- **Reason for Rejection**: Rejected by author (decision 35; after review,
-  2026-11-15): the Vercel AI SDK is final and hand-written adapters are not
-  kept as a fallback (Q1, AR1).
+#### Alternative C1: The Vercel AI SDK
+
+- **Pros**: One maintained library for all three providers; it was the
+  provider layer of the React Native plan, and its Phase 0 checks passed
+  for Gemini under Node (2026-11-17).
+- **Cons**: JavaScript only; there is no Kotlin or Swift version.
+- **Reason for Rejection**: Not possible in native apps (2026-11-17).
+
+#### Alternative C4: Provider SDKs (official where they exist, community libraries otherwise)
+
+- **Pros**: Less code to write; the SDK maintainer follows API changes.
+- **Cons**: The security rules in §4 would hold only if each SDK accepts the
+  app's HTTP client and allows retries off, checked again after every
+  upgrade (the official OpenAI and Anthropic Java SDKs retry by default).
+  Gemini has no mobile SDK that takes the user's key: Google's client SDKs
+  for Android and Swift were deprecated, and Firebase AI Logic bills the
+  app owner's project. iOS has no official OpenAI or Anthropic SDK, so code
+  that handles the key would come from community libraries. The two apps
+  would use different SDKs per provider, with different errors and
+  cancellation behavior.
+- **Reason for Rejection**: Rejected by author (2026-11-17), in favor of
+  thin clients.
 
 #### Alternative C2: Shared session code builds the messages (message-building option A)
 
@@ -945,7 +1127,7 @@ decision numbers refer to [concepts_brief.md](../../concepts_brief.md).
 - **Pros**: Less memory.
 - **Cons**: The user loses detail they want to zoom into.
 - **Reason for Rejection**: Rejected by author (decision 8): show full
-  quality; `expo-image` already downscales at render time.
+  quality; the display decoder already downsamples to the view size (§6).
 
 ### Data, configuration and reporting
 
@@ -972,13 +1154,14 @@ decision numbers refer to [concepts_brief.md](../../concepts_brief.md).
   the app the user deleted.
 - **Reason for Rejection**: Rejected by author (decisions 17, 21).
 
-#### Alternative E4: Settings and consent in secure store, AsyncStorage or SQLite
+#### Alternative E4: Settings and consent in the key store, a key-value store or SQLite
 
-- **Pros**: Secure store encrypts; SQLite allows queries.
-- **Cons**: Secure store has a size limit too small for consent history;
-  neither adds value for a few small files.
+- **Pros**: The Keychain and Keystore encrypt; DataStore or `UserDefaults`
+  are built in; SQLite allows queries.
+- **Cons**: None adds value for a few small files, and the key stores are
+  meant for secrets, not consent history.
 - **Reason for Rejection**: Rejected by author (decision 17): plain files in
-  the app document directory, keys only in secure store.
+  app storage, keys only in the Keychain or the Keystore-encrypted file.
 
 #### Alternative E5: Report by email from the user's mail app
 
@@ -1099,8 +1282,6 @@ These alternatives were decided during drafting:
 
 Decided by the author after review (2026-11-15):
 
-- Another provider layer, or hand-written adapters as a fallback: not
-  evaluated; the Vercel AI SDK is final (Q1, AR1).
 - An error table, error classes and automatic retries: not chosen; one
   generic message with details (G12, §7).
 - Tuning values in Remote Config: not chosen; they are code constants (§8a).
@@ -1109,10 +1290,18 @@ Decided by the author after review (2026-11-15):
 - Live kill-switch updates and a fallback model: not chosen; the kill switch
   applies at cold start only (G18).
 
+Decided by the author on 2026-11-17 (superseding the 2026-11-15 decision
+that the Vercel AI SDK was final):
+
+- Expo and React Native: replaced by two native apps (A1).
+- A Kotlin Multiplatform shared core: not chosen (A3).
+- The Vercel AI SDK and provider SDKs: replaced by thin clients (C1, C4).
+
 ## Non-Functional Requirements
 
-- **Security and privacy.** API keys only in `expo-secure-store` and only in
-  request headers to the three allowlisted hosts. No key, photo, question,
+- **Security and privacy.** API keys only in the Keychain (iOS) or the
+  Keystore-encrypted file (Android), and only in request headers to the
+  three allowlisted hosts. No key, photo, question,
   answer, image path or provider error body in any log, event, crash key or
   report field other than the report's own conversation text. Photos never
   written to the image disk cache. Analytics and Crashlytics off until the
@@ -1130,7 +1319,7 @@ Decided by the author after review (2026-11-15):
   bundled config values, so every
   publish must pass `config:validate` first, because a bad publish stops every
   install until it is fixed (Q9); TestFlight and Play internal track only.
-  No over-the-air JavaScript updates in v1; `expo-updates` is not installed.
+  No over-the-air updates in v1.
 
 ---
 
@@ -1140,16 +1329,19 @@ Decided by the author after review (2026-11-15):
   evidence citations.
 - [research/README.md](../../research/README.md): fetched provider, Apple, Play,
   Expo and Firebase documentation used as evidence.
-- [research/callstack/](../../research/callstack/): Callstack React Native best
-  practices, testing rules and React Native AI documentation.
+- [research/callstack/](../../research/callstack/): Callstack React Native
+  documentation, kept from the earlier React Native plan.
+- [docs/plans/native-migration.md](../plans/native-migration.md): the
+  2026-11-17 decision record for the move to native apps and thin clients.
 - [mockup/](../../mockup/): clickable mockup source (phone, tablet, design
   system).
 
 ### Future Improvements
 
-- **On-device models** (Phase 5): image-capable on-device providers first,
-  with a download and storage feature (`features/models/`), then the
-  local-versus-cloud benchmark.
+- **On-device models** (Phase 5): image-capable on-device providers first
+  (Apple Foundation Models, Android ML Kit GenAI), with a download and
+  storage feature (`features/models/`), then the local-versus-cloud
+  benchmark.
 - **Conversation log** with usage details, which the author will design
   later.
 - **Image editing** using the edit list already in the image data model.
@@ -1165,37 +1357,79 @@ Decided by the author after review (2026-11-15):
 These are mechanical choices this plan makes so implementation can start. Change
 them here before Phase 0 if they are wrong.
 
-- The app lives at the root of this project folder (next to
-  `concepts_brief.md`). `TokenEconomizer/` and `research/` are left as they
-  are and excluded from the app's TypeScript, lint and test runs.
-- App identifiers: iOS bundle ID and Android package
-  `com.yk.photocritic`; display name "PhotoCritic". These become
+- The repository root holds `android/`, `ios/`, `shared/`, `firebase/`,
+  `tools/`, `harness/` (data only), `docs/`. `TokenEconomizer/` and
+  `research/raw/` are ignored by git; `research/`, `mockup/` and the review
+  reports stay as they are.
+- App identifiers: iOS bundle ID, Android application ID and Android
+  namespace `com.yk.photocritic`; display name "PhotoCritic". These become
   permanent once a build is uploaded.
-- Two Firebase projects: `photocritic-dev` and `photocritic-prod`.
-- CI runs on GitHub Actions; app binaries are built with EAS Build.
-- Remote Config values are validated with `zod` (one schema per parameter),
-  shared by the app and the publishing scripts.
-- Connectivity comes from `@react-native-community/netinfo`.
-- Tests use Jest (`jest-expo` preset) and React Native Testing Library.
+- Two Firebase projects: `photocritic-dev` and `photocritic-prod`. Android
+  build flavors `dev` and `prod`; iOS build configurations `Debug-Dev`,
+  `Release-Dev` and `Release-Prod`. This replaces `APP_ENV`.
+- CI runs on GitHub Actions. Tester builds are made locally with Android
+  Studio (`bundleProdRelease`) and Xcode (Archive), and uploaded by hand to
+  the Play internal track and TestFlight. No EAS, no fastlane in v1.
+  Signing material stays outside git (files 17 and 41).
+- The Remote Config JSON Schema is the reference; each app has a
+  hand-written validator (no schema library at run time), and both are
+  tested against the same valid and invalid samples.
+- Dependencies are passed by hand: each app has one `AppContainer` that
+  holds the interfaces `ConfigSource`, `KeyStore`, `ReportSink`,
+  `ProviderRegistry`, `Telemetry` and `Connectivity`. Tests and the fake
+  mode build it with fakes (files 37 and 46). No injection library.
+- Connectivity: Android `ConnectivityManager` network callbacks; iOS
+  `NWPathMonitor`.
+- Tests: JUnit 5 in `core/` and `harness/`; JUnit 4 in `app/`, where
+  Robolectric and the Compose UI tests run; Swift Testing in `Core` and the
+  app; XCUITest for screen flows. Each source file has one test file in the
+  mirror test path, named `<Source>Test.kt` or `<Source>Tests.swift`.
+- Within a phase, Android work is done first, then iOS, so iOS starts from
+  Android code that already passes the shared contract tests (AR4).
 
 ### Implementation order
 
-Each phase ends with its tests passing in CI. Phase numbers match the brief.
+Each phase ends with both apps passing CI. Phase numbers match the brief.
 
-1.  **Phase 0, setup and spikes.** Scaffold, CI, Firebase projects, version
-    pin, the AI SDK setup checks (Q1), the spikes that answer Q3 (sheet library),
-    Q2 (minimum OS), the image-size accuracy test (Q5), and the Firebase
-    behavior checks listed under the Phase 0 files below.
+1.  **Phase 0, setup and spikes.**
+    1. Remove the Expo stack (file 1) in one commit, which also creates
+       `shared/tuning.json` from `src/platform/config/tuning.ts` (file 10)
+       and rewrites `docs/spikes/phase0.md` (file 50); the old stack stays in
+       history (commit `a1f4c49`).
+    2. Scaffold `android/` and `ios/` with Firebase, collection off, lint and
+       one test each; CI for both.
+    3. `shared/` with the README and fixture schema, the prompts, the
+       Remote Config schema and template, and `tools/` (`config:validate`,
+       `fixture:record`, `sync-shared.sh`), so the `shared` CI job passes.
+    4. Record provider streams and errors for all three providers with
+       spend-capped keys; confirm the wire-format table (§3a, Q1).
+    5. Build `core/net` and the Gemini client on both platforms and run the
+       client acceptance tests (Verification Plan) on a phone.
+    6. Firebase behavior checks, the image-size accuracy test (Q5), and HEIC
+       on API 24–27 and AVIF on API 24–30 (Q2), as listed under file 50.
 2.  **Phase 1, foundations.** Storage, install marker, Remote Config with
-    snapshot and validation, telemetry wrapper, image pipeline.
-3.  **Phase 2, Gemini end to end.** Provider interface, Gemini adapter, error
-    conversion, consent, setup, home screen, Stop, text cards.
-4.  **Phase 3, Anthropic then OpenAI.** Same contract tests.
+    snapshot and validation, telemetry wrapper, image pipeline (both apps).
+3.  **Phase 2, Gemini end to end.** Provider interface, the Gemini client,
+    error conversion, consent, setup, home screen, Stop, text cards (both
+    apps).
+4.  **Phase 3, Anthropic then OpenAI.** Same contract tests (both apps).
 5.  **Phase 4, polish and tester release.** Reports, Settings, wide layout,
     accessibility, privacy documents, store forms, TestFlight and Play
     internal track.
-6.  **Phase 5, on-device evaluation.** Starts after the first external tester
-    build ships or a harness baseline is recorded (D40). Not detailed here.
+6.  **Phase 5, on-device evaluation.** Apple Foundation Models and Android
+    ML Kit GenAI behind the same provider interface. Starts after the first
+    external tester build ships or a harness baseline is recorded (D40).
+    Not detailed here.
+
+Files by phase (a file split across phases lists the part):
+
+| Phase | Files |
+| --- | --- |
+| 0 | 1–3, 5, 7, 9–14, 15 (`validate-config`, `record-fixture`, `sync-shared.sh`), 16–25, 27 (Gemini; kept and finished in Phase 2), 41–45 (Net, provider types and shared code, Gemini), 49, 50 |
+| 1 | 26, 31–35, 38 and 46 (startup and `DisabledScreen`), tests for these in 39 and 47 |
+| 2 | 28, 29, 30 (consent), 37, 38 and 46 (setup, home, consent sheet), tests in 39 and 47 |
+| 3 | 27 and 45 (Anthropic, OpenAI), 4, 40 |
+| 4 | 6, 8, 15 (`publish-remote-config`, `purge-reports`), 30 (report), 36, 38 and 46 (Settings, report sheet, wide layout), 48, 51–54; `assets/` deleted (file 1) |
 
 Decisions made during drafting (Open Questions Q6–Q10, Q12):
 
@@ -1204,710 +1438,957 @@ Decisions made during drafting (Open Questions Q6–Q10, Q12):
 - **Q7 report writes:** create-only rules, no App Check, no sign-in.
 - **Q8 backup:** all app files excluded from iOS and Android backup; no
   restore handling.
-- **Q9 config failure:** no bundled values; a failed or invalid fetch shows
+- **Q9 config failure:** no in-app values; a failed or invalid fetch shows
   the config-unavailable screen.
 - **Q10 crashes before opt-in:** no special handling.
 - **Q12 photo display:** original aspect ratio, fitted whole, black around
   it. Controls use safe-area insets until the author writes the rest of the
   full-screen decision.
 
-Author decisions after review (2026-11-15): Vercel AI SDK final (Q1); one
-generic error message and no retries (G12); tuning values in code (§8a);
-restart instead of Try again (AR2); kill switch at cold start only (G18).
+Author decisions after review (2026-11-15): one generic error message and no
+retries (G12); tuning values in code (§8a); restart instead of Try again
+(AR2); kill switch at cold start only (G18). Author decisions, 2026-11-17:
+two native apps with no shared code module; thin provider clients (G11,
+Q1). Decided at the implementation review (2026-11-17): Q4 and Q13 (§5).
 
 ### Target Files to Create/Modify
 
-#### Project configuration
+Paths below are relative to the repository root. Android Kotlin packages
+are under `com.yk.photocritic`; `android/core/.../net/` means
+`android/core/src/main/kotlin/com/yk/photocritic/core/net/`, and
+`android/app/.../ui/` means
+`android/app/src/main/kotlin/com/yk/photocritic/ui/`. In general,
+`android/<module>/.../<package>/` means
+`android/<module>/src/main/kotlin/com/yk/photocritic/<module package>/<package>/`,
+where the module package is `core` for `:core` and empty for `:app`. iOS
+`Core/...` means `ios/Core/Sources/PhotoCriticCore/...`.
 
-##### 1. `package.json` (Create)
+#### Repository
 
-- **Type / Scope**: Node package manifest.
-- **Proposed Changes**: Exact versions for every dependency, pinned at Phase
-  0 to the latest stable Expo SDK and the versions `npx expo install` picks
-  for it: `expo`, `expo-router`, `react-native-screens`,
-  `react-native-reanimated`, `react-native-gesture-handler`,
-  `react-native-safe-area-context`, the sheet library chosen in Phase 0,
-  `@shopify/flash-list` (v2), `zustand`, `zod`, `expo-image-picker`,
-  `expo-image-manipulator`, `expo-image`, `expo-secure-store`,
-  `expo-file-system`, `expo-clipboard`, `expo-sharing`,
-  `expo-build-properties`, `@react-native-community/netinfo`, `ai` (AI SDK
-  v7) with `@ai-sdk/openai`, `@ai-sdk/anthropic`, `@ai-sdk/google`,
-  `@react-native-firebase/app`, `/remote-config`, `/analytics`,
-  `/crashlytics`, `/firestore` (all one version),
-  `react-native-svg`, `react-native-performance`. Dev: `typescript`,
-  `jest`, `jest-expo`, `@testing-library/react-native`, `eslint`,
-  `@firebase/rules-unit-testing`, `firebase-tools`, `tsx`. Scripts:
-  `typecheck`, `lint`, `test`, `test:rules`, `config:validate`,
-  `config:publish`, `check:permissions`, `harness`.
-  **Why:** one place records the version pin (D26), and scripts are what CI
-  runs.
+##### 1. Expo stack (Delete)
 
-##### 2. `app.config.ts` (Create)
+- **Type / Scope**: Removal.
+- **Proposed Changes**: Delete `package.json`, `package-lock.json`,
+  `node_modules/`, `app.config.ts`, `eas.json`, `tsconfig.json`,
+  `eslint.config.js`, `jest.config.js`, `test/`, `src/`, `spikes/`. Before
+  deleting `src/`, create `shared/tuning.json` from
+  `src/platform/config/tuning.ts` (file 10). Move `firebase/dev/` and
+  `firebase/prod/` service files into the file 18 and file 42 locations;
+  move `firestore.rules`, `firestore.indexes.json`, `firebase.json` and
+  `.firebaserc` into `firebase/` (files 5–7). Rewrite `docs/spikes/phase0.md`
+  (file 50) in the same commit. `assets/` stays as the icon source until
+  Phase 4, when files 22 and 46 hold the final icons; it is deleted then.
+  **Why:** the React Native stack is replaced (author decision,
+  2026-11-17).
 
-- **Type / Scope**: Expo app configuration.
-- **Proposed Changes**: Name, slug, `com.yk.photocritic`
-  identifiers; `newArchEnabled: true`; `orientation: "default"`;
-  `ios.requireFullScreen: false` and a resizable Android activity (for Split
-  View, G20; verify key names); `userInterfaceStyle: "dark"`; iOS deployment
-  target and Android `minSdkVersion` from Q2 (iOS 17, minSdk 24) via
-  `expo-build-properties`, with `ios.useFrameworks: "dynamic"` for React
-  Native Firebase; `expo-image-picker` plugin with `microphonePermission:
-false` and camera and photo usage strings; blocked Android permissions
-  (`READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`, `RECORD_AUDIO`,
-  `READ_MEDIA_IMAGES`); React Native Firebase plugins with advertising-ID
-  collection off; Google services files chosen by `APP_ENV`
-  (`development` or `production`); React Compiler on; Android R8 on for
-  release; all app files excluded from iOS and Android backup (Q8).
-  **Why:** every platform-level decision (G1, G10, G16, G20, G21)
-  is set here.
+##### 2. `.gitignore` (Modify)
 
-##### 3. `eas.json` (Create)
+- **Type / Scope**: Ignore rules.
+- **Proposed Changes**: Remove `/ios`, `/android`, the root `node_modules/`,
+  `.expo/`, `dist/`, `web-build/`, `expo-env.d.ts`, `.metro-health-check*`
+  and `*.tsbuildinfo`. Keep `.DS_Store`, `*.p8`, `*.p12`, `*.key`, `*.pem`,
+  `*.mobileprovision`, `*.jks`, `*.keystore`, `.env*`, `!.env.example`,
+  `firebase-debug.log`, `firestore-debug.log`, `*-service-account.json`,
+  `/TokenEconomizer/`, `/research/raw/`. Add `.gradle/`, `build/`,
+  `local.properties`, `.idea/`, `*.iml`, `xcuserdata/`, `DerivedData/`,
+  `ios/*.xcodeproj` (XcodeGen generates it), `tools/node_modules/`,
+  `firebase/rules-test/node_modules/`, `/harness/results/`,
+  `android/keystore.properties`, `ios/Config/Signing.xcconfig`.
 
-- **Type / Scope**: EAS Build profiles.
-- **Proposed Changes**: `development` (dev client, `APP_ENV=development`),
-  `preview` (internal distribution, development Firebase), `production`
-  (store builds, production Firebase, TestFlight and Play internal track
-  submit settings). Crashlytics debug-symbol upload on iOS builds.
-  **Why:** separates tester builds from development data (G24).
+##### 3. `.github/workflows/ci.yml` (Modify)
 
-##### 4. `tsconfig.json` (Create)
+- **Type / Scope**: CI pipeline.
+- **Proposed Changes**: Three jobs on every push.
+  - `android` (Ubuntu, JDK 17, Gradle cache, `working-directory: android`):
+    `./gradlew ktlintCheck detekt :core:test :core:koverVerify
+    :app:testDevDebugUnitTest :app:assembleDevDebug :app:checkPermissions`.
+    The Compose UI tests run inside `testDevDebugUnitTest` (Robolectric).
+  - `ios` (macOS): install XcodeGen and SwiftLint from their release
+    binaries at the versions in `docs/VERSIONS.md`; `xcodegen` in `ios/`;
+    `swiftlint --strict`; `diff -r shared/prompts
+    ios/Core/Sources/PhotoCriticCore/Resources/prompts`; `swift test
+    --enable-code-coverage` in `ios/Core` with an 80% line-coverage check
+    from `llvm-cov report`; `xcodebuild test -project
+    ios/PhotoCritic.xcodeproj -scheme PhotoCritic-Dev -destination
+    "$(ios/scripts/sim-destination.sh)"`, where the script picks the newest
+    available iPhone simulator.
+  - `shared` (Ubuntu, Node, JDK 17 for the emulator): `npm ci` and `npm run
+    config:validate` in `tools/`; from Phase 4, `npm ci` and `npm run
+    test:emulator` in `firebase/rules-test/`.
+  No provider keys in CI except for file 4. **Why:** lint, unit, contract
+  and build checks run for both apps on every push; the manual checks are in
+  the Verification Plan.
 
-- **Type / Scope**: TypeScript configuration.
-- **Proposed Changes**: Strict mode; path alias `@/` to `src/`; excludes
-  `TokenEconomizer/`, `research/`, `mockup/`. **Why:** strict types on the
-  provider and config boundaries catch shape errors early.
+##### 4. `.github/workflows/canary.yml` (Create, Phase 3)
 
-##### 5. `eslint.config.js` (Create)
+- **Type / Scope**: Scheduled CI job.
+- **Proposed Changes**: Daily at 05:00 UTC: `./gradlew :harness:run
+  --args="canary"` (working directory `android`) makes one live call per
+  provider and per model with `status` `active` in
+  `shared/remote-config/template.json`, sending `shared/images/test.jpg`
+  through the Kotlin clients, with spend-capped keys from the GitHub Actions
+  secrets `PC_CANARY_OPENAI_KEY`, `PC_CANARY_ANTHROPIC_KEY` and
+  `PC_CANARY_GEMINI_KEY`. It fails on any error event or a served-model
+  mismatch (the served model must equal the requested ID or start with it,
+  to allow dated snapshots). The Swift clients are covered by the shared
+  recordings and the live tests in file 47. **Why:** providers change models
+  and errors without notice (round-2 findings).
 
-- **Type / Scope**: Lint rules.
-- **Proposed Changes**: Expo and TypeScript rules, plus
-  `no-restricted-imports`: `@react-native-firebase/analytics` and
-  `/crashlytics` only inside `src/platform/telemetry/`; `ai` and `@ai-sdk/*`
-  only inside `src/features/providers/`; `fetch` to provider hosts only via
-  `src/platform/net/`; no imports from `index` files; no `console.*` in
-  `src/`. **Why:** enforces the redaction and layering rules (Technical Plan
-  §2, G16).
+#### Firebase
 
-##### 6. `jest.config.js` and `test/setup.ts` (Create)
+##### 5. `firebase/firebase.json`, `firebase/.firebaserc` (Move, Modify)
 
-- **Type / Scope**: Test configuration.
-- **Proposed Changes**: `jest-expo` preset; mocks for React Native Firebase,
-  secure store, file system and NetInfo; React Native Testing Library
-  matchers. **Why:** unit and screen tests run without a device.
-
-##### 7. `firebase.json`, `.firebaserc` (Create)
-
-- **Type / Scope**: Firebase CLI and React Native Firebase build defaults.
+- **Type / Scope**: Firebase CLI configuration.
 - **Proposed Changes**: Projects `photocritic-dev` and `photocritic-prod`;
-  Firestore rules and emulator ports; React Native Firebase keys that set
-  Analytics and Crashlytics collection off by default (exact key names
-  verified in Phase 0). **Why:** collection must be off before any code runs
-  (decision 24).
+  Firestore rules and indexes paths; emulator port. The `react-native`
+  section is removed: collection defaults now live in files 17 and 43.
 
-##### 8. `firebase/dev/` and `firebase/prod/` service files (Create)
-
-- **Type / Scope**: `GoogleService-Info.plist` and `google-services.json`
-  per project.
-- **Proposed Changes**: Downloaded from each Firebase project; selected by
-  `app.config.ts`. **Why:** development data never mixes with tester data.
-
-##### 9. `firestore.rules` (Create)
+##### 6. `firebase/firestore.rules` (Move, Modify in Phase 4)
 
 - **Type / Scope**: Firestore security rules.
 - **Proposed Changes**: `reports/{reportId}`: allow `create` only, when the
-  document ID equals `reportId`, `createdAt == request.time`, every field
-  has the expected type and size limit, `conversation` is a list whose
-  length is at most `HISTORY_TURNS_CAP × 2 + 2`, written as a literal number
-  (rules cannot read app code or Remote Config, and cannot check the items
-  inside a list; the app caps total text at `MAX_REPORT_CONVERSATION_CHARS`,
-  and the 1 MiB document limit bounds the rest), `category` is one of four
-  values, no field outside the list, and no image field. Deny read, update,
-  delete and list everywhere. **Why:** the app has no sign-in and no App
-  Check, so the rules are the only write protection (G15).
+  document ID equals `reportId`, `createdAt == request.time`, `expireAt ==
+  request.time + duration.value(REPORT_RETENTION_DAYS, 'd')` (the number
+  written as a literal), every field matches the file 30 table (type and
+  size limit), `conversation` is a list of at most `HISTORY_TURNS_CAP × 2 +
+  2` items (a literal; rules cannot read app code or Remote Config, and
+  cannot check the items inside a list, AR3), `category` is one of the four
+  values, no field outside the table, and no image field. Deny read, update,
+  delete and list everywhere. Deny-all until Phase 4. The header comment
+  names `shared/tuning.json` as the source of the literals. **Why:** the app
+  has no sign-in and no App Check, so the rules are the only write
+  protection (G15).
 
-##### 10. `firestore.indexes.json` (Create)
+##### 7. `firebase/firestore.indexes.json` (Move)
 
 - **Type / Scope**: Firestore index file.
-- **Proposed Changes**: Empty index list (no queries from the app); kept so
+- **Proposed Changes**: Empty index list (no queries from the apps); kept so
   the CLI deploy is reproducible.
 
-##### 11. `.github/workflows/ci.yml` (Create)
+##### 8. `firebase/rules-test/package.json`, `firebase/rules-test/reports.rules.test.ts` (Create, Phase 4)
 
-- **Type / Scope**: CI pipeline.
-- **Proposed Changes**: On every push: install, `typecheck`, `lint`,
-  `test`, `config:validate`, `test:rules` (Firestore emulator),
-  `npx expo install --check` (versions match the SDK), and
-  `check:permissions` on a prebuilt Android manifest. **Why:** each
-  guarantee in this design has an automatic check.
+- **Type / Scope**: Firestore emulator tests (Node).
+- **Proposed Changes**: Dependencies `jest`, `ts-jest`,
+  `@firebase/rules-unit-testing` 5.0.2, `firebase-tools` 15.36.0. Script
+  `test:emulator`: `firebase emulators:exec --only firestore --project
+  demo-photocritic "jest"`. Tests: valid create allowed; read, update,
+  delete and list denied; missing or extra fields, wrong types, each string
+  over its limit, a `conversation` list longer than the limit, wrong
+  `createdAt`, wrong or missing `expireAt`, and any image field rejected. A
+  test reads `shared/tuning.json` and fails if the literals in the rules
+  differ (AR3).
 
-##### 12. `.github/workflows/canary.yml` (Create, Phase 3)
+#### Shared data (`shared/`)
 
-- **Type / Scope**: Scheduled CI job.
-- **Proposed Changes**: Daily: one live call per provider and per listed
-  model with spend-capped keys from CI secrets, through the same adapters;
-  fails on any error event or a served-model mismatch. **Why:** providers
-  change models and errors without notice (round-2 findings).
+##### 9. `shared/README.md`, `shared/fixture.schema.json`, `shared/images/test.jpg` (Create)
 
-#### Remote configuration and scripts
+- **Type / Scope**: Format description, fixture schema, test image.
+- **Proposed Changes**: The README describes every file under `shared/` and
+  the rule that a change there is followed by both apps in the same pull
+  request. `fixture.schema.json` is the JSON Schema for the files in file 13.
+  Expected events are written as `{"type": "text", "delta": "…"}`,
+  `{"type": "done", "finishReason": "stop" | "length", "servedModel": "…",
+  "requestId": "…" | null}` and `{"type": "error", "error": {"phase":
+  "before-response" | "mid-stream" | "finish", "httpStatus": int | null,
+  "providerCode": string | null, "requestId": string | null}}`; `detail` is
+  not compared, only checked to contain no key. `test.jpg` is a 1024 px,
+  author-owned photo of printed text with no metadata, used by the request
+  fixtures, the canary and the image-pipeline tests.
 
-##### 13. `config/remoteconfig.template.json` (Create)
+##### 10. `shared/tuning.json` (Create)
 
-- **Type / Scope**: Remote Config template, source of truth.
-- **Proposed Changes**: Every parameter in Technical Plan §8 with v1 values:
-  kill switch (including `reportsDisabled`), providers (allowlisted
-  `baseUrl`s), the curated model list with labels and `contextTokens`,
-  consent texts per provider, privacy policy URL and version,
-  `config_meta.configVersion`. No tuning values (§8a) and no error rules.
-  **Why:** one validated source for every publish (G17).
+- **Type / Scope**: Data.
+- **Proposed Changes**: Created in the teardown commit (file 1) from
+  `src/platform/config/tuning.ts` at commit `a1f4c49`. Format: `{"NAME":
+  {"value": number, "unit": "ms" | "px" | "chars" | "turns" | "count" |
+  "days" | "ratio", "status": "fixed" | "provisional"}}`. The author sets
+  `MAX_QUESTION_CHARS`, `MAX_REPORT_CONVERSATION_CHARS`,
+  `REPORT_DAILY_LIMIT_PER_INSTALL` and `REPORT_RETENTION_DAYS` before Phase
+  1 ends; Phase 0 measurements set `HISTORY_TURNS_CAP`,
+  `CONNECT_TIMEOUT_MS`, `REQUEST_TIMEOUT_MS` and `REPORT_WRITE_TIMEOUT_MS`.
+  Both apps' constants (files 26 and 45) and the Firestore rules test (file
+  8) are checked against it.
 
-##### 14. `src/platform/config/schema.ts` (Create)
+##### 11. `shared/prompts/system.txt`, `identify.txt`, `explain.txt`, `extract.txt`, `free.txt`, `VERSION` (Create)
 
-- **Type / Scope**: TypeScript module.
-- **Proposed Changes**: One `zod` schema per parameter, exported for the app
-  and the scripts. **Why:** the same checks run before publishing and on
-  the device.
+- **Type / Scope**: Prompt text.
+- **Proposed Changes**: The fixed base prompt (answer about the photo, plain
+  text, wrap verbatim text from the photo in a fenced `text` block) and the
+  four prompt-kind texts; `VERSION` is recorded by the harness and in
+  reports (`promptVersion`). Android adds `shared/prompts/` to the `core`
+  resources through a Gradle `sourceSets` entry. iOS keeps a committed copy
+  in `ios/Core/Sources/PhotoCriticCore/Resources/prompts/`, written by
+  `tools/sync-shared.sh`; CI fails if the copy differs (file 3). **Why:**
+  both apps must send identical prompts, and Swift Package Manager accepts
+  resources only inside the target folder.
 
-##### 15. `scripts/validate-config.ts` (Create)
+##### 12. `shared/remote-config/schema.json`, `template.json`, `samples/valid/*.json`, `samples/invalid/*.json` (Create)
 
-- **Type / Scope**: Node script.
-- **Proposed Changes**: Validates the template against the schemas, plus
-  cross-checks: every `baseUrl` in the allowlist, every `replacementId`
-  names a listed model, every provider has a consent text. **Why:** with no bundled
-  values (Q9), a bad publish would stop every tester's app, so validation
-  before publishing is the only protection.
+- **Type / Scope**: Remote Config schema, source of truth and test samples.
+- **Proposed Changes**: JSON Schema for every parameter in §8.
+  `template.json` and the samples are plain objects `{parameterName:
+  parsedJsonValue}`; `publish-remote-config` converts them to the Remote
+  Config REST template shape. `template.json` holds the v1 values (kill
+  switch including `reportsDisabled`, providers with allowlisted `baseUrl`s,
+  the curated model list with labels, `status`, `maxOutputTokens` and
+  `contextTokens`, consent texts, privacy policy URL and version,
+  `configVersion`). Invalid samples include a `baseUrl` outside the
+  allowlist, a missing consent text, a `replacementId` that names no
+  `active` model, a `providers.<p>.consentTextVersion` that differs from
+  `consent_texts.<p>.version`, and wrong types. No tuning values and no
+  error rules. **Why:** one validated source for every publish (G17), and
+  one set of cases both validators must agree on.
 
-##### 16. `src/platform/config/tuning.ts` (Create)
+##### 13. `shared/provider-streams/<provider>/*.json`, `shared/provider-errors/<provider>/*.json`, `shared/provider-requests/<provider>/*.json` and `*.input.json` (Create, Phase 0)
 
-- **Type / Scope**: TypeScript constants.
-- **Proposed Changes**: The constants in Technical Plan §8a, exported and
-  typed `as const`. These are not defaults for Remote Config: no Remote
-  Config parameter has the same name or overrides them. **Why:** tuning
-  values change rarely, and a bad value can no longer stop every install
-  through a config publish (author decision after review, 2026-11-15).
+- **Type / Scope**: Recorded responses and expected requests (generated by
+  `fixture:record`, then reviewed).
+- **Proposed Changes**: Each fixture follows `shared/fixture.schema.json`:
+  `recordedAt`, `provider`, `model`, the HTTP status, response headers (keys
+  and request IDs replaced by placeholders), the raw server-sent-event lines
+  or error body, and the expected events or `PcError` fields (file 9).
+  Streams: normal answer, length limit, content filter or safety block,
+  mid-stream error, refusal. Errors: invalid key, no billing or spend
+  limit, rate limit (429), overloaded (Anthropic 529, OpenAI 503), unknown
+  model, Gemini 403. Each request fixture has a `<name>.input.json`
+  (`modelId`, `history`, `question`, `promptKind`, `maxOutputTokens`,
+  `imageDetail`, `image`: `shared/images/test.jpg`) and the exact JSON body
+  the client must produce, including OpenAI `store: false`. Bodies are
+  compared as parsed JSON with key order ignored.
 
-##### 17. `scripts/publish-remote-config.ts` (Create)
+##### 14. `shared/redaction/cases.json`, `shared/token-estimates.json`, `shared/vectors/history-trim.json`, `extracted-text.json`, `app-version.json`, `report-document.json` (Create)
 
-- **Type / Scope**: Node script (manual, author-run).
-- **Proposed Changes**: Validates, increments `configVersion`, sets
-  `publishedAt`, and publishes to the chosen Firebase project with the
-  Remote Config REST API. **Why:** publishing goes through validation.
+- **Type / Scope**: Test data for logic written in both apps.
+- **Proposed Changes**: Redaction, in order: (1) the user's own key string,
+  wherever it appears; (2) `sk-ant-[A-Za-z0-9_-]{16,}`,
+  `sk-[A-Za-z0-9_-]{16,}`, `AIza[0-9A-Za-z_-]{35}`, `AQ\.[0-9A-Za-z_-]{20,}`
+  (the Gemini key format seen on 2026-11-17) and `Bearer\s+\S+`, each
+  replaced by `[key]`; (3) the query string of any URL replaced by
+  `?[query]`; (4) `file://` and `content://` URIs and absolute paths with
+  two or more segments replaced by `[path]`; then cut to 200 characters.
+  `cases.json` holds inputs and expected outputs for each rule.
+  `token-estimates.json`: per provider `charsPerToken` and the image-token
+  rule (OpenAI tile rule parameters, Anthropic width × height ÷ 750, Gemini
+  tokens per `mediaResolution`), with values set in Phase 0 from the
+  `usage` fields of the recordings. The vectors: history trimming cases;
+  extracted-text cases (unclosed fence, several cards, tilde fence, fence in
+  the middle of a line); version comparisons (`1.10.0` above `1.9.0`); one
+  report input and its expected document without the timestamps.
 
-##### 18. `scripts/check-permissions.ts` (Create)
+#### Author tools (`tools/`)
 
-- **Type / Scope**: Node script.
-- **Proposed Changes**: Reads the merged Android manifest from
-  `expo prebuild` and fails if a blocked permission is present. **Why:** G1
-  promises no broad media or audio permission.
+##### 15. `tools/package.json`, `validate-config.ts`, `publish-remote-config.ts`, `record-fixture.ts`, `purge-reports.ts`, `sync-shared.sh` (Create)
 
-##### 19. `scripts/purge-reports.ts` (Create)
+- **Type / Scope**: Node scripts, author-run (validation also in CI).
+- **Proposed Changes**: Dependencies `typescript`, `tsx` 4.23.15, `ajv` 8,
+  `firebase-admin`. Scripts: `config:validate` checks `template.json`
+  against the schema with Ajv, plus cross-checks (every `baseUrl` in the
+  allowlist, every `replacementId` names an `active` model, every provider
+  has a consent text whose version matches `consentTextVersion`), and runs
+  the samples. `config:publish -- --project dev|prod` validates, increments
+  `configVersion`, sets `publishedAt` and publishes with the Remote Config
+  REST API, authenticating with `GOOGLE_APPLICATION_CREDENTIALS` and sending
+  the template ETag with `If-Match`. `fixture:record` calls a provider with
+  a key from an environment variable, saves the raw response and replaces
+  keys and request IDs before writing to `shared/`. `reports:purge`
+  (Firebase Admin SDK) deletes reports whose `expireAt` has passed (Q6).
+  `sync-shared.sh` copies `shared/prompts/` into the iOS package (file 11).
+  **Why:** with no in-app values, validation before publishing is the only
+  protection against a bad publish (AR2).
 
-- **Type / Scope**: Node script using the Firebase Admin SDK (author-run).
-- **Proposed Changes**: Deletes `reports` documents whose `expireAt` has
-  passed. **Why:** reports are removed on the free plan without billing (Q6).
+#### Android (`android/`)
 
-#### Screens (`src/app/`)
+##### 16. `android/settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradle/libs.versions.toml`, Gradle wrapper (Create)
 
-##### 20. `src/app/_layout.tsx` (Create)
+- **Type / Scope**: Build configuration.
+- **Proposed Changes**: Modules `:core`, `:app`, `:harness`; every library
+  and plugin version in the version catalog (pinned at Phase 0 and copied
+  into `docs/VERSIONS.md`); `org.jlleitschuh.gradle.ktlint` and detekt
+  applied to all modules; Kover on `:core` with `koverVerify` at 80% line
+  coverage; JUnit 5 in `:core` and `:harness`, JUnit 4 in `:app`.
 
-- **Type / Scope**: Root layout.
-- **Proposed Changes**: Runs startup in order: install-marker check and key
-  wipe; load settings; fetch and validate config (up to 10 seconds) and
-  build the snapshot; apply the kill switch once; start telemetry if opted
-  in. Shows the disabled screen when config is unavailable, or when the
-  whole-app kill switch or `minSupportedAppVersion` requires it. If only the
-  saved provider or model is disabled, opens setup with the kill-switch
-  message (G18). Registers no Remote Config update listener. Native stack navigator, dark status bar style, safe-area provider.
+##### 17. `android/app/build.gradle.kts`, `android/app/src/main/AndroidManifest.xml`, `android/app/proguard-rules.pro`, `android/app/src/main/res/values/strings.xml` (Create)
 
-##### 21. `src/app/index.tsx` (Create)
+- **Type / Scope**: Application module.
+- **Proposed Changes**:
+  - Build: `applicationId` and `namespace` `com.yk.photocritic`; minSdk 24;
+    targetSdk the latest Play requires; flavors `dev` and `prod`; R8 and
+    resource shrinking for release with `proguard-rules.pro`
+    (kotlinx.serialization keep rules); Google services and Crashlytics
+    plugins (mapping upload on release); Compose on;
+    `signingConfigs.release` reads `android/keystore.properties` (ignored by
+    git; it holds the path to the upload keystore outside the repository and
+    its passwords); without that file, release builds are unsigned (CI).
+  - Manifest: `INTERNET` and `ACCESS_NETWORK_STATE` declared by the app;
+    `tools:node="remove"` for `com.google.android.gms.permission.AD_ID`,
+    `android.permission.ACCESS_ADSERVICES_AD_ID`,
+    `android.permission.ACCESS_ADSERVICES_ATTRIBUTION`,
+    `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`, `READ_MEDIA_IMAGES`,
+    `READ_MEDIA_VIDEO` and `RECORD_AUDIO`; no `CAMERA` permission (the
+    camera app takes the photo); `allowBackup="false"`,
+    `fullBackupContent="@xml/backup_rules"` and
+    `dataExtractionRules="@xml/data_extraction_rules"`; a resizable
+    activity; `FileProvider` for camera output; Firebase `<meta-data>`
+    `firebase_analytics_collection_enabled`,
+    `firebase_crashlytics_collection_enabled`,
+    `google_analytics_adid_collection_enabled`,
+    `google_analytics_ssaid_collection_enabled`,
+    `google_analytics_default_allow_ad_storage`,
+    `google_analytics_default_allow_ad_user_data`,
+    `google_analytics_default_allow_ad_personalization_signals` and
+    `google_analytics_automatic_screen_reporting_enabled` all false (names
+    checked in Phase 0).
+  - `checkPermissions` task: reads the merged `prodRelease` manifest and
+    fails on any permission outside the allowlist `INTERNET`,
+    `ACCESS_NETWORK_STATE`, `WAKE_LOCK`,
+    `com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE`
+    and `com.yk.photocritic.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. Phase
+    0 confirms the list from the first merged manifest and records it in the
+    task.
+  - `strings.xml`: every user-visible string, so it can be translated later.
+  **Why:** G1, G16, G20 and Q8 are set here.
 
-- **Type / Scope**: Route.
-- **Proposed Changes**: Redirects to `setup` if no provider, model and key
-  are stored, else to `home`.
+##### 18. `android/app/src/dev/google-services.json`, `android/app/src/prod/google-services.json` (Move)
 
-##### 22. `src/app/setup.tsx` (Create)
+- **Type / Scope**: Firebase service files.
+- **Proposed Changes**: From `firebase/dev/` and `firebase/prod/`; the
+  flavor picks the project. **Why:** development data never mixes with
+  tester data.
 
-- **Type / Scope**: Screen.
-- **Proposed Changes**: Provider buttons; model list from the snapshot,
-  filtered by status and kill switch, with Fast/Best labels; key field
-  (secure text entry) with the BYOK explanation and "where do I get a key"
-  link; states: idle, checking, failed (the generic message with "Show
-  details", G12), saved. When opened at startup because the saved model or
-  provider is disabled, shows the kill-switch message above the list. In
-  first-run mode also shows the sharing switch. In edit mode (from
-  Settings) shows Back, keeps the stored key if the provider is unchanged,
-  and confirms before ending an open conversation (decision 30).
+##### 19. `android/app/src/main/res/xml/data_extraction_rules.xml`, `backup_rules.xml`, `file_paths.xml` (Create)
 
-##### 23. `src/app/home.tsx` (Create)
+- **Type / Scope**: Resources.
+- **Proposed Changes**: Exclude every domain from cloud backup and device
+  transfer (Q8); `FileProvider` paths limited to the camera folder in the
+  cache.
 
-- **Type / Scope**: Screen.
-- **Proposed Changes**: Chooses the phone layout (photo plus sheet) or the
-  wide layout (two panes) from `useLayoutMode`. Photo view with pinch to
-  zoom and pan, at its original aspect ratio, fitted whole with black around
-  it (Q12). Empty state with Take photo and
-  Choose from Photos. Top bar: Settings and New photo only. Hosts the
-  consent sheet, report sheet, new-photo dialog, offline banner and toasts.
+##### 20. `android/config/detekt.yml` (Create)
 
-##### 24. `src/app/settings.tsx` (Create)
+- **Type / Scope**: Lint rules.
+- **Proposed Changes**: `ForbiddenImport`: `com.google.firebase.analytics`
+  and `com.google.firebase.crashlytics` outside `platform.telemetry`;
+  `okhttp3` outside `core.net` (`ProviderHttp` gives providers its own
+  request and response types). `ForbiddenMethodCall`: `kotlin.io.println`
+  and `android.util.Log.*` outside `platform.telemetry`. **Why:** layering
+  and redaction rules (§2, G16).
 
-- **Type / Scope**: Screen.
-- **Proposed Changes**: Provider and Model rows (open setup in edit mode),
-  API key row (replace or remove), sharing switch, privacy policy link,
-  support ID (instance ID, only when sharing is on), app version and build
-  channel.
+##### 21. `android/core/build.gradle.kts` (Create)
 
-##### 25. `src/app/disabled.tsx` (Create)
+- **Type / Scope**: Pure Kotlin JVM module.
+- **Proposed Changes**: Kotlin JVM, kotlinx.coroutines, kotlinx.serialization,
+  OkHttp; `shared/prompts/` as resources; tests read `shared/` fixtures
+  from the repository path. No Android or Firebase dependency. **Why:** the
+  core builds and tests on the JVM, and the harness and canary reuse it.
 
-- **Type / Scope**: Screen.
-- **Proposed Changes**: Three full-screen modes, none with a Try again
-  button: config unavailable ("PhotoCritic couldn't load its settings.
-  Check your connection and restart the app."; AR2, CUJ 9), whole app
-  disabled (message from Remote Config), and update required (Update opens
-  `updateUrl`) for an app version below the minimum.
+##### 22. `android/app/src/main/res/` icons and theme (Create)
 
-#### Design system (`src/design/`)
+- **Type / Scope**: Resources.
+- **Proposed Changes**: Adaptive launcher icon (foreground, background,
+  monochrome) from the aperture-with-speech-tail design; Lucide icons as
+  vector drawables (Camera, Photos, NewPhoto, Send, Stop, Settings, Copy,
+  Share, Report, Back); dark theme; splash screen with `#0F1012`.
 
-##### 26. `src/design/tokens.ts` (Create)
+##### 23. `android/core/.../net/Allowlist.kt`, `ProviderHttp.kt`, `Sse.kt` (Create)
 
-- **Type / Scope**: Design tokens.
-- **Proposed Changes**: Colors, tints (`chromeTint` 0.65, `sheetTint`
-  0.72, `sheetTintExpanded` 0.94), radii, spacing, type scale using the
-  system font with font scaling, minimum touch size 44. Values from
-  Technical Plan §12.
+- **Type / Scope**: Network client.
+- **Proposed Changes**: The host allowlist constant; one `OkHttpClient`
+  built as in §4 (allowlist interceptor, no redirects, no retries, connect
+  and call timeouts, no cache, no cookie jar); a function that takes a
+  request and the provider's request-ID header name and returns the status,
+  headers, request ID and a line stream, using its own request and response
+  types; the server-sent-events parser. **Why:** every security rule in §4
+  lives in one package (`core.net`), behind one `OkHttpClient`.
 
-##### 27. `src/design/useLayoutMode.ts` (Create)
+##### 24. `android/core/.../providers/Types.kt`, `Registry.kt` (Create)
 
-- **Type / Scope**: Hook.
-- **Proposed Changes**: Returns `phone` or `wide` from window width, with a
-  margin (switch to wide above 720 points, back to phone below 680) so the
-  layout does not flip during resizing (D29).
-
-##### 28. `src/design/components/Button.tsx`, `Chip.tsx`, `Banner.tsx`, `Dialog.tsx`, `Toast.tsx`, `TextCard.tsx`, `Sheet.tsx` (Create)
-
-- **Type / Scope**: UI components.
-- **Proposed Changes**: Primary and secondary buttons; chips; an error and
-  offline banner; a confirmation dialog; a toast with screen-reader
-  announcement; the text card with Copy and Share and preserved line breaks;
-  `Sheet` wraps the Phase 0 sheet library with two heights (collapsed sized
-  to content up to a limit, expanded), tint from tokens, solid when Reduce
-  Transparency is on or blur is unavailable, and the library's
-  keyboard-aware input. Every control has an accessibility role and label.
-
-##### 29. `src/design/icons/CameraIcon.tsx`, `PhotosIcon.tsx`, `NewPhotoIcon.tsx`, `SendIcon.tsx`, `StopIcon.tsx`, `SettingsIcon.tsx`, `CopyIcon.tsx`, `ShareIcon.tsx`, `ReportIcon.tsx`, `BackIcon.tsx` (Create)
-
-- **Type / Scope**: Icon components.
-- **Proposed Changes**: Lucide SVG paths copied into `react-native-svg`
-  components (ISC licence notice in `THIRD_PARTY_NOTICES.md`), 24-point
-  grid, color from props.
-
-##### 30. `assets/icon.png`, `assets/adaptive-icon.png`, `assets/splash.png` (Create)
-
-- **Type / Scope**: App icon and splash.
-- **Proposed Changes**: The aperture-with-speech-tail icon from the design
-  board, dark background, amber mark. **Why:** G21.
-
-#### Session (`src/features/session/`)
-
-##### 31. `src/features/session/types.ts` (Create)
-
-- **Type / Scope**: Types.
-- **Proposed Changes**: `SessionState` (the states in Technical Plan §5),
-  `VisibleMessage` (question, answer text, cards, status: streaming, done,
-  stopped, failed; `error?: PcError`), `NeutralTurn`.
-
-##### 32. `src/features/session/sessionStore.ts` (Create)
-
-- **Type / Scope**: Zustand store.
-- **Proposed Changes**: Holds state, visible messages, neutral history and
-  the current image version. Actions: `setPhoto`, `ask(promptKind,
-text)`, `stop`, `dismissError`, `reset(reason)`. There is no `retry`
-  action (G12). `ask` checks
-  the consent gate, builds a `TurnRequest`, calls the provider's `send`
-  with an `AbortController`, appends text deltas to the streaming message,
-  and on `done` adds the turn to history. `stop` aborts and marks the
-  message stopped without adding it to history. An `error` event marks the
-  message failed, keeps any text received, and does not add it to history. Selectors so only the
-  streaming message re-renders.
-
-##### 33. `src/features/session/ConversationSheet.tsx`, `MessageList.tsx`, `MessageItem.tsx`, `Composer.tsx`, `StarterChips.tsx`, `ConversationPane.tsx` (Create)
-
-- **Type / Scope**: UI components.
-- **Proposed Changes**: Sheet content for phone and the right pane for wide
-  windows share `MessageList` (FlashList v2), `MessageItem` (plain text,
-  text cards from the extracted-text parser, Stopped or Failed tag, the
-  generic error message with "Show details", Copy answer and
-  Report actions once done), `Composer` (multi-line input, Send or Stop
-  button by state, disabled without a photo or while offline) and
-  `StarterChips` (Identify, Explain, Copy text; hidden while streaming).
-
-#### Providers (`src/features/providers/`)
-
-##### 34. `src/features/providers/types.ts` (Create)
-
-- **Type / Scope**: Types.
+- **Type / Scope**: Types and lookup.
 - **Proposed Changes**: `Provider`, `Capabilities`, `TurnRequest`,
   `TurnEvent`, `KeyCheckResult`, `PcError` (`phase`, `httpStatus`,
-  `providerCode`, `requestId`, `detail`), as in Technical Plan §3 and §7.
+  `providerCode`, `requestId`, `detail`), as in §3 and §7. `Registry`
+  returns the client for a provider ID and the capabilities for a model by
+  merging client defaults with the model's Remote Config entry.
 
-##### 35. `src/features/providers/registry.ts` (Create)
+##### 25. `android/core/.../providers/shared/SystemPrompt.kt`, `HistoryTrim.kt`, `ExtractedText.kt`, `ToPcError.kt`, `Redact.kt`, `UserMessages.kt` (Create)
 
-- **Type / Scope**: Module.
-- **Proposed Changes**: Returns the adapter for a provider ID and the
-  capabilities for a model by merging adapter defaults with the model's
-  Remote Config entry.
+- **Type / Scope**: Shared provider logic.
+- **Proposed Changes**: `SystemPrompt` loads file 11. `HistoryTrim`
+  estimates tokens per turn with the factors and image-token rules in
+  `shared/token-estimates.json` and drops the oldest turns until the request
+  fits `contextTokens` minus `maxOutputTokens`, never exceeding
+  `HISTORY_TURNS_CAP`. `ExtractedText` splits answer text into `{kind: text
+  | card, value}` segments; an unclosed fence stays plain text. `ToPcError`
+  turns a non-2xx response, a stream error event or a failing finish reason
+  into a `PcError` without classifying it. `Redact` applies the rules in
+  file 14. `UserMessages` holds the one generic message, the "Show details"
+  labels ("Where", "HTTP status", "Provider code", "Request ID",
+  "Details") and the `phase` strings ("Before the answer", "During the
+  answer", "At the end of the answer"). Each reads its `shared/vectors/`
+  file in tests.
 
-##### 36. `src/features/providers/shared/systemPrompt.ts` (Create)
+##### 26. `android/core/.../config/ConfigModels.kt`, `ConfigValidator.kt`, `Snapshot.kt`, `KillSwitch.kt`, `Tuning.kt`, `AppVersion.kt` (Create)
 
-- **Type / Scope**: Module.
-- **Proposed Changes**: The fixed base prompt (answer about the photo,
-  plain text, wrap verbatim text from the photo in a fenced `text` block)
-  and the four prompt-kind texts. Versioned with a constant so harness runs
-  record it.
+- **Type / Scope**: Config logic.
+- **Proposed Changes**: Typed models for §8; a validator that returns either
+  a snapshot or `Unavailable` with the failing parameter (any invalid value,
+  including a `baseUrl` outside the allowlist); the kill-switch evaluation,
+  run once at cold start; the §8a constants; semantic version comparison.
+  Display rules:
 
-##### 37. `src/features/providers/shared/historyTrim.ts` (Create)
+  | Item | Rule |
+  | --- | --- |
+  | `status` | `active`: shown. `preview`: shown with the label "Preview". `deprecated`: shown with "Ending soon" and "Replaced by <displayName>" from `replacementId`. `retired`: hidden. |
+  | Hidden model | `retired`, listed in `disabledModels`, `minAppVersion` above the app version, or its provider disabled |
+  | Disabled provider | `providers.<p>.enabled` is false, or listed in `disabledProviders` |
+  | Saved model or provider hidden | The G18 path: setup opens with the kill-switch message |
+  | Kill-switch message on setup | `kill_switch.message` if not empty, otherwise "The model you used is no longer available. Pick another one." |
+  | `bannerMessage` | If not empty, a banner under the home top bar, dismissible for the session |
+  | Update required | Shown when the app version is below `minSupportedAppVersion`; the Update button opens `updateUrl` |
+  | Consent version | `consent_texts.<p>.version`; must equal `providers.<p>.consentTextVersion` |
+  | `privacy_policy.version` | Shown in Settings next to the bundled privacy policy |
 
-- **Type / Scope**: Module.
-- **Proposed Changes**: Estimates tokens per turn (characters divided by a
-  per-provider factor, plus the image's token estimate from the provider's
-  image sizing rule) and drops the oldest turns until the request fits
-  `contextTokens` minus `maxOutputTokens`, never exceeding
-  `HISTORY_TURNS_CAP`. Each adapter calls it with its own estimates.
+##### 27. `android/core/.../providers/gemini/GeminiClient.kt`, `anthropic/AnthropicClient.kt`, `openai/OpenAiClient.kt`, each with `Wire.kt` (Create; Gemini in Phase 0 and 2, others in Phase 3)
 
-##### 38. `src/features/providers/shared/extractedText.ts` (Create)
+- **Type / Scope**: Provider clients.
+- **Proposed Changes**: Each implements `Provider` with the request format,
+  key header, image placement, `maxOutputTokens` field and end events in
+  §3a, sends through file 23 with its request-ID header name, maps events
+  to `TurnEvent`s, reports the served model and request ID (Gemini: body
+  `responseId`), and ignores unknown events and fields. OpenAI always sends
+  `store: false`; its `response.refusal.delta` text is collected, and a
+  response that ends with refusal content is a `finish` failure with
+  `providerCode` `refusal`, keeping the text as the Failed answer. No
+  sampling parameters for Gemini. `checkKey`: model list for OpenAI and
+  Anthropic; minimal inference call for Gemini. `Wire.kt` holds the
+  kotlinx.serialization request and event classes, which stay inside the
+  client's package.
 
-- **Type / Scope**: Module.
-- **Proposed Changes**: Splits answer text into segments `{kind: 'text' |
-'card', value}`; an unclosed fence stays plain text until it closes.
+##### 28. `android/core/.../providers/fake/FakeProvider.kt` (Create)
 
-##### 39. (Removed: no automatic retries, G12)
-
-##### 40. `src/features/providers/errors/toPcError.ts` and `errors/userMessages.ts` (Create)
-
-- **Type / Scope**: Modules.
-- **Proposed Changes**: `toPcError(phase, signal)` turns an HTTP response,
-  a stream error event or a failing finish reason into a `PcError`
-  (Technical Plan §7), reading the provider's error code and request ID and
-  redacting the message. It does not classify. `userMessages` holds the one
-  generic message and the "Show details" labels, in English strings kept in
-  one file for later translation.
-
-##### 41. `src/features/providers/gemini/adapter.ts`, `anthropic/adapter.ts`, `openai/adapter.ts` (Create; Gemini in Phase 2, others in Phase 3)
-
-- **Type / Scope**: Provider adapters.
-- **Proposed Changes**: Each implements `Provider` with the AI SDK provider
-  factory given `providerFetch`, `maxRetries: 0`, and the per-model image
-  setting (OpenAI `detail`, Gemini resolution, Anthropic none). Builds
-  messages as in Technical Plan §3, translates stream parts to
-  `TurnEvent`s, captures the request ID header (`request-id` for
-  Anthropic; OpenAI and Gemini headers confirmed in the Phase 0 setup
-  checks), and
-  reports the served model. No sampling parameters for Gemini. `checkKey`:
-  model list for OpenAI and Anthropic; minimal inference call for Gemini.
-
-##### 42. `src/features/providers/fake/adapter.ts` (Create)
-
-- **Type / Scope**: Test adapter (development builds and tests only).
+- **Type / Scope**: Test provider.
 - **Proposed Changes**: Scripted answers, errors and delays; capability set
-  `final-turn-only`, `streaming: 'whole'`, no usage, to prove the screens
-  cope with a weaker provider before Phase 5.
+  `final-turn-only`, `streaming: whole`, no usage, `dataLeavesDevice =
+  true` (so the consent flow runs in tests), to test that the screens handle
+  a final-turn-only, whole-response provider with no usage data before
+  Phase 5. Used only by tests and the `devDebug` fake container (file 37).
 
-#### Image (`src/features/image/`)
+##### 29. `android/core/.../session/SessionTypes.kt`, `SessionMachine.kt` (Create)
 
-##### 43. `src/features/image/types.ts` and `imageStore.ts` (Create)
+- **Type / Scope**: Session logic.
+- **Proposed Changes**: `SessionState` (the states in §5), `VisibleMessage`
+  (ID, question, answer text, segments, status: streaming, done, stopped,
+  failed; `error: PcError?`), `NeutralTurn`. A pure reducer for every arrow
+  in the §5 diagram and the §5 rules (image error, failed consent write,
+  lifecycle), and a controller that runs `Provider.send` in a coroutine:
+  text deltas extend the streaming message; `done` adds the turn to
+  history; Stop cancels the coroutine and marks the message stopped without
+  adding it to history; an `error` event marks it failed and keeps its
+  text. There is no retry action (G12). The consent gate (file 30) is
+  checked before `sending`.
 
-- **Type / Scope**: Types and store.
+##### 30. `android/core/.../consent/ConsentRules.kt`, `report/ReportBuilder.kt`, `report/ReportLimit.kt` (Create)
+
+- **Type / Scope**: Consent and report logic.
+- **Proposed Changes**:
+  - `canSend(provider)` is true when the provider's capabilities say data
+    stays on the device, or when there is a granted record at or above
+    `consent_texts.<p>.version`. "Not now" is not recorded. Consent history
+    keeps the current record and up to 10 earlier ones.
+  - `ReportBuilder` builds the report document (§10) with these fields:
+
+    | Field | Type | Limit |
+    | --- | --- | --- |
+    | `reportId` | string, equals the document ID | 36 (UUID) |
+    | `createdAt` | timestamp | set by `ReportService`; rules: `== request.time` |
+    | `expireAt` | timestamp | set by `ReportService`; rules: `request.time` plus `REPORT_RETENTION_DAYS` |
+    | `appVersion`, `osVersion` | string | 32 each |
+    | `platform` | `android` or `ios` | |
+    | `locale` | string | 35 |
+    | `configVersion` | int | |
+    | `promptVersion` | string | 16 |
+    | `provider` | `openai`, `anthropic` or `gemini` | |
+    | `requestedModel` | string | 100 |
+    | `servedModel` | string, optional | 100 |
+    | `providerRequestId` | string, optional | 200 |
+    | `imageSettings` | map: `longEdgePx` int, `detail` string (16), `bytes` int | |
+    | `conversation` | list of `{role: user or assistant, text}` | at most `HISTORY_TURNS_CAP × 2 + 2` items |
+    | `reportedTurnIndex` | int | |
+    | `category` | `offensive`, `wrong`, `unsafe` or `other` | |
+    | `reason` | string | 1,000 |
+    | `error` | optional map: `phase` (enum), `httpStatus` (int or null), `providerCode` (100), `requestId` (200), `detail` (200) | |
+    | `instanceId` | string, optional, only when sharing is on | 64 |
+
+    No image field. The conversation holds the reported turn and the turns
+    before it: the oldest whole turns are dropped until both the item limit
+    and `MAX_REPORT_CONVERSATION_CHARS` hold; if the reported turn alone is
+    too long, its answer is cut at the end. Stopped and failed turns are
+    included with their label at the start of the text. Tested against
+    `shared/vectors/report-document.json`.
+  - `ReportLimit` counts Send report attempts per UTC day against
+    `REPORT_DAILY_LIMIT_PER_INSTALL`.
+
+##### 31. `android/app/.../platform/storage/SecureKeys.kt`, `InstallMarker.kt`, `JsonFiles.kt`, `SettingsStore.kt`, `ConsentStore.kt`, `ReportStore.kt` (Create)
+
+- **Type / Scope**: Storage.
+- **Proposed Changes**: `SecureKeys`: one AES-GCM Keystore key
+  (non-exportable), one encrypted file per provider in `noBackupFilesDir`;
+  `get`, `set`, `delete`. `InstallMarker`: if `install.json` is missing
+  (not unreadable), delete the key files and the Keystore key, then write
+  the marker. `JsonFiles`: `AtomicFile` reads and writes with a per-file
+  mutex, defaults on a corrupt or missing file. The three stores read and
+  write the files in §9; a failed consent write blocks the send.
+
+##### 32. `android/app/.../platform/config/RemoteConfigLoader.kt` (Create)
+
+- **Type / Scope**: Firebase Remote Config.
+- **Proposed Changes**: The load order in §8: fetch and activate with a
+  minimum fetch interval of 0 and `CONFIG_FETCH_TIMEOUT_MS`; on
+  `FirebaseRemoteConfigFetchThrottledException`, use the last activated
+  values if any; pass the values to file 26. No `addOnConfigUpdateListener`.
+
+##### 33. `android/app/.../platform/telemetry/Telemetry.kt`, `Events.kt`, and `shared/telemetry/events.json` (Create)
+
+- **Type / Scope**: Analytics and Crashlytics wrapper and the shared event
+  list.
+- **Proposed Changes**: `shared/telemetry/events.json` lists every event,
+  its parameters with types, and its trigger; both apps' `Events` are
+  tested against it:
+
+  | Event | Parameters | Sent when |
+  | --- | --- | --- |
+  | `pc_session_start` | `provider`, `model`, `config_version` | home first shows after a cold start |
+  | `pc_image_prepared` | `source`, `input_format`, `prepare_ms`, `sent_long_edge_px`, `sent_bytes` | a send copy is built |
+  | `pc_question_sent` | `provider`, `model`, `turn_index`, `starter_prompt` | Send |
+  | `pc_answer_received` | `provider`, `model`, `time_to_first_token_ms`, `total_ms`, `input_tokens`, `output_tokens`, `finish_reason` | a `done` event |
+  | `pc_request_failed` | `provider`, `model`, `phase`, `http_status` | an `error` event |
+  | `pc_report_submitted` | `provider`, `model`, `category`, `result` (`sent`, `failed`, `limit_reached`) | a report attempt ends |
+  | `pc_config_fetch` | `result` (`success`, `throttled`, `failed`, `timeout`, `invalid`), `config_version`, `ms` | the startup fetch ends |
+
+  Brief K.5's `error_class`, `retry_count`, `queued`, `consent_recorded`
+  and `cached_tokens` are not used (G12, §10; caching is Q5). `Telemetry`:
+  `setSharing(on)` turns collection on or off in both SDKs and sets or
+  clears the instance-ID user ID; `instanceIdOrNull()` serves
+  `ReportService` and Settings; `log(event, params)` accepts only the listed
+  events and drops everything while sharing is off; values pass through
+  `Redact` first; an uncaught-exception path redacts before Crashlytics. No
+  special handling of crash reports from before opt-in (Q10).
+
+##### 34. `android/app/.../platform/net/Connectivity.kt` (Create)
+
+- **Type / Scope**: Connectivity state.
+- **Proposed Changes**: A `StateFlow<Boolean>` from a
+  `ConnectivityManager` default-network callback, used by the offline
+  banner, the Send button and Send report.
+
+##### 35. `android/app/.../features/image/PhotoRecord.kt`, `Pick.kt`, `ImagePipeline.kt`, `Cleanup.kt` (Create)
+
+- **Type / Scope**: Image feature.
 - **Proposed Changes**: `PhotoRecord {originalUri, edits: [], imageVersionId,
-sendCopy?: {uri, bytes, width, height, longEdgePx, detail}}`. The send
-  copy is rebuilt when the model's target size differs.
+  sendCopy?: {file, bytes, width, height, longEdgePx, detail}}`; the send
+  copy is rebuilt when the model's target size differs. `Pick`: Photo
+  Picker and `TakePicture` as in §6, with the camera URI in
+  `SavedStateHandle`. `ImagePipeline`: decode with downsampling, apply
+  orientation, encode JPEG at `JPEG_QUALITY`; if over `maxBytes`,
+  re-encode once at quality 0.6; if still over, `image-error`. Animated
+  images use their first frame. HEIC below API 28 and AVIF below API 31
+  give `image-error` (Q2). Records preparation time. `Cleanup`: delete send
+  copies and camera files when a conversation ends and at launch.
 
-##### 44. `src/features/image/pick.ts` (Create)
+##### 36. `android/app/.../features/report/ReportService.kt` (Create)
 
-- **Type / Scope**: Module.
-- **Proposed Changes**: Camera and system picker through
-  `expo-image-picker` (single image, original asset), Android pending
-  result recovery, and picker failures shown as the generic error message
-  (G12) or the permission message.
+- **Type / Scope**: Firestore write.
+- **Proposed Changes**: Sets `MemoryCacheSettings` before first use; takes
+  the file 30 document, adds `createdAt` and `expireAt` from the Firestore
+  server timestamp (Phase 0 checks that the SDK can write a server
+  timestamp plus an offset for `expireAt`; if it cannot, `expireAt` is left
+  out, the rules drop that check, and `reports:purge` deletes by
+  `createdAt` plus `REPORT_RETENTION_DAYS`), and writes it under a new
+  random UUID for each attempt. Returns sent, failed (not confirmed within
+  `REPORT_WRITE_TIMEOUT_MS`) or limit reached. A write shown as failed may
+  still arrive later, so a second attempt can create a duplicate report;
+  this is accepted. Not offered when `kill_switch.reportsDisabled` is true.
+  `instanceId` comes from `Telemetry.instanceIdOrNull()`.
 
-##### 45. `src/features/image/pipeline.ts` (Create)
+##### 37. `android/app/.../features/session/SessionViewModel.kt`, `android/app/.../AppContainer.kt`, `android/app/src/devDebug/kotlin/com/yk/photocritic/FakeContainer.kt` (Create)
 
-- **Type / Scope**: Module.
-- **Proposed Changes**: Decode with downsampling to the target long edge,
-  apply orientation, encode JPEG at `JPEG_QUALITY`, verify the output is
-  under `maxBytes` (re-encode at lower quality once if not), and confirm no
-  metadata remains. Records preparation time for telemetry and the harness.
+- **Type / Scope**: ViewModel and dependency wiring.
+- **Proposed Changes**: `AppContainer` is created in a custom `Application`
+  and holds the interfaces in the Assumptions. `SessionViewModel` gets it
+  through a `viewModelFactory`, owns a file 29 controller, exposes
+  `StateFlow` state, and connects consent, image and connectivity. When the
+  ViewModel is cleared, the conversation ends. `FakeContainer` (compiled
+  only in `devDebug`) supplies `FakeProvider` and fakes for Remote Config,
+  key storage and reports; a debug setting switches to it. UI tests build
+  `AppContainer` with fakes directly.
 
-##### 46. `src/features/image/cleanup.ts` (Create)
+##### 38. `android/app/.../ui/MainActivity.kt`, `AppNavigation.kt`, `SetupScreen.kt`, `HomeScreen.kt`, `SettingsScreen.kt`, `DisabledScreen.kt`, `PhotoView.kt`, `ConversationSheet.kt`, `ConversationPane.kt`, `MessageList.kt`, `MessageItem.kt`, `Composer.kt`, `StarterChips.kt`, `ConsentSheet.kt`, `ReportSheet.kt`, `design/Tokens.kt`, `design/Components.kt`, `design/LayoutMode.kt` (Create)
 
-- **Type / Scope**: Module.
-- **Proposed Changes**: Deletes send copies and picker temporary files when
-  a conversation ends and at launch.
+- **Type / Scope**: Screens and components.
+- **Proposed Changes**:
+  - `MainActivity`, `AppNavigation`: startup in order: install marker and
+    key wipe; settings; config fetch and validation (up to
+    `CONFIG_FETCH_TIMEOUT_MS`, behind the splash screen); kill switch once;
+    telemetry if opted in. Routes to disabled, setup (no provider, model and
+    key, or the saved one is hidden; file 26) or home.
+  - `DisabledScreen`: config unavailable, app disabled, update required
+    (Update opens `updateUrl`); no Try again button.
+  - `SetupScreen`: provider buttons; model list with labels by the file 26
+    rules; key field (password input) with the bring-your-own-key
+    explanation, the key-help link and, for Gemini, "Checking a Gemini key
+    uses a few tokens."; states idle, checking, failed (generic message and
+    "Show details"), saved; the kill-switch message when opened by G18; the
+    sharing switch in first-run mode; Back and the conversation-clearing
+    confirmation in edit mode.
+  - `HomeScreen`, `PhotoView`, `ConversationSheet`, `ConversationPane`:
+    phone layout (photo plus `BottomSheetScaffold`) or wide layout (two
+    panes) from `LayoutMode`; photo at its original aspect ratio, fitted
+    whole, black around it, pinch to zoom; empty state with Take photo and
+    Choose from Photos; top bar with Settings and New photo only; the
+    `bannerMessage` banner; hosts the consent sheet, report sheet, new-photo
+    dialog, offline banner and snackbars.
+  - `MessageList`, `MessageItem`: plain text, text cards with Copy and
+    Share, Stopped or Failed tag, the generic error with "Show details",
+    Copy answer and Report once done.
+  - `Composer`, `StarterChips`: multi-line input limited to
+    `MAX_QUESTION_CHARS`, Send or Stop by state, disabled without a photo
+    or offline; Identify, Explain, Copy text, hidden while streaming.
+  - `ConsentSheet`: provider name, `summary[]` bullets, `effectiveDate`,
+    the provider's `policyUrl`, a link to the bundled privacy policy, "Not now" and "Agree and send". `ReportSheet`: category
+    chips, note field (1,000 characters), "The photo itself is not sent",
+    what is sent, result and a copyable report ID.
+  - `SettingsScreen`: provider and model rows (open setup in edit mode), key
+    row (replace or remove), sharing switch, privacy policy (the bundled
+    page, file 51) with `privacy_policy.version`, support ID when sharing is on, app version and
+    flavor.
+  - `design/`: tokens from §12; components; `LayoutMode`: at start, wide if
+    the width is at least 700 dp, else phone; afterwards it switches to wide
+    above 720 dp and to phone below 680 dp, and keeps the current mode in
+    between.
+  - Every control has a content description and a role for TalkBack; text
+    uses sp; strings come from `strings.xml`.
 
-#### Consent (`src/features/consent/`)
+##### 39. Android tests (Create)
 
-##### 47. `src/features/consent/consentStore.ts` and `gate.ts` (Create)
+- **Type / Scope**: Unit, contract and screen tests.
+- **Proposed Changes**: Named by the mirror rule in the Assumptions.
+  - `core` (JVM): `SseTest`; `AllowlistTest`; `ProviderHttpTest`
+    (`MockWebServer`: allowlist refusal, redirect refusal, exactly one
+    request on errors, timeouts, key only in its header);
+    `ProviderContractTest` (every client against every `shared/provider-*`
+    fixture: events, `PcError` fields, request body equal as parsed JSON,
+    served model, request ID, cancellation stops the stream, no key in
+    `detail`); `HistoryTrimTest`, `ExtractedTextTest`, `AppVersionTest`,
+    `RedactTest`, `ReportBuilderTest` (their `shared/` files);
+    `ToPcErrorTest`; `ConfigValidatorTest` (file 12 samples);
+    `KillSwitchTest` (file 26 rules); `RegistryTest`; `TuningTest` (file
+    10); `SessionMachineTest` (every arrow in §5 and the §5 rules; stopped
+    and failed answers excluded from history; a failed answer keeps its
+    text); `ConsentRulesTest`; `ReportLimitTest`; `EventsTest` (against
+    `shared/telemetry/events.json`).
+  - `app` (Robolectric): `JsonFilesTest` (interrupted write, corrupt file),
+    `InstallMarkerTest` (missing versus unreadable marker, upgrade without
+    wipe), `RemoteConfigLoaderTest` (throttled path, timeout, fake Remote
+    Config), `TelemetryTest` (nothing logged while off, user ID cleared),
+    `ReportServiceTest` (memory cache, unconfirmed write shown as failed),
+    `ImagePipelineTest` (orientation, no EXIF in the output, size cap and
+    re-encode, HEIC and AVIF rejected by API level), `CleanupTest`.
+  - `SecureKeysTest` is an instrumented test run by hand on an API 24 phone
+    and a current phone each phase, because Robolectric has no Keystore.
+  - Compose UI tests in `app/src/test` on Robolectric, inside
+    `testDevDebugUnitTest`, with the fake container: CUJs 1–9 plus consent
+    once per provider (first launch, text card copy, Stop, the generic
+    error and its details, new-photo confirmation, report flow, kill switch
+    at start, layout switch at the width margin, config-unavailable
+    screen). There is no emulator job in v1.
 
-- **Type / Scope**: Modules.
-- **Proposed Changes**: Read and write `consent.json` (current record plus
-  up to 10 earlier per provider). `canSend(provider)` is true only for a
-  granted record at or above the snapshot's `consentTextVersion` for a
-  provider whose capabilities say data leaves the device. A failed write
-  blocks the send.
+##### 40. `android/harness/build.gradle.kts`, `android/harness/src/main/kotlin/com/yk/photocritic/harness/Main.kt`, `Run.kt`, `Canary.kt`, `Score.kt`; data in `harness/datasets/` (Create)
 
-##### 48. `src/features/consent/ConsentSheet.tsx` (Create)
+- **Type / Scope**: JVM command-line tool using `:core`, and its data.
+- **Proposed Changes**: `run` (the default) sends a labelled photo set
+  through the Kotlin clients at long edges 1024, 1536, 2048 and 3072 px and
+  settings OpenAI `low`/`high`, Gemini `MEDIA_RESOLUTION_LOW`/`MEDIUM`/
+  `HIGH`, Anthropic none. Photos are in `harness/datasets/<set>/images/`
+  (JPEG or PNG only) with `truth.json` (`{file: expectedText}`); a set is
+  committed only if the author owns the photos and they show no personal
+  data, otherwise `PC_HARNESS_DATASET` points to a folder outside git. The
+  harness downsizes with `javax.imageio` (bicubic) and encodes JPEG at
+  `JPEG_QUALITY` with no metadata; Phase 0 compares its output bytes with
+  the Android pipeline for five photos and records the difference. One CSV
+  per run goes to `harness/results/` (ignored by git), with columns
+  `run_id, provider, requested_model, served_model, prompt_version, image,
+  long_edge_px, detail, bytes, ttft_ms, total_ms, input_tokens,
+  output_tokens, finish_reason, error_phase, http_status, cer` (character
+  error rate against the truth). `canary` is the file 4 job. Keys come from
+  environment variables. **Why:** G23, the primary measure, and the data
+  for the image-size decision (Q5). One harness measures the models; the
+  shared request fixtures show both apps send the same request bodies.
+  Differences between the Android and iOS JPEG encoders are not measured.
 
-- **Type / Scope**: UI component.
-- **Proposed Changes**: Provider name, what is sent, the provider's
-  retention and training summary from `consent_texts`, privacy policy link,
-  "Not now" and "Agree and send". On agree, records consent and resumes the
-  pending question.
+#### iOS (`ios/`)
 
-#### Reports (`src/features/report/`)
+##### 41. `ios/project.yml`, `ios/scripts/sim-destination.sh` (Create)
 
-##### 49. `src/features/report/reportService.ts` and `reportLimit.ts` (Create)
+- **Type / Scope**: XcodeGen project specification and CI helper.
+- **Proposed Changes**: Targets `PhotoCritic` (app), `PhotoCriticTests`,
+  `PhotoCriticUITests`; deployment target iOS 17.0; Swift 6 language mode;
+  configurations `Debug-Dev`, `Release-Dev`, `Release-Prod`, each copying the
+  matching `GoogleService-Info.plist` (file 42) in a build phase; scheme
+  `PhotoCritic-Dev` (`Debug-Dev`, both test targets) and scheme
+  `PhotoCritic-Prod` (`Release-Prod`); the local `Core` package and the
+  Firebase Apple SDK package (Remote Config, Analytics without the
+  advertising-ID product, Crashlytics, Firestore), versions pinned;
+  Crashlytics dSYM upload run script; iPhone and iPad, all orientations,
+  `UIRequiresFullScreen` false; automatic signing with `DEVELOPMENT_TEAM`
+  from `ios/Config/Signing.xcconfig` (ignored by git). The generated
+  `.xcodeproj` is not committed. `sim-destination.sh` prints the
+  `-destination` value for the newest available iPhone simulator.
 
-- **Type / Scope**: Modules.
-- **Proposed Changes**: Builds the report document (Technical Plan §10),
-  writes it with a client-generated UUID as the document ID, and returns
-  sent, failed or limit reached. Turns Firestore offline persistence off
-  before the first write, and treats a write not confirmed within
-  `REPORT_WRITE_TIMEOUT_MS` as failed. Does not offer Report
-  when `kill_switch.reportsDisabled` is true. `reportLimit` keeps the daily
-  count (against `REPORT_DAILY_LIMIT_PER_INSTALL`) and sent IDs in
-  `reports.json`.
+##### 42. `ios/Config/Dev/GoogleService-Info.plist`, `ios/Config/Prod/GoogleService-Info.plist` (Move)
 
-##### 50. `src/features/report/ReportSheet.tsx` (Create)
+- **Type / Scope**: Firebase service files.
+- **Proposed Changes**: From `firebase/dev/` and `firebase/prod/`; selected
+  by build configuration.
 
-- **Type / Scope**: UI component.
-- **Proposed Changes**: Category chips, note field (1,000 characters) with
-  "The photo itself is not sent", a list of what is sent, result state and a
-  copyable report ID.
+##### 43. `ios/PhotoCritic/Info.plist`, `PrivacyInfo.xcprivacy` (Create)
 
-#### Platform (`src/platform/`)
+- **Type / Scope**: App configuration.
+- **Proposed Changes**: `NSCameraUsageDescription`; no photo-library usage
+  string (PhotosPicker needs none); `UIUserInterfaceStyle` Dark;
+  `ITSAppUsesNonExemptEncryption` NO; Firebase keys
+  `FIREBASE_ANALYTICS_COLLECTION_ENABLED`,
+  `FirebaseCrashlyticsCollectionEnabled`,
+  `GOOGLE_ANALYTICS_IDFV_COLLECTION_ENABLED`,
+  `GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE`,
+  `GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA`,
+  `GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS` and
+  `FirebaseAutomaticScreenReportingEnabled` all off (names checked in Phase
+  0). The privacy manifest: `NSPrivacyTracking` false; required-reason API
+  use for file timestamps only (the app keeps its data in files, not
+  `UserDefaults`); collected data types as in `docs/store-forms.md`.
+  **Why:** G1, G16 and App Store privacy rules are set here.
 
-##### 51. `src/platform/net/allowlist.ts` and `providerFetch.ts` (Create)
+##### 44. `ios/.swiftlint.yml` (Create)
 
-- **Type / Scope**: Modules.
-- **Proposed Changes**: The host allowlist constant and the fetch wrapper in
-  Technical Plan §4 (allowlist check, `redirect: 'error'`, Origin removal,
-  timeouts combined with the Stop signal, request-ID capture).
+- **Type / Scope**: Lint rules.
+- **Proposed Changes**: Custom rules with `included` paths
+  `ios/Core/Sources/PhotoCriticCore/` and `ios/PhotoCritic/`:
+  `import FirebaseAnalytics` and `import FirebaseCrashlytics` are errors
+  except under `ios/PhotoCritic/Platform/Telemetry/`; `URLSession(` is an
+  error except under `ios/Core/Sources/PhotoCriticCore/Net/`; `print(` and
+  `NSLog(` are errors except under `ios/PhotoCritic/Platform/Telemetry/`.
+  **Why:** layering and redaction rules (§2, G16).
 
-##### 52. `src/platform/net/connectivity.ts` (Create)
+##### 45. `ios/Core/Package.swift` and `ios/Core/Sources/PhotoCriticCore/` (Create)
 
-- **Type / Scope**: Hook and store.
-- **Proposed Changes**: Online or offline from NetInfo, used by the banner
-  and the Send button.
+- **Type / Scope**: Local Swift package, Foundation only.
+- **Proposed Changes**: `// swift-tools-version: 6.0`; `platforms:
+  [.iOS(.v17), .macOS(.v14)]` (so `swift test` runs on the CI Mac); Swift 6
+  language mode; targets `PhotoCriticCore` (resources:
+  `Resources/prompts`), `PhotoCriticCoreTests`, `PhotoCriticCoreLiveTests`.
+  The same files and behavior as Android files 23–30, in Swift:
+  `Net/Allowlist.swift`, `Net/ProviderHTTP.swift` (an ephemeral
+  `URLSession` with a delegate that refuses redirects, `bytes(for:)` for
+  streaming, timeouts from the constants, the request-ID header name passed
+  in), `Net/SSE.swift`; `Providers/Types.swift`, `Providers/Registry.swift`,
+  `Providers/Shared/` (`SystemPrompt.swift`, `HistoryTrim.swift`,
+  `ExtractedText.swift`, `ToPcError.swift`, `Redact.swift`,
+  `UserMessages.swift`), `Providers/Gemini/`, `Providers/Anthropic/`,
+  `Providers/OpenAI/` (each `<Name>Client.swift` plus `Wire.swift` with
+  `Codable` types), `Providers/Fake/FakeProvider.swift`; `Config/`
+  (`ConfigModels.swift`, `ConfigValidator.swift`, `Snapshot.swift`,
+  `KillSwitch.swift`, `Tuning.swift`, `AppVersion.swift`); `Session/`
+  (`SessionTypes.swift`, `SessionMachine.swift`, with the controller running
+  the stream in a `Task`); `Consent/ConsentRules.swift`,
+  `Report/ReportBuilder.swift`, `Report/ReportLimit.swift`. **Why:** the
+  same contract as Android, testable with `swift test` without a simulator.
 
-##### 53. `src/platform/config/remoteConfig.ts`, `snapshot.ts`, `killSwitch.ts` (Create)
+##### 46. `ios/PhotoCritic/` app sources (Create)
 
-- **Type / Scope**: Modules.
-- **Proposed Changes**: Startup sequence from Technical Plan §8, with no
-  update listener; `snapshot` exposes typed, validated values; a failed
-  fetch or any invalid value returns `unavailable`, which shows the
-  config-unavailable screen (Q9), and is logged through telemetry;
-  `killSwitch` evaluates app, provider and model disabling, reports
-  disabling and the minimum app version, once at cold start.
+- **Type / Scope**: App target.
+- **Proposed Changes**:
+  - `PhotoCriticApp.swift` (startup in the same order as file 38; Firebase
+    configured from the bundled plist); `AppContainer.swift` (the
+    Assumptions interfaces, passed through the SwiftUI environment);
+    `Debug/FakeContainer.swift` (compiled only in `Debug-Dev`, chosen by the
+    launch argument `-PCUseFakes YES`).
+  - `Platform/Storage/`: `Keychain.swift` (`kSecAttrAccessibleWhenUnlockedThisDeviceOnly`
+    on every write, `kSecAttrSynchronizable` false), `InstallMarker.swift`
+    (deletes all Keychain items for the service when the marker is
+    missing), `JSONFiles.swift` (atomic writes in Application Support,
+    marked `isExcludedFromBackup`), `SettingsStore.swift`,
+    `ConsentStore.swift`, `ReportStore.swift`.
+  - `Platform/Config/RemoteConfigLoader.swift` (same load order;
+    `minimumFetchInterval = 0`; no real-time listener);
+    `Platform/Telemetry/Telemetry.swift` and `Events.swift` (same as file
+    33); `Platform/Net/Connectivity.swift` (`NWPathMonitor`).
+  - `Features/Image/` (`PhotoRecord.swift`, `Pick.swift` with PhotosPicker
+    and the camera wrapper, `ImagePipeline.swift` with ImageIO as in §6 and
+    the file 35 rules, `Cleanup.swift`); `Features/Report/ReportService.swift`
+    (same as file 36, Firestore `MemoryCacheSettings`);
+    `Features/Session/SessionModel.swift` (`@Observable`, wraps the Core
+    controller).
+  - `UI/`: `SetupView.swift`, `HomeView.swift`, `SettingsView.swift`,
+    `DisabledView.swift`, `PhotoView.swift`, `ConversationSheet.swift`,
+    `ConversationPane.swift`, `MessageList.swift`, `MessageItem.swift`,
+    `Composer.swift`, `StarterChips.swift`, `ConsentSheet.swift`,
+    `ReportSheet.swift`, `Design/Tokens.swift`, `Design/Components.swift`,
+    `Design/LayoutMode.swift`, with the behavior of file 38 (the sheet in
+    §12; `LayoutMode` thresholds in points: 700 at start, 720 and 680
+    afterwards); VoiceOver labels and Dynamic Type.
+  - `Localizable.xcstrings` (every user-visible string); `Assets.xcassets`
+    (app icon, Lucide SVG icons, accent color).
 
-##### 54. `src/platform/storage/files.ts` (Create)
+##### 47. iOS tests (Create)
 
-- **Type / Scope**: Module.
-- **Proposed Changes**: `readJson`, `writeJsonAtomic` (write a temporary
-  file, then move over the target; handle a leftover temporary file at
-  launch), and a per-file write queue so writes do not overlap.
-
-##### 55. `src/platform/storage/secureKeys.ts` and `installMarker.ts` (Create)
-
-- **Type / Scope**: Modules.
-- **Proposed Changes**: `getKey`, `setKey`, `deleteKey` per provider, always
-  with `WHEN_UNLOCKED_THIS_DEVICE_ONLY`. `installMarker` checks
-  `install.json`; if it is missing (not unreadable), deletes the fixed list
-  of key names and writes the marker.
-
-##### 56. `src/platform/storage/settings.ts` (Create)
-
-- **Type / Scope**: Module.
-- **Proposed Changes**: `settings.json` read and write with defaults on a
-  corrupt or missing file: selected provider, model per provider, sharing
-  opt-in, onboarding time.
-
-##### 57. `src/platform/telemetry/telemetry.ts`, `events.ts`, `redact.ts`, `errorHandler.ts` (Create)
-
-- **Type / Scope**: Modules.
-- **Proposed Changes**: `setSharing(on)` turns collection on or off in both
-  SDKs and sets or clears the instance-ID user ID; `log(event, params)`
-  accepts only the events and parameters in `events.ts` (brief K.5 without
-  `tier`) and drops everything while sharing is off; `redact` removes keys,
-  URLs with query strings, file paths and any text field; `errorHandler`
-  is the global JavaScript error handler that redacts before Crashlytics.
-  No special handling of crash reports from before opt-in (Q10).
-
-#### Tests and fixtures
-
-##### 58. `test/fixtures/images/` (Create)
-
-- **Type / Scope**: Image fixtures.
-- **Proposed Changes**: HEIC with GPS, AVIF, DNG, animated GIF, corrupt
-  JPEG, 48 MP JPEG, extreme panorama, rotated EXIF, a sign and a receipt for
-  text-extraction checks.
-
-##### 59. `test/fixtures/providers/<provider>/*.json` (Create)
-
-- **Type / Scope**: Recorded responses.
-- **Proposed Changes**: Error responses per provider (for example Gemini
-  403 and safety 400, Anthropic spend-limit 400, 429, 529 and CORS 401,
-  OpenAI billing 429 and 503), plus normal streams, mid-stream errors and
-  refusals. Each carries its recording date.
-
-##### 60. `src/features/providers/__tests__/contract.test.ts` (Create)
-
-- **Type / Scope**: Shared adapter contract test.
-- **Proposed Changes**: Runs every adapter against its fixtures: message
-  order and image placement, history trimming, no AI SDK types in output,
-  request ID captured, served model reported, abort stops the stream, each
-  error fixture produces one `error` event with the expected `phase`,
-  `httpStatus`, `providerCode` and `requestId`, no key in `detail`, and no
-  second request (no retries).
-
-##### 61. Unit tests next to each module (Create)
-
-- **Type / Scope**: Jest tests.
-- **Proposed Changes**: `extractedText.test.ts`, `toPcError.test.ts`,
-  `tuning.test.ts` (report limits match the literals in `firestore.rules`),
-  `historyTrim.test.ts`, `providerFetch.test.ts` (allowlist, redirects,
-  Origin removed), `pipeline.test.ts` (fixtures, metadata removed, size
-  cap), `remoteConfig.test.ts` (offline first launch shows the
-  config-unavailable screen, an invalid value shows it too, throttled fetch
-  uses the last activated values, `baseUrl` outside allowlist rejected, a
-  disabled saved model opens setup, no update listener registered, `1.10.0`
-  versus `1.9.0`), `files.test.ts`
-  (interrupted write, leftover temporary file, corrupt files),
-  `installMarker.test.ts` (missing versus unreadable marker, upgrade without
-  wipe), `consentStore.test.ts` (write failure blocks send, version bump
-  re-asks), `telemetry.test.ts` (nothing logged while off, user ID cleared,
-  marker string never reaches Crashlytics), `sessionStore.test.ts`
-  (every state transition in §5, stopped and failed answers excluded from
-  history, a failed answer keeps its partial text),
-  `reportService.test.ts` (no image field, `instanceId` only when sharing,
-  limit reached, unconfirmed write shown as failed, persistence off).
-
-##### 62. Screen tests: `src/app/__tests__/setup.test.tsx`, `home.test.tsx`, `settings.test.tsx` (Create)
-
-- **Type / Scope**: React Native Testing Library tests.
-- **Proposed Changes**: Written with `screen`, `getByRole` with names and
-  `findBy*` for async content, no side effects in `waitFor`. Cover CUJs
-  1–9 with the fake provider: first launch, consent once per provider, copy
-  text card, Stop, the generic error message and its details, new photo
-  confirmation, report flow, kill switch at start, layout switch at the
-  width margin, config-unavailable screen.
-
-##### 63. `test/rules/reports.rules.test.ts` (Create)
-
-- **Type / Scope**: Firestore emulator test.
-- **Proposed Changes**: Valid create allowed; read, update, delete and list
-  denied; missing or extra fields, wrong types, oversize `reason`, a
-  `conversation` list longer than the limit, wrong `createdAt`, and any
-  image field rejected. (Oversize text inside a list item cannot be
-  rejected by rules; this is the accepted trade-off of the list shape.)
-
-#### Benchmark harness
-
-##### 64. `harness/run.ts`, `harness/score.ts`, `harness/README.md`, `harness/datasets/` (Create)
-
-- **Type / Scope**: Node tool outside the app.
-- **Proposed Changes**: Runs a labelled photo set through the same adapters
-  (under Node) at several long-edge sizes and detail settings; records
-  served model, settings, prompt version, time to first token, total time,
-  tokens, and error `phase` and HTTP status; scores extracted text against ground truth
-  (character error rate). Writes one CSV per run to `harness/results/`
-  (ignored by git). **Why:** G23, the primary measure, and the data for
-  the image-size decision (Q5).
+- **Type / Scope**: Unit, contract, live and UI tests.
+- **Proposed Changes**:
+  - `ios/Core/Tests/PhotoCriticCoreTests/`: the same list as file 39's
+    `core` tests, reading the same `shared/` files (the repository root is
+    found from `#filePath`), with a `URLProtocol` stub in place of
+    `MockWebServer`.
+  - `ios/Core/Tests/PhotoCriticCoreLiveTests/`: the client acceptance tests
+    against the live APIs, skipped unless `PC_LIVE_OPENAI_KEY`,
+    `PC_LIVE_ANTHROPIC_KEY` or `PC_LIVE_GEMINI_KEY` is set; run by hand with
+    `swift test --filter Live` before each tester release.
+  - `PhotoCriticTests`: Keychain and install marker (missing versus
+    unreadable), atomic files, telemetry off, report service, image
+    pipeline, cleanup, Remote Config loader.
+  - `PhotoCriticUITests`: CUJs 1–9 plus consent once per provider, with the
+    fake container (`-PCUseFakes YES`).
 
 #### Documentation
 
-##### 65. `README.md` (Create)
+##### 48. `README.md` (Create)
 
 - **Type / Scope**: Project readme.
-- **Proposed Changes**: How to set up, run the dev client, run tests,
-  publish config, and build for TestFlight and Play internal; links to this
+- **Proposed Changes**: Toolchain setup (Android Studio, Xcode, XcodeGen,
+  SwiftLint, Node for `tools/`), how to build and run each app, run tests,
+  record fixtures, publish config, and make tester builds; links to this
   design and the brief.
 
-##### 66. `docs/VERSIONS.md` (Create)
+##### 49. `docs/VERSIONS.md` (Modify)
 
 - **Type / Scope**: Version table.
-- **Proposed Changes**: The Phase 0 pins (Expo SDK, React Native,
-  Reanimated, sheet library, AI SDK and provider packages, React Native
-  Firebase), the reason for each, and the rule that the AI SDK and React
-  Native AI are upgraded together in Phase 5.
+- **Proposed Changes**: Replace the Expo table with the Phase 0 pins:
+  Kotlin, Android Gradle Plugin, Compose BOM, OkHttp, kotlinx libraries,
+  Firebase Android BoM, Swift tools version, Firebase Apple SDK, XcodeGen,
+  SwiftLint, ktlint, detekt; the reason for each; the platform minimums; the
+  rule that a provider API version (Anthropic `anthropic-version`, Gemini
+  `v1beta`) changes in both apps in the same pull request.
 
-##### 67. `docs/spikes/phase0.md` (Create)
+##### 50. `docs/spikes/phase0.md` (Modify)
 
 - **Type / Scope**: Spike results.
-- **Proposed Changes**: Pass or fail with evidence for: AI SDK setup checks
-  from a release build for all three providers (custom fetch accepted,
-  streaming, abort, error bodies and headers readable, mid-stream errors,
-  no Origin header, polyfills needed or not, Gemini endpoint and version,
-  OpenAI API choice); sheet library comparison; image-size accuracy;
-  Anthropic caching fields; `getAppInstanceId` with collection off and on;
-  Crashlytics unsent reports; Firestore persistence off leaves no report
-  text on disk; atomic file move;
-  whether pre-opt-in crash reports are sent after opting in. **Why:** these
-  confirm the AI SDK setup (Q1), answer Q2, Q3 and Q5, and confirm the Q10
-  behavior. A failed AI SDK check is worked around inside the AI SDK setup
-  (AR1).
+- **Proposed Changes**: Rewritten in the same commit as file 1. Replaces the
+  AI SDK check matrix with:
+  - wire formats confirmed per provider (§3a, Q1), with recording dates;
+  - `core/net` and the Gemini client passing the client acceptance tests on
+    an Android phone and an iPhone;
+  - Firebase behavior checks: collection-off key names on both platforms;
+    `getAppInstanceId` with collection off and on; Crashlytics unsent
+    reports; the Firestore memory cache leaving no report text on disk;
+    server timestamp plus offset for `expireAt` (file 36); Analytics
+    reserved event names (file 33);
+  - the merged-manifest permission list (file 17);
+  - atomic file writes;
+  - image-size accuracy, the history cap and the token-estimate values
+    (Q5, file 14);
+  - harness and Android pipeline output compared (file 40);
+  - Anthropic automatic caching fields;
+  - HEIC on API 24–27 and AVIF on API 24–30 (Q2);
+  - the measured timeouts.
+  The Expo-era Gemini Node run (2026-11-17) stays as a historical note.
+  **Why:** these confirm §3a (Q1), answer Q5 and the Q2 image limits, and
+  confirm the Q10 behavior.
 
-##### 68. `docs/privacy-policy.md` (Create; hosted copy linked from `privacy_policy.url`)
+##### 51. `docs/privacy-policy.md` (Create; bundled in both apps)
 
 - **Type / Scope**: Privacy policy.
 - **Proposed Changes**: Per provider: what is sent, retention, training and
-  human review, region notes; what Firebase collects (config, opt-in
-  analytics and crash data, report text and retention, linked
-  instance ID when sharing is on); keys and photos stay on the device;
-  18+; deletion requests by report ID through the support contact.
+  human review, region notes; that OpenAI requests use `store: false`, so
+  OpenAI keeps abuse-monitoring logs for up to 30 days, or longer where
+  required by law, and no application state; what Firebase collects
+  (config, opt-in analytics and crash data, report text and its retention,
+  linked instance ID when sharing is on); keys and photos stay on the
+  device; 18+; deletion requests by report ID through the support contact.
+  The policy is bundled with the app (author decision, 2026-11-17): the
+  Android build copies it into the `app` assets with a Gradle `sourceSets`
+  entry, and `ios/project.yml` adds it as a bundle resource. Settings and
+  the consent sheet open it in an in-app text view (plain text; no Markdown
+  rendering in v1). `privacy_policy.url` stays empty until a hosted copy is
+  needed (for example for the store listing). The support email is supplied
+  by the author when application coding is complete.
 
-##### 69. `docs/store-forms.md` (Create)
+##### 52. `docs/store-forms.md` (Create)
 
 - **Type / Scope**: Compliance notes.
 - **Proposed Changes**: App Privacy label answers, Play Data safety
   answers, age rating answers, and the TestFlight and Play internal test
   notes.
 
-##### 70. `docs/reviewer-key-runbook.md` (Create)
+##### 53. `docs/reviewer-key-runbook.md` (Create)
 
 - **Type / Scope**: Operations runbook.
-- **Proposed Changes**: Creating a spend-capped key for Beta App Review,
-  where it is given to reviewers, rotation after each review, and what to do
-  if a key is reported leaked.
+- **Proposed Changes**: Creating a spend-capped key for Beta App Review and
+  Play review, where it is given to reviewers, rotation after each review,
+  and what to do if a key is reported leaked.
 
-##### 71. `THIRD_PARTY_NOTICES.md` (Create)
+##### 54. `THIRD_PARTY_NOTICES.md` (Create)
 
 - **Type / Scope**: Licence notices.
-- **Proposed Changes**: Lucide (ISC) and other copied assets.
+- **Proposed Changes**: Lucide (ISC), OkHttp and other Apache 2.0
+  libraries, Firebase SDKs.
 
-##### 72. `.gitignore` (Create)
+##### 55. `docs/plans/native-migration.md` (Keep)
 
-- **Type / Scope**: Ignore rules.
-- **Proposed Changes**: Node modules, native build folders, `.env*`,
-  `harness/results/`, CI key files.
+- **Type / Scope**: Decision record.
+- **Proposed Changes**: None; it records the 2026-11-17 decisions and the
+  rejected provider layers. This design supersedes it where they differ.
 
 ### Verification Plan
 
-- **Compilation/Build**: `npm run typecheck`; `npx expo install --check`;
-  `npx expo prebuild --clean` then `npm run check:permissions`;
-  `eas build --profile preview` for iOS and Android on each phase end.
-- **Unit Tests**: `npm test` (Jest with `jest-expo`), including the shared
-  provider contract test.
-- **Static Analysis & Linting**: `npm run lint` (layering, telemetry and
-  barrel rules); `npm run config:validate`.
-- **Test Coverage Requirement**: 80% line coverage for `src/features/` and
-  `src/platform/`; every recorded error fixture has a contract test.
-- **E2E/Integration**: `npm run test:rules` (Firestore emulator); screen
-  tests for CUJs 1–9 with the fake provider; the daily canary from Phase 3;
-  the manual smoke test with live keys (invalid key, revoked key, old
-  unrestricted Gemini key, spend-capped key per provider, re-routed Gemini
-  model, oversize image); a proxy check that a build with sharing off sends
-  no Analytics or Crashlytics traffic; an iOS reinstall on a physical device
-  wipes keys.
-- **Measurements**: `npm run harness` before Phase 2 ends (baseline) and
-  before each tester release; time to first word, photo preparation time,
-  cold start and frame rate recorded on the oldest supported phone.
+- **Compilation/Build**: `./gradlew assembleDevDebug assembleProdRelease
+  :app:checkPermissions`; `xcodegen && xcodebuild build` for the
+  `PhotoCritic-Dev` and `PhotoCritic-Prod` schemes. A signed Android build
+  at the end of every phase from Phase 1; a signed iOS build once the Apple
+  Developer account exists, and at the latest at the end of Phase 4.
+- **Unit Tests**: `./gradlew :core:test :app:testDevDebugUnitTest`; `swift
+  test` in `ios/Core`; `xcodebuild test` for `PhotoCriticTests`. Both apps
+  run the same provider contract tests against `shared/`.
+- **Static Analysis & Linting**: `./gradlew ktlintCheck detekt` (layering,
+  telemetry and logging rules); `swiftlint --strict`; `npm run
+  config:validate` in `tools/`; the prompt-copy check (file 3).
+- **Test Coverage Requirement**: 80% line coverage for `android/core`
+  (Kover, `koverVerify`) and `ios/Core` (`llvm-cov report`), enforced in
+  CI; every fixture in `shared/` is used by both apps' contract tests.
+- **Client acceptance tests** (each provider client, both platforms): key
+  only in its header, never in the URL, logs or `detail`; text streams in
+  more than one delta; the image carries the detail or resolution setting
+  from the model's Remote Config entry; a disallowed host and any redirect
+  are refused before data is sent; exactly one request per question,
+  including on errors; Stop ends the stream and the request; errors carry
+  status, provider code and request ID where the provider sends one; every
+  recorded stream gives the expected events; OpenAI requests contain
+  `store: false`. They run in CI against recordings and a local mock
+  server, and before each tester release against the live APIs with
+  spend-capped keys (`:harness` for Kotlin, `PhotoCriticCoreLiveTests` for
+  Swift).
+- **E2E/Integration**: Firestore emulator rules tests; Compose UI tests and
+  XCUITests for CUJs 1–9 plus consent once per provider, with the fake
+  container; the daily canary from Phase 3; an iOS 17.0 simulator run and
+  `SecureKeysTest` on an API 24 phone before each tester release; the
+  manual smoke test with live keys on both platforms (invalid key, revoked
+  key, old unrestricted Gemini key, spend-capped key per provider,
+  re-routed Gemini model, oversize image); a proxy check that a build with
+  sharing off sends nothing to `app-measurement.com`,
+  `firebaselogging-pa.googleapis.com` or
+  `crashlyticsreports-pa.googleapis.com` (Remote Config and Installations
+  calls are expected; Phase 0 confirms the host list); an iOS reinstall on
+  a physical device wipes keys.
+- **Measurements**: `./gradlew :harness:run` before Phase 2 ends (Gemini
+  baseline), before Phase 4 ends (all providers) and before each tester
+  release; time to first token, photo preparation time, cold start and
+  frame rate recorded on one reference phone per platform (chosen in Phase
+  0: the oldest test phone available, API 24–27 on Android if possible).
 
 ---
 
