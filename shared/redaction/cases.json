@@ -1,0 +1,18 @@
+{
+  "description": "Redaction cases (design file 14). Each app's Redact must turn input into expected. userKey, when present, is the key the user entered.",
+  "cases": [
+    { "name": "user key anywhere", "userKey": "my-own-key-123", "input": "API key my-own-key-123 is invalid", "expected": "API key [key] is invalid" },
+    { "name": "OpenAI key", "input": "Incorrect API key provided: sk-proj-abcdefghijklmnop1234", "expected": "Incorrect API key provided: [key]" },
+    { "name": "Anthropic key", "input": "key sk-ant-api03-abcdefghijklmnopqrst rejected", "expected": "key [key] rejected" },
+    { "name": "Google AIza key", "input": "key=AIzaSyA1234567890abcdefghijklmnopqrstuv", "expected": "key=[key]" },
+    { "name": "Gemini AQ key", "input": "API key AQ.Ab8RN6aaaaaaaaaaaaaaaaaaaaaa not valid", "expected": "API key [key] not valid" },
+    { "name": "bearer token", "input": "Authorization: Bearer abc.def.ghi", "expected": "Authorization: [key]" },
+    { "name": "URL query string", "input": "See https://example.com/path/x?key=secret&a=1 for details", "expected": "See https://example.com/path/x?[query] for details" },
+    { "name": "content URI", "input": "Cannot read content://media/external/images/12", "expected": "Cannot read [path]" },
+    { "name": "file URI", "input": "Cannot read file:///data/user/0/app/cache/a.jpg", "expected": "Cannot read [path]" },
+    { "name": "absolute path", "input": "Failed at /var/mobile/Containers/Data/photo.jpg now", "expected": "Failed at [path] now" },
+    { "name": "single-segment path kept", "input": "Use /v1 endpoint", "expected": "Use /v1 endpoint" },
+    { "name": "plain text kept", "input": "The model is overloaded. Try again later.", "expected": "The model is overloaded. Try again later." },
+    { "name": "cut to 200", "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
+  ]
+}

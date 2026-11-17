@@ -33,10 +33,11 @@ subprojects {
 tasks.register("checkLayering") {
     group = "verification"
     description = "Fails if okhttp3 is imported outside core/net."
-    val sources = fileTree(projectDir) {
-        include("**/src/main/kotlin/**/*.kt")
-        exclude("core/src/main/kotlin/com/yk/photocritic/core/net/**")
-    }
+    val sources =
+        files(
+            fileTree("core/src/main/kotlin") { exclude("com/yk/photocritic/core/net/**") },
+            fileTree("app/src/main/kotlin"),
+        )
     inputs.files(sources)
     doLast {
         val offenders = sources.files.filter { file -> file.readLines().any { it.startsWith("import okhttp3") } }

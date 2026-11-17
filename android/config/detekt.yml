@@ -26,6 +26,14 @@ style:
     ignorePropertyDeclaration: true
     ignoreCompanionObjectPropertyDeclaration: true
     excludes: ['**/test/**']
+  MaxLineLength:
+    maxLineLength: 140
+  ReturnCount:
+    max: 3
+    excludeGuardClauses: true
+complexity:
+  LongParameterList:
+    functionThreshold: 7
 naming:
   FunctionNaming:
     # Compose functions are PascalCase.

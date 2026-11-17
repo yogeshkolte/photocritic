@@ -9,7 +9,13 @@ best = None
 for runtime, items in devices.items():
     if "iOS" not in runtime:
         continue
-    version = tuple(int(p) for p in runtime.rsplit("iOS-", 1)[-1].split("-"))
+    # e.g. ...SimRuntime.iOS-27-2 or ...SimRuntime.iOS-27-2-iPhone19-4
+    parts = []
+    for p in runtime.rsplit("iOS-", 1)[-1].split("-"):
+        if not p.isdigit():
+            break
+        parts.append(int(p))
+    version = tuple(parts)
     for d in items:
         if d["name"].startswith("iPhone") and (best is None or version > best[0]):
             best = (version, d["udid"])

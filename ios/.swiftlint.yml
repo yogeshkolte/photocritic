@@ -27,5 +27,18 @@ custom_rules:
 disabled_rules:
   # Trailing commas are the house style in both apps.
   - trailing_comma
+  # Response lines are decoded lossily on purpose (String(decoding:as:)): a
+  # stray invalid byte must not drop a whole line.
+  - optional_data_string_conversion
+# Limits match android/config/detekt.yml and .editorconfig.
+line_length:
+  warning: 140
+  error: 140
+function_parameter_count:
+  warning: 7
+  error: 7
+cyclomatic_complexity:
+  warning: 15
+  error: 15
 identifier_name:
   excluded: [bg, id]

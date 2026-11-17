@@ -12,7 +12,7 @@ in with evidence (device, build, date).
 | Firebase service files moved to `android/app/src/{dev,prod}/` and `ios/Config/{Dev,Prod}/`; rules, indexes and CLI config moved to `firebase/` | Done 2026-11-17 |
 | Toolchain: JDK 17 (Zulu), Android command-line tools with platform-tools, platforms 36 and 37.0, build-tools 36.1.0; Xcode 27.2; XcodeGen 2.47.0; SwiftLint 0.65.1 | Installed 2026-11-17 |
 | Android scaffold (files 16–22): builds, lint and one test pass | Done 2026-11-17: `assembleDevDebug`, ktlint, detekt, `checkLayering`, `:core:test` (2), `koverVerify`, `testDevDebugUnitTest` (1, Robolectric SDK 35), `checkPermissions` |
-| iOS scaffold (files 41–44): builds, lint and one test pass | Partly, 2026-11-17: `swift test` (2) and `swiftlint --strict` pass; the app builds for the simulator with Firebase 13.1.1 and the dev plist. App and UI tests not run: no simulator runtime installed |
+| iOS scaffold (files 41–44): builds, lint and one test pass | Done 2026-11-17: `swift test`, `swiftlint --strict`, app build with Firebase 13.1.1 and the dev plist, app unit test and UI launch test on the iOS 27.2 simulator |
 | CI for both apps (file 3) | Written 2026-11-17; not yet run on GitHub |
 | `shared/` README, fixture schema, prompts, Remote Config schema and template; `tools/` validate and record scripts | Done except `record-fixture.ts` (step 4): `config:validate` passes the template and rejects all 6 invalid samples |
 | Expo project on expo.dev deleted (author, D1) | Pending: needs the author's password on expo.dev |
@@ -28,6 +28,22 @@ Recordings go to `shared/provider-*` (file 13). Record the date and model.
 | Request ID location | Body `responseId`; no header; failed calls carry none (2026-11-17, Node run below) | | |
 | Refusal and content-filter shapes | | | |
 | OpenAI `store: false` accepted | n/a | n/a | |
+
+## Gemini client and `core/net` (step 5)
+
+Built on both platforms on 2026-11-17 to the §3a and §4 tables: Android
+`core/net` (`Allowlist.kt`, `ProviderHttp.kt`, `Sse.kt`) and
+`providers/gemini/`; iOS `Core/Net/` and `Providers/Gemini/`, plus types,
+prompts, redaction and error helpers. The same 26 checks pass on both: SSE
+parsing (6), host policy and transport (5: refused host sends nothing, no
+redirect followed, no retry, request ID header, lines kept), redaction
+against `shared/redaction/cases.json`, prompts against `shared/prompts/`,
+tuning (2), and the Gemini client (11: text and done with `responseId`, key
+only in the header, image and resolution in the body, invalid key, SAFETY,
+MAX_TOKENS, blocked prompt, stream without finish, error event, thought
+parts hidden, Stop, refused host). They run against a local mock server
+(Android) and a `URLProtocol` stub (iOS) with hand-written streams; the
+recorded fixtures (step 4) replace those, and the phone runs below remain.
 
 ## Client acceptance tests on a phone (Gemini client, both platforms)
 

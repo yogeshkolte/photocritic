@@ -1846,7 +1846,7 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
   | Consent version | `consent_texts.<p>.version`; must equal `providers.<p>.consentTextVersion` |
   | `privacy_policy.version` | Shown in Settings next to the bundled privacy policy |
 
-##### 27. `android/core/.../providers/gemini/GeminiClient.kt`, `anthropic/AnthropicClient.kt`, `openai/OpenAiClient.kt`, each with `Wire.kt` (Create; Gemini in Phase 0 and 2, others in Phase 3)
+##### 27. `android/core/.../providers/gemini/GeminiClient.kt`, `anthropic/AnthropicClient.kt`, `openai/OpenAiClient.kt`, each with `<Provider>Wire.kt` (for example `GeminiWire.kt`) (Create; Gemini in Phase 0 and 2, others in Phase 3)
 
 - **Type / Scope**: Provider clients.
 - **Proposed Changes**: Each implements `Provider` with the request format,
@@ -1858,7 +1858,7 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
   response that ends with refusal content is a `finish` failure with
   `providerCode` `refusal`, keeping the text as the Failed answer. No
   sampling parameters for Gemini. `checkKey`: model list for OpenAI and
-  Anthropic; minimal inference call for Gemini. `Wire.kt` holds the
+  Anthropic; minimal inference call for Gemini. The wire file holds the
   kotlinx.serialization request and event classes, which stay inside the
   client's package.
 
@@ -2192,7 +2192,7 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
   `Providers/Shared/` (`SystemPrompt.swift`, `HistoryTrim.swift`,
   `ExtractedText.swift`, `ToPcError.swift`, `Redact.swift`,
   `UserMessages.swift`), `Providers/Gemini/`, `Providers/Anthropic/`,
-  `Providers/OpenAI/` (each `<Name>Client.swift` plus `Wire.swift` with
+  `Providers/OpenAI/` (each `<Name>Client.swift` plus `<Name>Wire.swift` with
   `Codable` types), `Providers/Fake/FakeProvider.swift`; `Config/`
   (`ConfigModels.swift`, `ConfigValidator.swift`, `Snapshot.swift`,
   `KillSwitch.swift`, `Tuning.swift`, `AppVersion.swift`); `Session/`
