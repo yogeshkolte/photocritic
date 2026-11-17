@@ -44,7 +44,7 @@ struct GeminiClientTests {
         return out
     }
 
-    private func error(_ events: [TurnEvent]) -> PcError? {
+    private func lastError(_ events: [TurnEvent]) -> PcError? {
         if case let .error(error)? = events.last { return error }
         return nil
     }
@@ -82,7 +82,7 @@ struct GeminiClientTests {
         let body = #"{"error":{"code":400,"message":"API key not valid: \#(key)","status":"INVALID_ARGUMENT"}}"#
         StubProtocol.enqueue(.init(status: 400, body: Data(body.utf8)), host: host)
         let out = await events(client(), request())
-        let error = try #require(error(out))
+        let error = try #require(lastError(out))
         #expect(out.count == 1)
         #expect(error.phase == .beforeResponse)
         #expect(error.httpStatus == 400)
@@ -96,7 +96,7 @@ struct GeminiClientTests {
         stream(chunk("Partial"), chunk("", finish: "SAFETY"))
         let out = await events(client(), request())
         #expect(out.first == .text("Partial"))
-        let error = try #require(error(out))
+        let error = try #require(lastError(out))
         #expect(error.phase == .finish)
         #expect(error.providerCode == "SAFETY")
         #expect(error.requestID == "resp_1")
@@ -109,19 +109,19 @@ struct GeminiClientTests {
 
     @Test func blockedPromptIsAFinishFailure() async throws {
         stream(#"{"promptFeedback":{"blockReason":"PROHIBITED_CONTENT"},"responseId":"resp_2"}"#)
-        let error = try #require(error(await events(client(), request())))
+        let error = try #require(lastError(await events(client(), request())))
         #expect(error.phase == .finish)
         #expect(error.providerCode == "PROHIBITED_CONTENT")
     }
 
     @Test func streamEndingWithoutFinishReasonIsMidStreamFailure() async throws {
         stream(chunk("Cut"))
-        #expect(try #require(error(await events(client(), request()))).phase == .midStream)
+        #expect(try #require(lastError(await events(client(), request()))).phase == .midStream)
     }
 
     @Test func errorEventAfter200IsMidStreamFailure() async throws {
         stream(chunk("Start"), #"{"error":{"code":503,"message":"overloaded","status":"UNAVAILABLE"}}"#)
-        let error = try #require(error(await events(client(), request())))
+        let error = try #require(lastError(await events(client(), request())))
         #expect(error.phase == .midStream)
         #expect(error.providerCode == "UNAVAILABLE")
     }
@@ -144,7 +144,7 @@ struct GeminiClientTests {
 
     @Test func disallowedHostIsBeforeResponseFailureWithNoRequestSent() async throws {
         let out = await events(client(hosts: ["api.example.invalid"]), request())
-        let error = try #require(error(out))
+        let error = try #require(lastError(out))
         #expect(out.count == 1)
         #expect(error.phase == .beforeResponse)
         #expect(error.providerCode == "host-not-allowed")
