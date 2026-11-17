@@ -1,0 +1,102 @@
+> Documentation index: https://firebase.google.com/docs/remote-config/templates/llms.txt
+
+Remote Config templates are sets of JSON-formatted parameters and
+conditions created for your Firebase project. Remote Config organizes
+configurations into **templates** that can be created, updated, versioned,
+and rolled back.
+
+Depending on your architecture, you can create and manage client templates,
+server templates, or both:
+
+- **[Client templates](https://firebase.google.com/docs/remote-config/templates/client.md.txt)** :
+  Serve configurations to client app instances across Apple, Android, Web,
+  Flutter, Unity, and C++ platforms. Client templates support conditions
+  based on Google Analytics audiences, app versions, platform, device
+  language, country, user percentiles, and custom signals.
+
+- **[Server templates](https://firebase.google.com/docs/remote-config/templates/server.md.txt)** :
+  Serve configurations to backend environments such as
+  Cloud Run, Cloud Functions for Firebase, or containerized servers
+  using the Firebase Admin SDK for Node.js, Python, Go, and Java. Server
+  templates evaluate parameters server-side with near-zero latency using
+  server custom signals and random percentage rollouts.
+
+## Compare client and server templates
+
+Client and server templates are maintained independently within your Firebase
+project. Use the following table to understand how client and server templates
+differ:
+
+| Feature | Client templates | Server templates |
+|---|---|---|
+| **Target environments** | Client apps (Apple, Android, Web, Flutter, Unity, C++) | Server environments (Cloud Run, Cloud Functions for Firebase, GKE, backend services) |
+| **Supported SDKs** | Firebase client SDKs | Firebase Admin SDK (Node.js, Python, Go, Java) |
+| **Management tools** | Firebase console, Firebase CLI, REST API, Firebase Admin SDK | Firebase console |
+| **Console location** | [Parameters](https://console.firebase.google.com/project/_/config) and [Conditions](https://console.firebase.google.com/project/_/config/conditions) | [Parameters](https://console.firebase.google.com/project/_/config/env/firebase-server) and [Conditions](https://console.firebase.google.com/project/_/config/env/firebase-server/conditions) |
+| **Template defaults download** | Supported (XML for Android, PLIST for iOS, JSON for Web) | Not applicable (default values defined in server code or backend) |
+| **Detailed guide** | [Manage client templates](https://firebase.google.com/docs/remote-config/templates/client.md.txt) | [Manage server templates](https://firebase.google.com/docs/remote-config/templates/server.md.txt) |
+
+## Template lifecycle and versioning
+
+Whether you work with client templates or server templates, Remote Config
+provides built-in version control and lifecycle management:
+
+### Version creation and tracking
+
+Each time you update parameters or conditions, Remote Config creates a new
+versioned Remote Config template and stores the previous template as a
+version that you can retrieve or roll back to as needed. Version numbers are
+incremented sequentially from the initial value stored by Remote Config.
+
+All templates include a `version` field containing metadata about that specific
+version, such as:
+
+- `versionNumber`: The sequential version number of the template.
+- `updateTime`: The timestamp when the template was published.
+- `updateUser`: The email or identity of the user who made the update.
+- `updateOrigin`: How the change was made (for example, `CONSOLE`, `REST_API`, or `ADMIN_SDK_NODE`).
+- `updateType`: The nature of the change (for example, `INCREMENTAL_UPDATE` or `FORCED_UPDATE`).
+
+### Version limits and retention
+
+There is a total limit of 300 lifetime stored versions per template type
+(300 client templates and 300 server templates), which includes stored
+version numbers for deleted templates. If you publish more than 300
+template versions per template type during the lifetime of a project, the
+earliest versions are deleted, maintaining a maximum of 300 versions of
+that type.
+
+
+### Rollbacks
+
+You can roll back to any stored version of a template at any time. When you
+roll back, Remote Config creates a new version whose content matches the
+selected historical version. For example, rolling back from version 10 to
+version 6 creates version 11 with the configuration from version 6.
+
+### Import and export
+
+You can download your active template as a JSON file and publish it to the
+same project or another project. This capability lets you:
+
+- Store template definitions in source control (such as Git).
+- Integrate configuration deployments into CI/CD pipelines.
+- Promote configurations across stages (for example, from a development or staging project to production).
+- Migrate configurations between projects.
+
+Parameters and parameter values created specifically as variants in an
+A/B Testing experiment are not included in exported templates.
+
+### Template defaults
+
+For client applications, you can download files containing parameter default
+values in XML, PLIST, or JSON format to bundle with your app. For instructions,
+see
+[Download Remote Config template defaults](https://firebase.google.com/docs/remote-config/templates/client.md.txt#download-template-defaults).
+
+## Next steps
+
+- **Client templates** : Learn how to manage, version, download, and publish client templates in [Manage Remote Config client templates and versioning](https://firebase.google.com/docs/remote-config/templates/client.md.txt).
+- **Server templates** : Learn how to manage, version, and publish server templates in [Manage Remote Config server templates and versioning](https://firebase.google.com/docs/remote-config/templates/server.md.txt).
+- **Parameters and conditions** : Learn how parameters and conditions work in the [Remote Config parameters and conditions overview](https://firebase.google.com/docs/remote-config/parameters.md.txt).
+- **Automate updates** : Learn how to modify templates programmatically in [Modify Remote Config programmatically](https://firebase.google.com/docs/remote-config/automate-rc.md.txt).

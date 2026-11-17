@@ -1,0 +1,115 @@
+> Documentation index: https://firebase.google.com/docs/remote-config/parameters/llms.txt
+
+Firebase Remote Config lets you dynamically control the behavior and
+appearance of your applications without requiring users to download an app
+update or requiring backend redeployments.
+
+To configure your applications, you define **parameters** (key-value pairs) in
+Remote Config and consume them in your app or backend code. You can also
+define **conditions** (targeting rules) to assign **conditional values** that
+override default values for specific audiences, environments, or custom
+criteria.
+
+Remote Config organizes parameters and conditions into **templates**.
+Depending on your architecture, you can use client templates, server templates,
+or both:
+
+- **[Parameters and conditions in client templates](https://firebase.google.com/docs/remote-config/parameters/client.md.txt)** :
+  Serve configurations to client app instances across Apple, Android, Web,
+  Flutter, Unity, and C++ platforms. Target app instances using
+  Google Analytics audiences, app versions, platform, device language,
+  country, user percentiles, and client-side custom signals.
+
+- **[Parameters and conditions in server templates](https://firebase.google.com/docs/remote-config/parameters/server.md.txt)** :
+  Serve configurations to backend environments such as
+  Cloud Run, Cloud Functions for Firebase, or containerized servers
+  using the Firebase Admin SDK for Node.js, Python, Go, and Java. Evaluate
+  parameters server-side with near-zero latency using server custom signals
+  and random percentage rollouts.
+
+## Compare client and server templates
+
+Client and server templates serve different architectures and support distinct
+SDKs and targeting rules. Use the following table to understand which template
+type fits your use case:
+
+| Feature | Client templates | Server templates |
+|---|---|---|
+| **Target environments** | Client apps (Apple, Android, Web, Flutter, Unity, C++) | Server environments (Cloud Run, Cloud Functions for Firebase, GKE, backend services) |
+| **Supported SDKs** | Firebase client SDKs | Firebase Admin SDK (Node.js, Python, Go, Java) |
+| **Evaluation model** | Fetched and cached on client devices; activated by app code | Loaded into server memory; evaluated per request with near-zero latency |
+| **Condition rules** | App version, OS/platform, device language, country/region, Analytics audiences and user properties, user in random percentile, first app open, client custom signals | User in random percentage, server custom signals |
+| **Common use cases** | Feature rollouts, seasonal promotions, UI themes, A/B Testing, Personalization | AI prompt and model selection, server-side feature flags, backend rate-limiting, dynamic routing |
+| **Detailed guide** | [Parameters in client templates](https://firebase.google.com/docs/remote-config/parameters/client.md.txt) | [Parameters in server templates](https://firebase.google.com/docs/remote-config/parameters/server.md.txt) |
+
+## Core concepts
+
+Whether you work with client templates or server templates, Remote Config
+shares fundamental concepts:
+
+### Parameters
+
+Parameters are key-value pairs that you define in the Firebase console or
+using the [Remote Config backend APIs](https://firebase.google.com/docs/remote-config/automate-rc.md.txt).
+
+- **Parameter keys**: String identifiers for your parameters. Keys can be up to 256 characters long, must start with an underscore or English letter character (A-Z, a-z), and can include numbers.
+- **Parameter values** : The values assigned to your parameters. Values are stored as strings, but you can select data types in the console to validate values against formats like `String`, `Boolean`, `Number`, or `JSON`.
+- **Default values** : The baseline value assigned when no condition rules apply. You can define in-app default values in your code, as well as template default values in the Remote Config backend.
+
+> [!IMPORTANT]
+> **Important:** Don't store confidential data in Remote Config parameter keys or values. Remote Config data is encrypted in transit, but end users can access any default or fetched Remote Config parameter that is available to their client app instance.
+
+### Conditions, rules, and conditional values
+
+Conditions let you target specific segments of app users or server
+requests with customized parameter values:
+
+- **Rules**: Individual criteria evaluated against client metadata or request contexts (such as a version number, country, or custom signal).
+- **Conditions** : Named sets of one or more rules. All rules within a condition must evaluate to `true` for the condition to evaluate to `true`.
+- **Conditional values** : Alternative values assigned to a parameter when a condition evaluates to `true`. If multiple conditions evaluate to `true`, the condition with the highest priority in the Firebase console takes precedence.
+
+### Parameter groups
+
+To organize configurations with dozens or hundreds of parameters, you can use
+**parameter groups** . Groups provide visual organization in the
+Firebase console and logical grouping in the REST API.
+
+- A parameter can belong to only one group at a time.
+- Parameter keys remain globally unique across your project regardless of grouping.
+- Grouping doesn't change how parameter values are referenced in your SDK code.
+
+For instructions on creating and managing groups, see the detailed
+[client](https://firebase.google.com/docs/remote-config/parameters/client.md.txt#parameter-groups)
+or
+[server](https://firebase.google.com/docs/remote-config/parameters/server.md.txt#parameter-groups)
+parameters guides.
+
+### Template versioning and rollbacks
+
+Every time you update and publish parameters or conditions in
+Remote Config, Firebase creates and stores a new version of your template.
+You can view version history, compare changes between versions, and roll back
+to a previous version whenever necessary.
+
+To learn more about template version management, see
+[Manage Remote Config template versions](https://firebase.google.com/docs/remote-config/templates.md.txt#template-lifecycle-and-versioning).
+
+## Quotas and limits
+
+Within a Firebase project, Remote Config enforces the following limits:
+
+- **Parameters**: Up to 3,000 parameters per project.
+- **Conditions**: Up to 2,000 conditions per project.
+- **Parameter key length**: Up to 256 characters.
+- **Total value string length**: Up to 1,000,000 characters across all parameter values within a project.
+
+For a full list of limits, see
+[Quotas and limits](https://firebase.google.com/docs/remote-config/quotas-limits.md.txt).
+
+## Next steps
+
+- **Client apps** : Learn how to configure parameters, targeting rules, and priority in [Parameters and conditions in client templates](https://firebase.google.com/docs/remote-config/parameters/client.md.txt).
+- **Server apps** : Learn how to configure server parameters, custom signals, and server evaluation in [Parameters and conditions in server templates](https://firebase.google.com/docs/remote-config/parameters/server.md.txt).
+- **Get started with client SDKs** : Set up your client application with the [Get started with Firebase Remote Config](https://firebase.google.com/docs/remote-config/get-started.md.txt) guide.
+- **Get started with server SDKs** : Set up your backend environment with the [Use Remote Config in server environments](https://firebase.google.com/docs/remote-config/server.md.txt) guide.
+- **Automate updates** : Learn how to modify templates programmatically in [Modify Remote Config programmatically](https://firebase.google.com/docs/remote-config/automate-rc.md.txt).

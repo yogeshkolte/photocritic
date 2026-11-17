@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// Phase 0 placeholder: deny everything. The report rules (design file 9)
+// replace this in Phase 4, with the literal limits from
+// src/platform/config/tuning.ts.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

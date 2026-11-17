@@ -1,0 +1,645 @@
+> Documentation index: https://firebase.google.com/docs/storage/llms.txt
+
+In September 2024, we announced infrastructure
+updates to better align with Google Cloud Storage quota and billing and to
+prevent abuse on our platform.
+
+Here are two key points to know:
+
+- Cloud Storage for Firebase (even default buckets) now requires projects to be
+  on the [pay-as-you-go Blaze pricing plan](https://firebase.google.com/pricing.md.txt). **No-cost usage is still available even on
+  the Blaze pricing plan.**
+
+- All default Cloud Storage for Firebase buckets created *after*
+  September 2024 have the name format of
+  `PROJECT_ID.firebasestorage.app`.
+
+Review the following FAQs for details about the changes:
+
+- [Billing requirements and expected experience](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024.md.txt#errors)
+- [Changes for the default Cloud Storage for Firebase bucket](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024.md.txt#all-changes-default-storage-bucket)
+- [Changes for programmatic interactions (like REST APIs and Terraform)](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024.md.txt#all-changes-programmatic-interactions)
+- [Changes for "default Google Cloud resources"](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024.md.txt#all-changes-default-gcp-resources)
+
+<br />
+
+*** ** * ** ***
+
+## Billing requirements and troubleshooting
+
+To use Cloud Storage for Firebase, your Firebase project must be on the
+[pay-as-you-go Blaze pricing plan](https://firebase.google.com/pricing.md.txt). No-cost usage is still available even on the
+Blaze pricing plan.
+
+If your Firebase project is on the Spark pricing plan, you won't have
+access to any Cloud Storage buckets (including default buckets), and your API
+calls to buckets will return 402 or 403 errors.
+
+### How to regain access
+
+To regain access and quality of service for Cloud Storage resources and
+data, upgrade to the [pay-as-you-go Blaze pricing plan](https://firebase.google.com/pricing.md.txt). No-cost usage is still available
+even on the Blaze pricing plan, including for your legacy
+`*.appspot.com` default bucket.
+
+### No access in console
+
+If your project is on the Spark pricing plan, you'll no longer have
+access to your bucket in the Firebase console and the Google Cloud console.
+Instead, you'll be redirected to the Cloud Storage landing page where you can
+upgrade to the Blaze pricing plan.
+
+### 402 and 403 errors
+
+If your project is on the Spark pricing plan, your calls to
+Cloud Storage APIs (like from your app) will fail and return 402 or 403 errors.
+Follow the guidance in [How to regain access](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024.md.txt#regain-access) above or check out
+more [troubleshooting options](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024.md.txt#troubleshooting) below.
+
+##### 402 errors
+
+    "error": {
+        "code": 402,
+        "message": "Cloud Storage for Firebase no longer supports Firebase projects that are on the no-cost Spark pricing plan. Please upgrade to the pay-as-you-go Blaze pricing plan to maintain access to your default bucket and all other Cloud Storage resources. For details, see our FAQ: https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024"
+      }
+
+OR
+
+    storage/quota-exceeded: Firebase Storage: Quota for bucket '{project-id}.appspot.com' exceeded, please view quota on https://firebase.google.com/pricing/. (storage/quota-exceeded)
+
+##### 403 errors
+
+    <Error>
+      <Code>UserProjectAccountProblem</Code>
+      <Message>The project to be billed is associated with an absent billing account.</Message>
+      <Details>The billing account for the owning project is disabled in state absent</Details>
+    </Error>
+
+OR
+
+    storage/unauthorized: User does not have permission to access {path}
+
+### Troubleshooting
+
+If you're experiencing any issues, check out these troubleshooting resources. If
+none of the following help with your issue, then
+[reach out to Firebase Support](https://firebase.google.com/support/troubleshooter/storage/pricing-plan-changes).
+
+#### Troubleshoot billing setup
+
+The Cloud Billing documentation provides
+[troubleshooting help for common billing and payment issues](https://support.google.com/a/topic/2413217).
+For example, you can find solutions if your
+[Indian debit or credit card isn't accepted](https://support.google.com/a/answer/3401127).
+
+#### Troubleshoot service account permissions
+
+For Cloud Storage for Firebase to function properly, a service account in your
+Firebase project needs certain IAM permissions.
+
+If you get errors in the Firebase console about permissions for this
+service account, it's often because the service account has been deleted from
+your Firebase project. To resolve this issue, follow the steps described in
+[FAQ for storage accounts](https://firebase.google.com/docs/storage/faq-and-troubleshooting.md.txt#storage-accounts).
+
+<br />
+
+*** ** * ** ***
+
+## Pricing plan FAQs
+
+To use Cloud Storage for Firebase, your Firebase project must be on the
+[pay-as-you-go Blaze pricing plan](https://firebase.google.com/pricing.md.txt). **No-cost usage is still available even on the
+Blaze pricing plan.**
+
+> [!NOTE]
+> **Important** : Here are the summarized key points for pricing plan requirements (review each FAQ below for details):
+>
+> - To provision a new Cloud Storage for Firebase default bucket, your Firebase project must be on the [pay-as-you-go Blaze pricing plan](https://firebase.google.com/pricing.md.txt). The bucket can optionally use the ["Always Free" tier](https://cloud.google.com/storage/pricing#cloud-storage-always-free) for Google Cloud Storage.
+> - To maintain access to your default bucket and all other Cloud Storage resources, your Firebase project must be on the [pay-as-you-go Blaze pricing plan](https://firebase.google.com/pricing.md.txt). Any `*.appspot.com` default bucket will maintain its current no-cost level of usage even on the Blaze pricing plan.
+
+We understand that these changes will require your time to evaluate and make
+changes to your Firebase project and workflows. If you have any questions,
+please reach out to [Firebase Support](https://firebase.google.com/support/troubleshooter/storage/pricing-plan-changes).
+
+<br />
+
+#### What are the pricing plan requirements for Cloud Storage for Firebase?
+
+<br />
+
+The following billing requirements apply to all projects using
+Cloud Storage for Firebase:
+
+- **To provision a new default bucket** using the Firebase console or REST
+  API, your project must be on the [pay-as-you-go Blaze pricing plan](https://firebase.google.com/pricing.md.txt).
+
+- **All default buckets provisioned *after*
+  September 2024** have these characteristics:
+
+  - The buckets follow
+    [Google Cloud Storage pricing and usage](https://cloud.google.com/storage/pricing),
+    which provides an ["Always Free" tier](https://cloud.google.com/storage/pricing#cloud-storage-always-free) for buckets in
+    `US-CENTRAL1`, `US-EAST1`, and `US-WEST1`.
+
+  - The buckets have a name format of `PROJECT_ID.firebasestorage.app`
+    (instead of the former `PROJECT_ID.appspot.com`).
+
+- **To maintain access to your default bucket and all other Cloud Storage
+  resources** , your project must be on the [pay-as-you-go Blaze pricing plan](https://firebase.google.com/pricing.md.txt). Any
+  `*.appspot.com` default bucket maintains its current
+  no-cost level of usage even on the Blaze pricing plan.
+
+Learn more about
+[what happens if you don't upgrade to the Blaze pricing plan](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024.md.txt#what-happens-if-no-upgrade-to-blaze).
+If you have any questions, please reach out to [Firebase Support](https://firebase.google.com/support/troubleshooter/storage/pricing-plan-changes).
+
+<br />
+
+<br />
+
+<br />
+
+#### Why is Firebase making these pricing plan changes?
+
+<br />
+
+Firebase strives to keep our products and our ecosystem safe and secure. As part
+of that, we're making some changes to Cloud Storage for Firebase and taking
+proactive steps to prevent abuse on our platform. This includes updating our
+infrastructure to better align with Google Cloud Storage quota and billing.
+
+<br />
+
+<br />
+
+<br />
+
+#### Can I keep no-cost usage if I upgrade to the Blaze pricing plan?
+
+<br />
+
+Yes. If you have a `PROJECT_ID.appspot.com` default bucket and you
+upgrade to the [pay-as-you-go Blaze pricing plan](https://firebase.google.com/pricing.md.txt), you maintain your default
+bucket's current no-cost level of usage, as described below. Any usage over this
+no-cost usage is charged according to
+[Google App Engine pricing](https://cloud.google.com/appengine/pricing).
+
+- 5 GB stored
+- 1 GB downloaded / day
+- 20,000 uploads / day
+- 50,000 downloads / day
+
+**Starting September 2024** , all new default buckets
+have the name format of `PROJECT_ID.firebasestorage.app` and they follow
+[Google Cloud Storage pricing and usage](https://cloud.google.com/storage/pricing),
+which provides an ["Always Free" tier](https://cloud.google.com/storage/pricing#cloud-storage-always-free) for buckets in
+`US-CENTRAL1`, `US-EAST1`, and `US-WEST1`.
+
+<br />
+
+<br />
+
+<br />
+
+#### How do I upgrade to the Blaze pricing plan?
+
+<br />
+
+To upgrade your project to the pay-as-you-go Blaze pricing plan, you need to link your
+project with a
+[Cloud Billing account](https://firebase.google.com/docs/projects/billing/firebase-pricing-plans.md.txt#cloud-billing-accounts).
+You can
+[use the Firebase console workflow to upgrade your pricing plan](https://console.firebase.google.com/project/_/overview?purchaseBillingPlan=metered).
+
+To upgrade the pricing plan, you need to have the IAM role of
+[Owner](https://firebase.google.com/docs/projects/iam/roles-basic.md.txt) for your project.
+
+> [!IMPORTANT]
+> **Important:** When you upgrade to the Blaze pricing plan, we strongly recommend setting up [budget alerts](https://firebase.google.com/docs/projects/billing/budget-alerts.md.txt). The console flow for upgrading your pricing plan automatically prompts you to set up this alert. Learn more about [avoiding surprise bills](https://firebase.google.com/docs/projects/billing/avoid-surprise-bills.md.txt).
+
+If you have any questions, please reach out to [Firebase Support](https://firebase.google.com/support/troubleshooter/storage/pricing-plan-changes).
+
+<br />
+
+<br />
+
+<br />
+
+#### When do I need to upgrade to the Blaze pricing plan?
+
+<br />
+
+To use Cloud Storage for Firebase or to maintain access to your
+`PROJECT_ID.appspot.com` default bucket, you must upgrade to the
+pay-as-you-go Blaze pricing plan plan. This requirement went into effect starting
+February 03, 2026.
+
+To upgrade your project, link it with a
+[Cloud Billing account](https://firebase.google.com/docs/projects/billing/firebase-pricing-plans.md.txt#cloud-billing-accounts).
+You can
+[use the Firebase console workflow to upgrade your pricing plan](https://console.firebase.google.com/project/_/overview?purchaseBillingPlan=metered).
+
+<br />
+
+<br />
+
+<br />
+
+#### What if I don't upgrade my project to the Blaze pricing plan?
+
+<br />
+
+- If you haven't yet provisioned a default Cloud Storage bucket in your project,
+  then you won't be able to provision it unless your project is on the
+  Blaze pricing plan.
+
+- If you have existing buckets and your project isn't on the
+  Blaze pricing plan, the following happens:
+
+  - You lose read/write access to all your Cloud Storage resources, including your
+    default bucket.
+
+  - You won't be able to view buckets or access their data in the
+    Firebase console or the Google Cloud console.
+
+  - Any data will remain in your buckets, but it will be inaccessible until you
+    upgrade to the Blaze pricing plan.
+
+If you have any questions, please reach out to [Firebase Support](https://firebase.google.com/support/troubleshooter/storage/pricing-plan-changes).
+
+<br />
+
+<br />
+
+<br />
+
+#### What happens if my `*.appspot.com` default bucket's usage is over the no-cost usage level ?
+
+<br />
+
+If you have a `PROJECT_ID.appspot.com` default bucket, and you upgrade to
+the Blaze pricing plan with a usage that's over the no-cost usage
+levels described below, then you will be charged for the overage according to
+[Google App Engine pricing](https://cloud.google.com/appengine/pricing)
+on your next billing cycle.
+
+- 5 GB stored
+- 1 GB downloaded / day
+- 20,000 uploads / day
+- 50,000 downloads / day
+
+If you have any questions, please reach out to [Firebase Support](https://firebase.google.com/support/troubleshooter/storage/pricing-plan-changes).
+
+<br />
+
+<br />
+
+<br />
+
+*** ** * ** ***
+
+## Changes for the default Cloud Storage bucket
+
+> [!NOTE]
+> **Important** : Here are the summarized key points for default buckets (review each FAQ below for details):
+>
+> - All newly provisioned default Cloud Storage buckets have the name format of `PROJECT_ID.firebasestorage.app`.  
+>   These buckets follow [Google Cloud Storage pricing and usage](https://cloud.google.com/storage/pricing), which provides an ["Always Free" tier](https://cloud.google.com/storage/pricing#cloud-storage-always-free) for buckets in `US-CENTRAL1`, `US-EAST1`, and `US-WEST1`.
+> - There are no changes to the names of existing `PROJECT_ID.appspot.com` default buckets.
+
+Review the following FAQs for more details about these requirements. If you
+have any questions, please reach out to [Firebase Support](https://firebase.google.com/support/troubleshooter/storage/pricing-plan-changes).
+
+<br />
+
+#### Will the name of my default bucket change?
+
+<br />
+
+No. When you upgrade to the Blaze pricing plan, the name of your
+default Cloud Storage bucket does ***not*** change.
+
+- **If you created your default bucket *before*
+  September 2024** , then your default bucket has a
+  name format of `PROJECT_ID.appspot.com`.
+
+  The only exception is if you
+  [delete your `*.appspot.com` bucket](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024.md.txt#what-happens-if-delete-appspot-bucket)
+  and provision a new default bucket.
+- **If you created your default bucket recently** (*after*
+  September 2024), then your default bucket has a
+  name format of `PROJECT_ID.firebasestorage.app`.
+
+<br />
+
+<br />
+
+<br />
+
+#### What happens if I delete my `*.appspot.com` default bucket?
+
+<br />
+
+A deleted bucket is restorable using the Cloud Storage
+[Buckets: restore](https://cloud.google.com/storage/docs/json_api/v1/buckets/restore)
+API until its hard delete time has elapsed.
+
+If you delete your `PROJECT_ID.appspot.com` default bucket, you won't be
+able to provision a bucket with that same name format.
+
+Instead, you can create a new default Cloud Storage bucket (if your project is on
+the Blaze pricing plan) that has a name format of
+`PROJECT_ID.firebasestorage.app`. It follows
+[Google Cloud Storage pricing and usage](https://cloud.google.com/storage/pricing),
+which provides an ["Always Free" tier](https://cloud.google.com/storage/pricing#cloud-storage-always-free) for buckets in
+`US-CENTRAL1`, `US-EAST1`, and `US-WEST1`.
+
+<br />
+
+<br />
+
+<br />
+
+#### Do I need to update my app's codebase?
+
+<br />
+
+No. You do ***not*** need to update your app's codebase.
+
+All existing `PROJECT_ID.appspot.com` default buckets maintain their
+name format.
+
+As long as your project is on the [pay-as-you-go Blaze pricing plan](https://firebase.google.com/pricing.md.txt), your codebase will
+continue to interact with the `PROJECT_ID.appspot.com` default bucket as
+it always has.
+
+<br />
+
+<br />
+
+<br />
+
+#### Do I need to move my data out of my `*.appspot.com` default bucket?
+
+<br />
+
+No. You do ***not*** need to move your data out of your
+`PROJECT_ID.appspot.com` default bucket.
+
+As long as you upgrade your project to the [pay-as-you-go Blaze pricing plan](https://firebase.google.com/pricing.md.txt), you'll
+maintain access to your bucket and see no service interruptions.
+
+<br />
+
+<br />
+
+<br />
+
+*** ** * ** ***
+
+## Changes for programmatic interactions (like REST APIs and Terraform)
+
+If you provision or work with default Cloud Storage for Firebase buckets
+programmatically (for example, using REST APIs or Terraform), review the
+following changes to see if you need to change anything in your workflows or
+apps.
+
+> [!NOTE]
+> **Important** : Here are the summarized key points for programmatic interactions (review each FAQ below for details):
+>
+> - Two REST APIs have been shut down: the [`projects.defaultLocation.finalize`](https://firebase.google.com/docs/reference/firebase-management/rest/v1beta1/projects.defaultLocation/finalize.md.txt) endpoint and the [`projects.availableLocations.list`](https://firebase.google.com/docs/reference/firebase-management/rest/v1beta1/projects.availableLocations/list.md.txt) endpoint.
+> - The changes to these REST APIs also affect how you use Terraform with Cloud Storage for Firebase (and possibly Cloud Firestore).
+
+Review the following FAQs for more details about these requirements. If you
+have any questions, please reach out to [Firebase Support](https://firebase.google.com/support/troubleshooter/storage/pricing-plan-changes).
+
+<br />
+
+#### What are the changes for using REST APIs?
+
+<br />
+
+The following changes apply to REST APIs that involve Cloud Storage for Firebase:
+
+- The [`projects.defaultBucket.create`](https://firebase.google.com/docs/reference/rest/storage/rest/v1alpha/projects.defaultBucket/create.md.txt) endpoint has changed:
+
+  - To call this endpoint, your project must be on the [pay-as-you-go Blaze pricing plan](https://firebase.google.com/pricing.md.txt).
+
+  - Default buckets provisioned by this endpoint have the name format
+    of `PROJECT_ID.firebasestorage.app` (instead of the former
+    `PROJECT_ID.appspot.com`).
+
+  - These default buckets follow Google Cloud Storage pricing and
+    usage, which provides an ["Always Free" tier](https://cloud.google.com/storage/pricing#cloud-storage-always-free) for buckets in
+    `US-CENTRAL1`, `US-EAST1`, and `US-WEST1`.
+
+- The [`projects.defaultLocation.finalize`](https://firebase.google.com/docs/reference/firebase-management/rest/v1beta1/projects.defaultLocation/finalize.md.txt) and
+  [`projects.availableLocations.list`](https://firebase.google.com/docs/reference/firebase-management/rest/v1beta1/projects.availableLocations/list.md.txt) endpoints have been shut down and
+  return `404: METHOD_NOT_FOUND` errors.
+
+  Instead, to set a resource's location programmatically, you should use the
+  resource-specific APIs. For example, set the locations of the default
+  Cloud Storage bucket and the default Cloud Firestore instance during their
+  individual provisioning when calling [`projects.defaultBucket.create`](https://firebase.google.com/docs/reference/rest/storage/rest/v1alpha/projects.defaultBucket/create.md.txt)
+  and [`projects.databases.create`](https://firebase.google.com/docs/firestore/reference/rest/v1/projects.databases/create.md.txt), respectively. For more details
+  about replacements for REST APIs and locations, see the FAQ:
+  [How do I set or get the location for a "default Google Cloud resource"?](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024.md.txt#set-get-location-for-default-gcp-resources)
+
+<br />
+
+<br />
+
+<br />
+
+#### What are the changes for using Terraform?
+
+<br />
+
+The following changes apply to using Terraform with Cloud Storage for Firebase:
+
+You can no longer provision the default Cloud Storage for Firebase bucket using
+Terraform. This is because you can no longer provision this bucket via
+Google App Engine. Instead, you can do one of the following:
+
+- Provision the bucket by calling [`projects.defaultBucket.create`](https://firebase.google.com/docs/reference/rest/storage/rest/v1alpha/projects.defaultBucket/create.md.txt).
+  This API is not yet available via Terraform.
+
+- Provision the bucket through the Firebase console. To get started, go to
+  **Databases \& Storage** \>
+  [**Storage**](https://console.firebase.google.com/project/_/storage)
+  in the Firebase console.
+
+Additionally, note the following about
+`*.firebasestorage.app` default buckets (provisioned
+*after* September 2024):
+
+- Your project must be on the pay-as-you-go Blaze pricing plan to provision a
+  default Cloud Storage bucket.
+
+- You no longer need to provision your default Cloud Firestore instance before
+  your default Cloud Storage bucket.
+
+- The location you select for your default Cloud Firestore instance is not
+  applicable to your default Cloud Storage bucket (this means that your default
+  Cloud Firestore instance and your default Cloud Storage bucket can be in different
+  locations).
+
+- The name format of the default Cloud Storage bucket is
+  `PROJECT_ID.firebasestorage.app` (instead of the former
+  `PROJECT_ID.appspot.com`).
+
+<br />
+
+<br />
+
+<br />
+
+*** ** * ** ***
+
+## Changes for "default Google Cloud resources"
+
+The ["default Google Cloud resources"](https://firebase.google.com/docs/projects/locations.md.txt#default-cloud-location)
+are any project resources associated with Google App Engine, including
+the following:
+
+- default Cloud Firestore instance
+- default Cloud Storage for Firebase bucket (specifically those with the name format of `PROJECT_ID.appspot.com`)
+- Google Cloud Scheduler (specifically for 1st gen scheduled functions)
+
+With many changes over the years to the Firebase ecosystem, the associations of
+Firebase-related resources to Google App Engine have been changing.
+
+Review the following FAQs for more details about these requirements. If you
+have any questions, please reach out to [Firebase Support](https://firebase.google.com/support/troubleshooter/storage/pricing-plan-changes).
+
+<br />
+
+#### What happened to the "location for default Google Cloud resources"?
+
+<br />
+
+The ["location for default Google Cloud resources"](https://firebase.google.com/docs/projects/locations.md.txt#default-cloud-location)
+is the location setting for any project resources associated with
+Google App Engine, including the following:
+
+- default Cloud Firestore instance
+- default Cloud Storage for Firebase bucket (specifically those with the name format of `PROJECT_ID.appspot.com`)
+- Google Cloud Scheduler (specifically for 1st gen scheduled functions)
+
+When you set up any one of these resources in your project, you're transitively
+setting the location of the Google App Engine app in your project.
+This, in turn, sets the location for all the resources associated with
+Google App Engine.
+
+> [!IMPORTANT]
+> **Important:** **Starting October 30, 2024** , provisioning the default Cloud Storage bucket no longer sets the "location for default Google Cloud resources" (like the location for the project's default Cloud Firestore instance). Also, provisioning the default Cloud Firestore instance no longer sets the location for a new default Cloud Storage bucket (those with the name format of `PROJECT_ID.firebasestorage.app`).
+
+Note the following:
+
+- **Any default Cloud Storage bucket provisioned *before*
+  September 2024**
+  (with a name format of `PROJECT_ID.appspot.com`) is
+  associated with Google App Engine.
+  This means the following:
+
+  - The bucket's location sets the location of resources associated with Google App Engine (like the location of the default Cloud Firestore instance).
+- **Any default Cloud Storage bucket provisioned *after*
+  September 2024**
+  (with the name format of `PROJECT_ID.firebasestorage.app`) is
+  ***not*** associated with Google App Engine.
+  This means the following:
+
+  - Provisioning your default Cloud Storage bucket does not set the location of
+    resources associated with Google App Engine (like the location of
+    the default Cloud Firestore instance).
+
+  - Provisioning your default Cloud Firestore instance does not set the location
+    of your project's default Cloud Storage bucket.
+
+  - The locations available for your default Cloud Storage bucket are the same
+    [locations available for Google Cloud Storage](https://cloud.google.com/storage/docs/locations#available-locations)
+    (rather than limited to those for Google App Engine).
+
+<br />
+
+<br />
+
+<br />
+
+#### How do I set or get the location for a "default Google Cloud resource"?
+
+<br />
+
+The ["default Google Cloud resources"](https://firebase.google.com/docs/projects/locations.md.txt#default-cloud-location)
+are any project resources associated with Google App Engine, including
+the following:
+
+- default Cloud Firestore instance
+- default Cloud Storage for Firebase bucket (specifically those with the name format of `PROJECT_ID.appspot.com`)
+- Google Cloud Scheduler (specifically for 1st gen scheduled functions)
+
+The concept of "default Google Cloud resources" doesn't apply to
+default Cloud Storage buckets with the name format of
+`PROJECT_ID.firebasestorage.app`, and these buckets are ***not***
+associated with Google App Engine. To learn more, review the FAQ:
+[What happened to the "location for default Google Cloud resources"?](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024.md.txt#location-for-default-gcp-resources)
+
+> [!IMPORTANT]
+> **Important:** Since `*.firebasestorage.app` default buckets aren't associated with Google App Engine, their location does ***not*** set the "location for default Google Cloud resources" (like the location for the default Cloud Firestore instance). Also, provisioning the default Cloud Firestore instance *first* in your project does not set the location for these `*.firebasestorage.app` default buckets.
+
+If you want to set or get the location for any resource in a project, then you
+should interact directly with the resource instead.
+
+##### Default Cloud Storage for Firebase bucket
+
+- **In the Firebase console:**
+
+  - Set and find the location of a default Cloud Storage bucket in the [***Storage*** section](https://console.firebase.google.com/u/0/project/_/storage) of the Firebase console.
+- **Using REST APIs:**
+
+  - Set the location of a default Cloud Storage bucket during its provisioning
+    when calling [`projects.defaultBucket.create`](https://firebase.google.com/docs/reference/rest/storage/rest/v1alpha/projects.defaultBucket/create.md.txt).
+
+    Note that calling this endpoint requires the [pay-as-you-go Blaze pricing plan](https://firebase.google.com/pricing.md.txt). So
+    before attempting to create a default bucket, make sure that the project
+    is linked to a Cloud Billing account (for example, using
+    [`projects.updateBillingInfo`](https://cloud.google.com/billing/docs/reference/rest/v1/projects/updateBillingInfo)).
+  - Get the location of a default Cloud Storage bucket using
+    [`projects.buckets.get`](https://firebase.google.com/docs/reference/rest/storage/rest/v1alpha/projects.buckets/get.md.txt).
+
+##### Default Cloud Firestore instance
+
+Note that if you have a legacy `*.appspot.com` default
+bucket (provisioned *before* September 2024), then
+the location of the project's default Cloud Firestore instance has already been
+set (due to associations with Google App Engine).
+
+- **In the Firebase console:**
+
+  - Set and find the location of a default Cloud Firestore instance in the [***Firestore*** section](https://console.firebase.google.com/u/0/project/_/firestore) of the Firebase console.
+- **Using REST APIs:**
+
+  - Set the location of a default Cloud Firestore instance during its provisioning
+    when calling [`projects.databases.create`](https://firebase.google.com/docs/firestore/reference/rest/v1/projects.databases/create.md.txt).
+
+  - Get the location of a default Cloud Firestore instance using
+    [`projects.databases.get`](https://firebase.google.com/docs/firestore/reference/rest/v1/projects.databases/get.md.txt).
+
+##### Scheduled functions (1st gen)
+
+Note that if you have a legacy `*.appspot.com` default
+bucket (provisioned *before* September 2024), then
+the project's scheduled functions (1st gen) has already been set (due to
+associations with Google App Engine).
+
+- Set the location of a scheduled function during its
+  [setup and deployment](https://firebase.google.com/docs/functions/1st-gen/schedule-functions-1st.md.txt).
+
+- Get the location of a scheduled function from the topic name of its job and function in the
+  [Google Cloud console](https://console.cloud.google.com/project/_/cloudscheduler)
+  (`firebase-schedule-FUNCTION_NAME-REGION`.
+
+<br />
+
+<br />

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PhotoCritic design system v1</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#F5B13D}a:hover{color:#FFD08A}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 1120px; height: 900px; box-sizing: border-box; padding: 48px 56px; background: #0F1012; color: #F4F4F2; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, system-ui, sans-serif; font-size: 14px; line-height: 1.45; display: flex; flex-direction: column; gap: 34px">
+
+  <div style="display: flex; justify-content: space-between; align-items: flex-end">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #F5B13D">Design system v1 · decision 36</span>
+      <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, system-ui, sans-serif; font-weight: 600; font-size: 40px; line-height: 1.1">Darkroom</h1>
+      <p style="margin: 0; max-width: 620px; color: rgba(244,244,242,.72)">The photo is the hero. Interface surfaces are near-black and quiet; one amber "safelight" accent marks the primary action. Glass only on controls over photos; any text sits on a tint of at least 65%. Dark theme only in v1. System fonts, Lucide icons.</p>
+    </div>
+    <div style="display: flex; align-items: flex-end; gap: 18px">
+      <div style="width: 104px; height: 104px; border-radius: 24px; background: #17181B; border: 1px solid rgba(255,255,255,.12); display: flex; align-items: center; justify-content: center">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" role="img" aria-label="App icon proposal: aperture with a speech tail"><circle cx="32" cy="30" r="21" stroke="#F5B13D" stroke-width="4"></circle><circle cx="32" cy="30" r="7.5" fill="#F5B13D"></circle><path d="M32 9v13M53 30H40M32 51V38M11 30h13" stroke="#F5B13D" stroke-width="4" stroke-linecap="round"></path><path d="M44 47l8 9-1-11" fill="#F5B13D"></path></svg>
+      </div>
+      <div style="width: 60px; height: 60px; border-radius: 14px; background: #F5B13D; display: flex; align-items: center; justify-content: center">
+        <svg width="38" height="38" viewBox="0 0 64 64" fill="none" aria-hidden="true"><circle cx="32" cy="30" r="21" stroke="#1A1206" stroke-width="5"></circle><circle cx="32" cy="30" r="7.5" fill="#1A1206"></circle><path d="M44 47l8 9-1-11" fill="#1A1206"></path></svg>
+      </div>
+      <span style="font-size: 12px; color: rgba(244,244,242,.66); max-width: 120px">App icon direction: aperture + speech tail. Dark and amber variants.</span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(244,244,242,.66)">Color tokens (dark)</h2>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+        <div style="display: flex; gap: 10px; align-items: center"><span style="width: 40px; height: 40px; border-radius: 10px; background: #0F1012; border: 1px solid rgba(255,255,255,.16)"></span><span><b>bg</b> #0F1012<br><span style="color: rgba(244,244,242,.66)">App background</span></span></div>
+        <div style="display: flex; gap: 10px; align-items: center"><span style="width: 40px; height: 40px; border-radius: 10px; background: #17181B; border: 1px solid rgba(255,255,255,.16)"></span><span><b>surface</b> #17181B<br><span style="color: rgba(244,244,242,.66)">Sheets, cards</span></span></div>
+        <div style="display: flex; gap: 10px; align-items: center"><span style="width: 40px; height: 40px; border-radius: 10px; background: #1C1D21; border: 1px solid rgba(255,255,255,.16)"></span><span><b>field</b> #1C1D21<br><span style="color: rgba(244,244,242,.66)">Inputs</span></span></div>
+        <div style="display: flex; gap: 10px; align-items: center"><span style="width: 40px; height: 40px; border-radius: 10px; background: #F4F4F2"></span><span><b>text</b> #F4F4F2<br><span style="color: rgba(244,244,242,.66)">16.9:1 on bg</span></span></div>
+        <div style="display: flex; gap: 10px; align-items: center"><span style="width: 40px; height: 40px; border-radius: 10px; background: rgba(244,244,242,.68)"></span><span><b>muted</b> text at 68%<br><span style="color: rgba(244,244,242,.66)">Body copy, labels (≥4.5:1)</span></span></div>
+        <div style="display: flex; gap: 10px; align-items: center"><span style="width: 40px; height: 40px; border-radius: 10px; background: #F5B13D"></span><span><b>accent</b> #F5B13D<br><span style="color: rgba(244,244,242,.66)">Primary action, selection, focus. Not for body text</span></span></div>
+        <div style="display: flex; gap: 10px; align-items: center"><span style="width: 40px; height: 40px; border-radius: 10px; background: #8A5A00; border: 1px solid rgba(255,255,255,.16)"></span><span><b>accentOnLight</b> #8A5A00<br><span style="color: rgba(244,244,242,.66)">Accent on light surfaces (share sheets, future light theme)</span></span></div>
+        <div style="display: flex; gap: 10px; align-items: center"><span style="width: 40px; height: 40px; border-radius: 10px; background: #1A1206; border: 1px solid rgba(255,255,255,.16)"></span><span><b>on-accent</b> #1A1206<br><span style="color: rgba(244,244,242,.66)">Text on amber</span></span></div>
+        <div style="display: flex; gap: 10px; align-items: center"><span style="width: 40px; height: 40px; border-radius: 10px; background: #FF8A7A"></span><span><b>danger</b> #FF8A7A<br><span style="color: rgba(244,244,242,.66)">Errors, never the accent</span></span></div>
+      </div>
+      <p style="margin: 0; color: rgba(244,244,242,.66); font-size: 13px">Over photos: controls use surface at 55% + 16 px blur; the conversation sheet uses at least 72% when collapsed and 94% when expanded, so text stays at 4.5:1 over any photo. Solid surface when Reduce Transparency is on, and on Android without blur. No light theme in v1. Contrast figures are approximate; check each pair with a contrast tool when the token file is written.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(244,244,242,.66)">Type · spacing · shape</h2>
+      <div style="display: flex; flex-direction: column; gap: 8px; background: #17181B; border: 1px solid rgba(255,255,255,.10); border-radius: 16px; padding: 18px">
+        <span style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, system-ui, sans-serif; font-weight: 600; font-size: 28px; line-height: 1.15">Title 28 · system font</span>
+        <span style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, system-ui, sans-serif; font-weight: 600; font-size: 21px">Heading 21 · system font</span>
+        <span style="font-size: 15px">Body 15 · SF Pro on iOS, Roboto on Android. Sizes scale with Dynamic Type / font scale.</span>
+        <span style="font-size: 13px; color: rgba(244,244,242,.72)">Caption 13</span>
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: rgba(244,244,242,.66)">Label 12 · uppercase</span>
+        <span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 13px">Mono 13 · extracted text</span>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: flex-end">
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 4px; height: 4px; background: #F5B13D"></span><span style="font-size: 12px; color: rgba(244,244,242,.66)">4</span></span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 8px; height: 8px; background: #F5B13D"></span><span style="font-size: 12px; color: rgba(244,244,242,.66)">8</span></span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 12px; height: 12px; background: #F5B13D"></span><span style="font-size: 12px; color: rgba(244,244,242,.66)">12</span></span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 16px; height: 16px; background: #F5B13D"></span><span style="font-size: 12px; color: rgba(244,244,242,.66)">16</span></span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 24px; height: 24px; background: #F5B13D"></span><span style="font-size: 12px; color: rgba(244,244,242,.66)">24</span></span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 32px; height: 32px; background: #F5B13D"></span><span style="font-size: 12px; color: rgba(244,244,242,.66)">32</span></span>
+        <span style="margin-left: 24px; font-size: 13px; color: rgba(244,244,242,.72)">Radii: controls 12 · cards 14–16 · sheet 24 · pills 999. Touch targets ≥ 44.</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(244,244,242,.66)">Core components</h2>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+        <button type="button" style="height: 48px; padding: 0 20px; border: 0; border-radius: 14px; background: #F5B13D; color: #1A1206; font-weight: 600; font-size: 15px">Primary</button>
+        <button type="button" style="height: 48px; padding: 0 20px; border-radius: 14px; border: 1px solid rgba(255,255,255,.18); background: transparent; color: #F4F4F2; font-weight: 600; font-size: 15px">Secondary</button>
+        <button type="button" aria-label="Icon button" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid rgba(255,255,255,.14); background: #17181B; color: #F4F4F2; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="13" height="13" rx="2"></rect><path d="M19.5 3v6M16.5 6h6"></path></svg></button>
+        <button type="button" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.18); background: #17181B; color: #F4F4F2; font-size: 14px">Chip</button>
+        <button type="button" aria-pressed="true" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #F5B13D; background: rgba(245,177,61,.14); color: #F4F4F2; font-size: 14px">Chip selected</button>
+        <span style="width: 50px; height: 30px; border-radius: 15px; background: #F5B13D; position: relative"><span style="position: absolute; top: 3px; left: 23px; width: 24px; height: 24px; border-radius: 12px; background: #FFFFFF"></span></span>
+      </div>
+      <div style="border: 1px solid rgba(255,255,255,.16); background: #17181B; border-radius: 12px; overflow: hidden; max-width: 420px">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px 8px 14px; border-bottom: 1px solid rgba(255,255,255,.10)">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: rgba(244,244,242,.66)">Text card</span>
+          <span style="display: flex; gap: 6px"><button type="button" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.16); background: transparent; color: #F4F4F2; font-size: 13px">Copy</button><button type="button" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.16); background: transparent; color: #F4F4F2; font-size: 13px">Share</button></span>
+        </div>
+        <pre style="margin: 0; padding: 12px 14px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 13px; white-space: pre-wrap">Extracted text keeps its line breaks.</pre>
+      </div>
+      <span style="font-size: 13px; color: rgba(244,244,242,.66)">Still to draw: text field states, sheet, list row, toast, dialog, empty state, error banner, offline banner.</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(244,244,242,.66)">Icons · 24 px grid · 1.8 stroke · round caps</h2>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: #17181B; border: 1px solid rgba(255,255,255,.10); border-radius: 12px; padding: 14px 6px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F4F4F2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg><span style="font-size: 12px; color: rgba(244,244,242,.72)">camera</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: #17181B; border: 1px solid rgba(255,255,255,.10); border-radius: 12px; padding: 14px 6px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F4F4F2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"></rect><circle cx="9" cy="10" r="1.8"></circle><path d="M20.5 16l-5-5-8 8.5"></path></svg><span style="font-size: 12px; color: rgba(244,244,242,.72)">photos</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: #17181B; border: 1px solid rgba(255,255,255,.10); border-radius: 12px; padding: 14px 6px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F4F4F2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="13" height="13" rx="2"></rect><path d="M19.5 3v6M16.5 6h6"></path></svg><span style="font-size: 12px; color: rgba(244,244,242,.72)">new photo</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: #17181B; border: 1px solid rgba(255,255,255,.10); border-radius: 12px; padding: 14px 6px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F4F4F2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"></path></svg><span style="font-size: 12px; color: rgba(244,244,242,.72)">send</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: #17181B; border: 1px solid rgba(255,255,255,.10); border-radius: 12px; padding: 14px 6px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F4F4F2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><circle cx="16" cy="7" r="2"></circle><circle cx="10" cy="17" r="2"></circle></svg><span style="font-size: 12px; color: rgba(244,244,242,.72)">settings</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: #17181B; border: 1px solid rgba(255,255,255,.10); border-radius: 12px; padding: 14px 6px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F4F4F2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"></path></svg><span style="font-size: 12px; color: rgba(244,244,242,.72)">copy</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: #17181B; border: 1px solid rgba(255,255,255,.10); border-radius: 12px; padding: 14px 6px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F4F4F2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"></path></svg><span style="font-size: 12px; color: rgba(244,244,242,.72)">report</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; background: #17181B; border: 1px solid rgba(255,255,255,.10); border-radius: 12px; padding: 14px 6px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F4F4F2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg><span style="font-size: 12px; color: rgba(244,244,242,.72)">stop</span></div>
+      </div>
+      <span style="font-size: 13px; color: rgba(244,244,242,.66)">In the app: Lucide icons (ISC licence), copied as individual SVG components via react-native-svg; custom drawing only for the app icon.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1120,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

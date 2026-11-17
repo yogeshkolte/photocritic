@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test -- --ci
+      - run: npx expo install --check
+      # Added as their inputs land (design file 11):
+      #   Phase 1: npm run config:validate
+      #   Phase 1: npm run check:permissions (needs expo prebuild and Firebase files)
+      #   Phase 4: npm run test:rules (Firestore emulator, needs Java)

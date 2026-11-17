@@ -1,0 +1,400 @@
+MailComposer - Expo documentation
+
+Docs
+BlogChangelogStar us on GitHub
+
+This documentation is available as Markdown for AI agents and LLMs. See the full Markdown index or append .md to any documentation URL.
+
+# Expo MailComposer
+A library that provides functionality to compose and send emails with the system's specific UI.
+
+Android
+iOS (device only)
+Web
+Included in Expo Go
+
+Ask AI
+
+GitHub
+
+npm
+
+Changelog
+
+Recommended version:
+~58.0.4
+
+Copy page
+expo-mail-composer allows you to compose and send emails quickly and easily using the OS UI. This module can't be used on iOS Simulators since you can't sign into a mail account on them.
+
+## Installation
+
+Terminalnpmyarnpnpmbun
+
+Copy
+
+- npx expo install expo-mail-composer
+
+- yarn expo install expo-mail-composer
+
+- pnpm expo install expo-mail-composer
+
+- bun expo install expo-mail-composer
+If you are installing this in an existing React Native app, make sure to install expo in your project.
+
+## API
+
+import * as MailComposer from 'expo-mail-composer';
+
+## Methods
+
+### MailComposer.composeAsync(options)
+
+Android
+iOS
+Web
+
+ | Parameter | Type
+ | options | MailComposerOptions
+
+Opens a mail modal for iOS and a mail app intent for Android and fills the fields with provided
+data. On iOS you will need to be signed into the Mail app.
+
+Returns:Promise<MailComposerResult>
+
+A promise fulfilled with an object containing a status field that specifies whether an
+email was sent, saved, or cancelled. Android does not provide this info, so the status is always
+set as if the email were sent.
+
+### MailComposer.getClients()
+
+Android
+iOS
+Web
+
+Retrieves a list of available email clients installed on the device.
+This can be used to present options to the user for sending emails through their preferred email client,
+or to open an email client so the user can access their mailbox — for example, to open a confirmation email sent by your app.
+
+Returns:MailClient[]
+
+An array of available mail clients.
+
+### MailComposer.isAvailableAsync()
+
+Android
+iOS
+Web
+
+Determine if the MailComposer API can be used in this app.
+
+Returns:Promise<boolean>
+
+A promise resolves to true if the API can be used, and false otherwise.
+
+- Returns true when the device has a default email setup for sending mail.
+
+- Can return false on iOS if an MDM profile is setup to block outgoing mail. If this is the
+case, you may want to use the Linking API instead.
+
+- Always returns true in the browser.
+
+## Types
+
+### MailClient
+
+Android
+iOS
+Web
+
+Represents a mail client available on the device.
+
+ | Property | Type | Description
+ | label | string | 
+
+The display name of the mail client.
+ | packageName(optional) | string | 
+
+Only for: 
+Android
+
+The package name of the mail client application.
+You can use this package name with the getApplicationIconAsync
+or openApplication functions from
+expo-intent-launcher to retrieve the app’s icon or open the mail client directly.
+ | url(optional) | string | 
+
+Only for: 
+iOS
+
+The URL scheme of the mail client.
+You can use this URL with the openURL function from expo-linking
+to open the mail client.
+
+### MailComposerOptions
+
+Android
+iOS
+Web
+
+A map defining the data to fill the mail.
+
+ | Property | Type | Description
+ | attachments(optional) | string[] | 
+
+An array of app's internal file URIs to attach.
+ | bccRecipients(optional) | string[] | 
+
+An array of e-mail addresses of the BCC recipients.
+ | body(optional) | string | 
+
+Body of the e-mail.
+ | ccRecipients(optional) | string[] | 
+
+An array of e-mail addresses of the CC recipients.
+ | isHtml(optional) | boolean | 
+
+Whether the body contains HTML tags so it could be formatted properly.
+Not working perfectly on Android.
+ | recipients(optional) | string[] | 
+
+An array of e-mail addresses of the recipients.
+ | subject(optional) | string | 
+
+Subject of the e-mail.
+
+### MailComposerResult
+
+Android
+iOS
+Web
+
+ | Property | Type | Description
+ | status | MailComposerStatus | 
+-
+## Enums
+
+### MailComposerStatus
+
+Android
+iOS
+Web
+
+#### CANCELLEDMailComposerStatus.CANCELLED ＝ "cancelled"
+
+#### SAVEDMailComposerStatus.SAVED ＝ "saved"
+
+#### SENTMailComposerStatus.SENT ＝ "sent"
+
+#### UNDETERMINEDMailComposerStatus.UNDETERMINED ＝ "undetermined"
+
+Previous (Expo SDK)
+Magnetometer
+
+Next (Expo SDK)
+Manifests
+
+Was this doc helpful?
+
+- 
+Share your feedback
+- 
+Ask a question on the forums about MailComposer
+- 
+View open bug reports for MailComposer
+- 
+Edit this page
+- View llms.txt
+
+Sign up for the Expo NewsletterSign up
+Unsubscribe at any time. Read our privacy policy.Your Privacy Choices
+
+ On this page
+
+Installation
+
+API
+
+Methods
+composeAsync()
+getClients()
+isAvailableAsync()
+
+Types
+MailClient
+MailComposerOptions
+MailComposerResult
+
+Enums
+MailComposerStatus
+
+Hide navigation
+
+Search or Ask AI
+⌘ K
+HomeGuidesExpo ServicesReferenceLearn
+
+Reference version
+
+Configuration files
+app.json / app.config.js
+babel.config.js
+metro.config.js
+package.json
+
+Expo Router
+Overview
+Color
+Experimental Stack
+ALPHA
+Link
+Native tabs
+Split View
+ALPHA
+Stack
+UI
+
+Expo UI
+Overview
+
+Jetpack Compose
+
+SwiftUI
+
+Drop-in replacements
+
+Universal
+
+Expo SDK
+Expo
+Accelerometer
+AgeRange
+AppIntegrity
+AppIntents
+ALPHA
+AppleAuthentication
+Application
+Asset
+Audio (expo-audio)
+AuthSession
+BackgroundFetchDeprecated
+BackgroundTask
+Barometer
+Battery
+Blob
+BlurView
+Brightness
+Brownfield
+BuildProperties
+Calendar
+Calendar (legacy)
+Camera
+Cellular
+Checkbox
+Clipboard
+Constants
+Contacts
+Contacts (legacy)
+Crypto
+DevClient
+Device
+DeviceMotion
+DevMenu
+DocumentPicker
+FileSystem
+FileSystem (legacy)
+Fingerprint
+Font
+GlassEffect
+GLView
+Gyroscope
+Haptics
+Hinge
+NEW
+Image
+ImageManipulator
+ImagePicker
+IntentLauncher
+KeepAwake
+LightSensor
+LinearGradient
+Linking
+LivePhoto
+LocalAuthentication
+Localization
+Location
+Location (next)
+NEW
+Magnetometer
+MailComposer
+Manifests
+Maps
+MediaLibrary
+MediaLibrary (legacy)
+MeshGradient
+NavigationBar
+Network
+Notifications
+Observe
+Pedometer
+Print
+ScreenCapture
+ScreenOrientation
+SecureStore
+Sensors
+Server
+Sharing
+SMS
+Speech
+SplashScreen
+SQLite
+StatusBar
+StoreReview
+Symbols
+SystemUI
+TaskManager
+TrackingTransparency
+Updates
+Video (expo-video)
+VideoThumbnailsDeprecated
+WebBrowser
+Widgets
+
+Third-party libraries
+Overview
+@react-native-async-storage/async-storage
+@react-native-community/datetimepicker
+@react-native-community/netinfo
+@react-native-community/slider
+@react-native-masked-view/masked-view
+@react-native-picker/picker
+@react-native-segmented-control/segmented-control
+@shopify/flash-list
+@shopify/react-native-skia
+@stripe/stripe-react-native
+react-native-gesture-handler
+react-native-keyboard-controller
+react-native-maps
+react-native-pager-view
+react-native-reanimated
+react-native-safe-area-context
+react-native-screens
+react-native-svg
+react-native-view-shot
+react-native-webview
+
+Technical specs
+Expo Updates v1
+Expo Structured Field Values
+
+More
+Expo CLI
+create-expo-app
+create-expo-module
+qr.expo.dev
+Release statuses
+Glossary of terms
+
+React Native
+Visit documentation
+ArchiveExpo SnackDiscord and forumsNewsletter

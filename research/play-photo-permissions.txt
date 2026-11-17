@@ -1,0 +1,558 @@
+Understanding Restricted Permissions with minimum scope alternatives - Play Console Help Skip to main content 
+
+Play Console Help
+
+Sign in
+
+Google Help
+
+- Help Center
+- Play Console Help
+- Policy Center
+- Community
+- Play Console
+
+- Privacy Policy
+- Terms of Service
+- Submit feedback 
+
+Send feedback on...
+
+This help content & information
+
+General Help Center experience
+CloseNext
+
+- Help Center
+- Community
+- Announcements
+
+Play Console
+
+- Play Console Help
+Get startedPopular articlesManage your developer accountCreate, upload, and publishDistribute your appRun tests and check performanceProtect your appComply with Google Play policiesFix an issueAndroid developer verificationDesign for multiple form factorsCentral Play Help Center
+- Policy Center
+Restricted ContentIntellectual PropertyPrivacy, Deception and Device AbuseUse of SDKs In AppsMalwareImpersonationMobile Unwanted SoftwareMonetization and AdsStore Listing and PromotionSpam, Functionality, and User ExperienceOther ProgramsFamiliesEnforcementUpdates and Other ResourcesHow Google Play Works for Developers
+
+- Use of app permissions and APIs
+- Understanding Restricted Permissions with minimum scope alternatives 
+
+Notification 
+
+You can now request help from the Help page in your Play Console account.  If you don't have access to Play Console, ask your account admin for an invite. 
+
+# Understanding Restricted Permissions with minimum scope alternatives
+
+System pickers and alternatives like Sharesheet are designed to support a privacy-oriented path for developers. Photos, Videos, Contacts, and other personal and sensitive data gated by restricted permissions should be treated with privacy best practices. Your app should only request and carry the sensitive permissions below if minimum scope alternatives are not sufficient to provide core app functionality.
+
+## Photo and Video Permissions
+
+In October 2023, we introduced our new Photo and Video Permissions policy that governs the permissible use of the READ_MEDIA_IMAGES and READ_MEDIA_VIDEO permissions. Apps that target Android 13 or later (API level 33+) may only request the READ_MEDIA_IMAGES and READ_MEDIA_VIDEO permissions if system pickers (like the Android Photo Picker), are not sufficient for your app to provide core functionality. All user Photos are personal and sensitive data subject to the Google Play User Data policy.
+
+## Timeline
+
+- May 28, 2025: Full policy compliance is mandatory for all developers, including those who requested an extension. After this date, all apps are subject to removal from Google Play if not compliant.
+
+## Frequently asked questions
+
+## In what cases can the READ_MEDIA_IMAGES and READ_MEDIA_VIDEO permissions be accessed?
+
+Apps whose core functionality revolves around broad access to Photos and Videos may use the permissions above.
+
+## What kinds of apps would need "broad access to photos?"
+
+Apps whose core function includes managing and maintaining all of users' photos/videos (such as "gallery apps") would need broad access on a user's device. Other examples include apps whose core function is not served by the Photo Picker’s features - for example, where the picker is not technically sufficient.
+
+## What if I have a custom photo picking experience, does that qualify for access to these permissions?
+
+Apps that have custom pickers are not automatically qualified to use the permission - they must still submit a declaration in Play Console demonstrating why Android Photo Picker (or other alternatives) is not sufficient.
+
+## Are there any exceptions to this policy?
+
+Private and enterprise device management apps are exempt from this policy requirement.
+
+## Will my app need to remove the READ_MEDIA_IMAGES and READ_MEDIA_VIDEO permissions from my app manifest?
+
+Yes, in order to be compliant with this policy, if your app does not need access to Photos and Videos via a supported core use case, the media access permissions must be removed from the app by the effective policy date.
+
+## Why opt for a "picker" experience?
+
+Broad access to media files on shared storage is a vector for abuse and can harm both users and developers. The picker experience helps developers avoid unnecessarily broad access to sensitive data while giving them the tools to support a wide range of app features. By minimizing data access, the chance of being victims of leaks or targets of exploits is also minimized. It provides a consistent user experience, satisfies user expectations of privacy while using your app, and helps further maintain a safe and trusted experience.
+
+## How easy is it to integrate the photo picker into my app?
+
+Integrating Android photo picker in your app is easy and the tool updates automatically, offering expanded functionality to your app’s users over time without requiring any code changes. To simplify photo picker integration, include version 1.7.0 or higher of the androidx.activity library.
+
+## What versions of Android is the photo picker compatible with?
+
+The photo picker is available on devices that run Android 11 (API level 30) or higher and receive changes to Modular System Components through Google System Updates. Older devices that run Android 4.4 (API level 19) through Android 10 (API level 29) and Android Go devices running Android 11 or 12 that support Google Play services can install a backported version of the photo picker.
+
+## Must I use the Android photo picker or can my app use other picker integrations?
+
+You are not required to use the Android photo picker and can integrate other system pickers per your preference as needed.
+
+## What if a user does not grant my app broad access to media files?
+
+In accordance with the Restricted Permissions policy, you must make a reasonable effort to accommodate users who do not grant broad access to media files on their device. This includes facilitating a more transactional method (for example, via a system picker) where users can still enjoy the feature or functionality of your app. This could also include gracefully facilitating a modified app experience where users can still enjoy the applicable functionality of your app.
+
+## Contacts Permission
+
+In April 2026, we introduced our new Contacts Permission policy that governs the permissible use of the READ_CONTACTS permission. Apps that target Android 17 or later (API level 37+) may only request the READ_CONTACTS permission if the Android Contact Picker is not sufficient for your app to provide core functionality. We also provided guidance on the use of non-public contact data and reinforced that all Contacts are personal and sensitive data subject to the Google Play User Data policy.
+
+## Timeline
+
+- April 15, 2026: We announced the Contacts Permission policy.
+
+- September 2026: Developers with apps that carry READ_CONTACTS permission are prompted in Play Console to submit a declaration form to qualify for core functionality access or remove permission and utilize Contact Picker for their needs.
+
+- Action item: Consult your teams to understand if your app requires the READ_CONTACTS permission for core functionality purposes and if so, be prepared to explain why the minimum scope picker is not sufficient from a technical standpoint.
+
+- January 27, 2027: Policy compliance is mandatory for all apps that target Android 17 or later (API level 37+). 30-day automatic self extension will be available in Console. After this date, all apps in scope are subject to enforcement if not compliant.
+
+## Declaration Guidance
+
+All apps targeting Android 17 or higher and requesting READ_CONTACTS must complete a declaration in the Play Console to demonstrate access needs and justify why the Contact Picker is insufficient.
+
+The declaration will require you to complete the following questions:
+
+1. Which user-facing features in your app require READ_CONTACTS permission? (If your use case is non-user-facing or not listed below, select Other).
+
+ | 
+
+Use Case
+
+ | 
+
+Description
+
+ | 
+
+Examples (not exhaustive)
+
+ | 
+
+Contact Management
+
+ | 
+
+Used for managing all contacts.
+
+ | 
+
+Showing all contacts, contact editing/organization, managing all contacts' birthdays
+
+ | 
+
+Dialing or SMS sending
+
+ | 
+
+Used to show users which contact they are calling or texting.
+
+ | 
+
+Managing calls, displaying your contact list, and providing the user interface for the in-call screen
+
+ | 
+
+Call History
+
+ | 
+
+Used to show users all the calls they have received and which contact they belong to.
+
+ | 
+
+Showing call history inside a dialer, or a parental control app that shows call history
+
+ | 
+
+Customer Relationship Management (CRM)
+
+ | 
+
+Functionalities that support businesses to keep track of business contact needs.
+
+ | 
+
+Updating contact notes, or other contacts data for all contacts
+
+ | 
+
+Call Screening
+
+ | 
+
+Service designed to identify, block or filter incoming calls and SMS.
+
+ | 
+
+Spam or call blocking that requires knowing all saved contacts
+
+ | 
+
+Accessibility features
+
+ | 
+
+Assistive tools that interact with contact lists to facilitate device usage for users with visual, auditory, or motor impairments.
+
+ | 
+
+"Read aloud" features or "Call a specific contact"
+
+ | 
+
+Personal Assistants
+
+ | 
+
+AI-driven agents that require deep access to contacts databases for contextual user commands.
+
+ | 
+
+"Send an email to" or "Call them at"
+
+ | 
+
+Friend matching/search
+
+ | 
+
+Used to facilitate social discovery by notifying the user which of their real-world contacts are already using the platform.
+
+ | 
+
+Apps with social features, social discovery
+
+ | 
+
+Backup and Restore/Connect to another device
+
+ | 
+
+Used for the specific purpose of data preservation and enabling users to recover their contacts.
+
+ | 
+
+Contact backup/restore, all user data backup/restore
+
+ | 
+
+Auto-Correct/Auto-Complete
+
+ | 
+
+Used for auto-correcting contact names or auto-completing names, email addresses or phone numbers.
+
+ | 
+
+Keyboard autocorrect which needs to know all contact names, auto-completing by merging server side, and device contacts
+
+ | 
+
+User-initiated device contact selection
+
+ | 
+
+Explicitly used when a user initiates contacts selection.
+
+ | 
+
+Referring/inviting a specific user, sharing a file with a specific user, blocking a specific contact on a gaming app
+
+ | 
+
+Other
+
+2. Explain why Contacts Picker is not sufficient and you still need broad access via READ_CONTACTS.
+
+## Frequently asked questions
+
+## What are common use cases where the READ_CONTACTS permission is utilized?
+
+Common use cases for the READ_CONTACTS permission include friend finder/friend matching or lookup features, or apps that require a contact list to function as needed. Some examples of apps or features that typically would need access to contacts include:
+
+- Contact management apps
+
+- Accessibility
+
+- Server side access for friend matching
+
+- Backing up contacts
+
+- Auto complete/keyboards
+
+## What are common use cases where the READ_CONTACTS permission is not permissible
+
+Apps that only request the READ_CONTACTS permission for sharing files, collaborating, inviting/referring someone to join a service, choosing a contact to transact with, typically should not request the permission.
+
+## What if I already have a custom contact picking experience, does that qualify for access to this permission?
+
+This does not qualify as a reason to retain Contacts access.
+
+## Are there any exceptions to this policy?
+
+Private and enterprise device management apps are exempt from this policy requirement.
+
+## Will the READ_CONTACTS permission still be available for use?
+
+Yes, however the usage is strictly permitted for those apps that pass the appropriate access review upon submission of declaration in the Play Developer Console, following the effective date.
+
+## How would I integrate the contact picker into my app?
+
+To integrate the Contact Picker, use the Intent.ACTION_PICK_CONTACTS intent. This intent launches the picker and returns the selected contacts to your app. Unlike the legacy ACTION_PICK, the Contact Picker lets you specify multiple data fields your app requires at the same time. For details on how to launch Contact picker for your app, see Android Developer guidance here.
+
+## What versions of Android is the contact picker compatible with?
+
+Android Contact Picker is not backported to previous versions and only exists for Android 17 or later (API level 37+). For apps targeting Android 17 and higher, the system automatically upgrades the existing Intent.ACTION_PICK intent to use the new Contact Picker interface. We recommend developers to use the Intent.ACTION_PICK_CONTACTS intent to benefit from the full capabilities offered by the new Contact Picker (multiple data types selection, work profile, etc.).
+
+## Manage Contacts Permission
+
+In October 2026, we introduced our new MANAGE_CONTACTS policy that governs the permissible use of the MANAGE_CONTACTS permission. Apps may only request the MANAGE_CONTACTS permission if the available platform intents for creating and modifying contact data do not suffice for your app's core functionality. Contacts are personal and sensitive data subject to the Google Play User Data policy.
+
+## Timeline
+
+- October 29, 2026: We announced the MANAGE_CONTACTS policy.
+
+- Summer 2027: Developers with apps that need MANAGE_CONTACTS permission are prompted in Play Console to submit a declaration form to qualify for core functionality access or utilize available platform intents for their needs.
+
+- Action item: Consult your teams to understand if your app requires the MANAGE_CONTACTS permission for core functionality purposes and if so, be prepared to explain why the platform intents are not sufficient from a technical standpoint.
+
+- August 2027: Policy compliance is mandatory for all apps. 30 day automatic extensions will be available in Console. After this date, all apps in scope are subject to enforcement if not compliant.
+
+## Frequently asked questions
+
+## What are common use cases for the new MANAGE_CONTACTS permission?
+
+This permission is reserved for apps whose core functionality relies on programmatic or bulk contact management. Common use cases can include: dedicated contact manager applications, and enterprise sync adapters.
+
+## My app only needs to create or edit a single contact (for example, adding a contact from a chat thread). What should I do?
+
+You will need to transition to platform intents instead of requesting direct Write permissions. You should use:
+
+- ACTION_INSERT to prompt the user to create a new contact
+
+- ACTION_EDIT to modify an existing contact
+
+- ACTION_INSERT_OR_EDIT for hybrid workflows
+
+These platform intents launch a standardized, highly reliable system editor where the user remains in control to review and confirm the change. If applicable, apps can pre-fill contact fields such as (name, phone number, etc) for easy creation.
+
+## Does my app still need to request READ_CONTACTS if it gets the new MANAGE_CONTACTS permission?
+
+No, you do not need to request READ_CONTACTS separately for standard contact management workflows. The MANAGE_CONTACTS permission is a high-level special app access that covers full programmatic read, write, and deletion capabilities. If your app qualifies for MANAGE_CONTACTS, you only need to declare and request this single permission.
+
+## Are there any exceptions to this policy?
+
+Private and enterprise device management apps are exempt from this policy requirement.
+
+## Can I still use the WRITE_CONTACTS permission?
+
+Not for apps targeting API level 38 or higher. For these apps, WRITE_CONTACTS no longer grants the ability to create, modify, or delete contacts. The system won't show the permission request dialog. Attempts to write to the Contacts Provider will throw a SecurityException. Your app should handle this exception rather than assume a write succeeded.
+
+## What if I already have a custom contact creation/editing interface, does that qualify my app for MANAGE_CONTACTS permission?
+
+No, wanting to maintain a custom, branded user experience does not qualify as a reason to access this permission. To support developers, Android provides standardized, highly reliable platform intents to handle intents smoothly.
+
+## Local Network Permission
+
+In October 2026, we introduced our new Local Network Permission policy that governs the permissible use of the ACCESS_LOCAL_NETWORK permission. Apps that target Android 17 or higher (API level 37+) may only request the ACCESS_LOCAL_NETWORK permission if it is necessary for their core functionality and if device pickers (like NsdManager) are not sufficient to provide core functionality.
+
+## Timeline
+
+- October 29, 2026: We announced the Local Network Permission policy. 
+
+- June 2027: Developers with apps that carry the ACCESS_LOCAL_NETWORK permission will be prompted in Play Console to submit a declaration form to qualify for core functionality access, or remove the permission and use a picker option for their needs. 
+
+- Action item: Consult your teams to understand if your app requires the ACCESS_LOCAL_NETWORK permission for core functionality purposes and, if so, be prepared to explain why a device picker is not sufficient from a technical standpoint.
+
+- August 25, 2027: Policy compliance will be mandatory for all apps that target Android 17 or higher (API level 37+). A 30-day automatic self-extension will be available in Play Console. After this date, all apps in scope are subject to enforcement if not compliant.
+
+## Declaration Guidance
+
+All apps targeting Android 17 or higher and requesting ACCESS_LOCAL_NETWORK must complete a declaration in Play Console to demonstrate access needs and justify why a device picker is insufficient.
+
+The declaration will require you to answer the following questions:
+
+- Which user-facing features in your app require the ACCESS_LOCAL_NETWORK permission? (If your use case is non-user-facing or not listed in the following table, select Other).
+
+ |  
+ | 
+
+Use Case
+
+ | 
+
+Description
+
+ | 
+
+Examples (not exhaustive)
+
+ | 
+
+1
+
+ | 
+
+Peer-to-peer (P2P) interaction
+
+ | 
+
+Used for direct data exchange or communication between devices on a local network.
+
+ | 
+
+Local multiplayer gaming, device-to-device file transfer. 
+
+ | 
+
+2
+
+ | 
+
+Smart device and IoT control
+
+ | 
+
+Used to discover, configure, and control smart devices connected to a local network.
+
+ | 
+
+Smart home hubs, connected appliances, lighting controls, printing service plugin. 
+
+ | 
+
+3
+
+ | 
+
+Network infrastructure and diagnostics
+
+ | 
+
+Used to configure network hardware, map network topology, or troubleshoot local network connectivity.
+
+ | 
+
+Router or mesh Wi-Fi setup apps, Wi-Fi analyzers, network diagnostic tools.
+
+ | 
+
+4
+
+ | 
+
+Media casting
+
+ | Used for user-initiated streaming or  media casting to local network devices
+ | 
+
+Wireless speakers, smart TVs. 
+
+ | Other
+
+- Explain why a device picker is not sufficient and you still need broad access through ACCESS_LOCAL_NETWORK.
+
+## Frequently Asked Questions
+
+## What are common use cases where the ACCESS_LOCAL_NETWORK permission is utilized?
+
+Common use cases for the ACCESS_LOCAL_NETWORK permission include control of IoT devices such as smart light bulbs, or apps that require peer-to-peer connections to function as needed.
+
+## Are there any exceptions to this policy?
+
+Private and enterprise device management apps are exempt from this policy requirement.
+
+## Will the INTERNET permission still be available for use?
+
+Yes, the INTERNET permission is still available and allows applications to open network sockets. For apps targeting Android 16 and lower, the INTERNET permission will continue to provide access to the local network.
+
+## Which device picker should I use for general device and service discovery?
+
+To discover and connect to individual devices or services on the local network, follow the NsdManager device picker guidance and refer to the NsdManager API reference for implementation details.
+
+## What versions of Android is the NsdManager device picker compatible with?
+
+The NsdManager device picker is available on all devices running Android 13 or higher (API level 33+) with up-to-date Google Play system updates. 
+
+For media casting, are there any voluntary, opt-in alternatives to requesting the ACCESS_LOCAL_NETWORK permission?
+
+Yes, if your app uses the Google Cast SDK, you can opt in to the System Output Switcher (available on Android 13 and higher) to cast media without requesting the ACCESS_LOCAL_NETWORK permission, but using the System Output Switcher is not required.
+
+## Was this helpful?
+How can we improve it?
+YesNo
+Submit
+
+## Need more help? 
+### Try these next steps: 
+
+ Post to the help community Get answers from community members 
+
+ Contact us Tell us more and we’ll help you get there 
+
+true 
+
+## Use of app permissions and APIs
+- 
+1 of 12Declare permissions for your app
+- 
+2 of 12Understanding location in the background permissions
+- 
+3 of 12Use of All files access (MANAGE_EXTERNAL_STORAGE) permission
+- 
+4 of 12Use of the broad package (App) visibility (QUERY_ALL_PACKAGES) permission
+- 
+5 of 12Use of the REQUEST_INSTALL_PACKAGES permission
+- 
+6 of 12Use of SMS or Call Log permission groups
+- 
+7 of 12Use of the AccessibilityService API
+- 
+8 of 12Remediation for Sensitive JavaScript Interface Vulnerability
+- 
+9 of 12​​Use of the isMonitoringTool Flag
+- 
+10 of 12Understanding Restricted Permissions with minimum scope alternatives
+- 
+11 of 12Minimum Scope: Foreground Location Access and the Location Button
+- 
+12 of 12Preview: Use of SMS or Call Log permission groups 
+
+ ©2026 Google 
+- Privacy Policy 
+- Terms of Service Language Afrikaans‎català‎dansk‎Deutsch‎eesti‎English (United Kingdom)‎español‎español (Latinoamérica)‎Filipino‎français‎français (Canada)‎Gaeilge‎hrvatski‎Indonesia‎isiZulu‎italiano‎Kiswahili‎latviešu‎lietuvių‎magyar‎Malti‎Melayu‎Nederlands‎norsk‎polski‎português‎português (Brasil)‎română‎slovenčina‎slovenščina‎suomi‎svenska‎Tiếng Việt‎Türkçe‎čeština‎Ελληνικά‎български‎русский‎српски‎українська‎‏עברית‏اردو‏العربيةहिन्दी‎தமிழ்‎ಕನ್ನಡ‎ไทย‎አማርኛ‎中文（简体）‎中文（繁體）‎中文（香港）‎日本語‎한국어‎ English‎ 
+
+Enable Dark Mode 
+
+Send feedback on... This help content & information General Help Center experience 
+
+Search
+Clear search
+Close search
+Google apps
+Main menu 
+7290719104478327797 
+
+true 
+Search Help Center 
+false 
+
+true 
+
+true 
+
+true 
+true 
+true 
+92637 
+
+false 
+
+false 
+false 
+false 
+
+false

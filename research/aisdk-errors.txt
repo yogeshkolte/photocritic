@@ -1,0 +1,363 @@
+AI SDK Errors | AI SDK
+
+- 
+
+- 
+- 
+- 
+- 
+
+- 
+- 
+- 
+
+- 
+- 
+- 
+- 
+- 
+
+- 
+- 
+
+- 
+- 
+- 
+- 
+- 
+- 
+
+- 
+- 
+- 
+- 
+
+- 
+
+- 
+- 
+- 
+- 
+
+- 
+- 
+- 
+
+- 
+- 
+- 
+- 
+- 
+
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+
+- 
+
+- 
+
+- 
+
+- 
+
+- 
+
+- 
+
+- 
+
+Reference
+Menu
+
+# AI SDK Errors
+
+The AI SDK exposes typed errors so applications can handle expected failure
+modes without matching error message strings.
+
+## Importing Errors
+
+The application package is named ai, not @ai-sdk/ai. It re-exports common
+provider-level errors from @ai-sdk/provider together with the higher-level
+errors raised by AI SDK Core:
+
+import { APICallError, NoObjectGeneratedError } from 'ai';
+
+Provider implementations that depend directly on @ai-sdk/provider can import
+its provider-level errors from that package instead:
+
+import { APICallError, InvalidResponseDataError } from '@ai-sdk/provider';
+
+## Migrating to Typed Error Handling
+
+Replace message matching or an unconditionally generic catch block with the
+most specific static isInstance guard available. Check AISDKError last when
+you need a fallback for any AI SDK error:
+
+import { AISDKError, APICallError, generateText } from 'ai';
+
+try {
+ await generateText({
+ model,
+ prompt: 'Write a vegetarian lasagna recipe for 4 people.',
+ });
+} catch (error) {
+ if (APICallError.isInstance(error)) {
+ console.error('Provider request failed:', error.statusCode);
+ return;
+ }
+
+ if (AISDKError.isInstance(error)) {
+ console.error('AI SDK error:', error.name);
+ return;
+ }
+
+ throw error;
+}
+
+Prefer ErrorClass.isInstance(error) over error instanceof ErrorClass when
+the class provides it. The static guard also works when multiple AI SDK package
+versions are loaded.
+
+## Common Failure Modes
+
+ | Failure mode | Error to check
+ | A provider request fails because of a network error or non-success response | APICallError
+ | Automatic retries are exhausted | RetryError
+ | A provider reports an error after a response stream has started | StreamProviderError
+ | A structured output cannot be parsed or validated | NoObjectGeneratedError; inspect its cause for JSONParseError or TypeValidationError
+ | A generation call returns no usable output | NoOutputGeneratedError or the modality-specific No*GeneratedError
+ | A model calls a missing tool or supplies invalid tool input | NoSuchToolError or InvalidToolInputError
+ | Tool-call repair fails | ToolCallRepairError
+ | A response violates an enforced toolChoice | ToolChoiceViolationError
+ | Message history contains unresolved tool calls or invalid approvals | MissingToolResultsError, InvalidToolApprovalError, or InvalidToolApprovalSignatureError
+ | A provider or model cannot be resolved | NoSuchProviderError, NoSuchModelError, or NoSuchProviderReferenceError
+ | A provider response is empty, malformed, or invalid | EmptyResponseBodyError, JSONParseError, or InvalidResponseDataError
+ | The requested model or provider does not support a capability or specification version | UnsupportedFunctionalityError or UnsupportedModelVersionError
+ | UI messages cannot be converted or a UI message stream is invalid | MessageConversionError or UIMessageStreamError
+
+## Error Reference
+
+### Base Error
+
+- AISDKError: Base class and broad type guard for AI SDK errors.
+
+### Provider Requests and Responses
+
+- APICallError
+
+- DownloadError
+
+- EmptyResponseBodyError
+
+- InvalidPromptError
+
+- InvalidResponseDataError
+
+- JSONParseError
+
+- LoadAPIKeyError
+
+- LoadSettingError
+
+- NoContentGeneratedError
+
+- NoSuchModelError
+
+- NoSuchProviderReferenceError
+
+- RetryError
+
+- StreamProviderError
+
+- TooManyEmbeddingValuesForCallError
+
+- TypeValidationError
+
+- UnsupportedFunctionalityError
+
+### Inputs and Message Streams
+
+- InvalidArgumentError
+
+- InvalidDataContentError
+
+- InvalidMessageRoleError
+
+- InvalidStreamPartError
+
+- MessageConversionError
+
+- UIMessageStreamError
+
+### Generated Output
+
+- NoImageGeneratedError
+
+- NoObjectGeneratedError
+
+- NoOutputGeneratedError
+
+- NoSpeechGeneratedError
+
+- NoTranscriptGeneratedError
+
+- NoTranslationGeneratedError
+
+- NoVideoGeneratedError
+
+### Providers and Model Compatibility
+
+- NoSuchProviderError
+
+- UnsupportedModelVersionError
+
+### Tools and Approvals
+
+- InvalidToolApprovalError
+
+- InvalidToolApprovalSignatureError
+
+- InvalidToolInputError
+
+- MissingToolResultsError
+
+- NoSuchToolError
+
+- ToolCallNotFoundForApprovalError
+
+- ToolCallRepairError
+
+- ToolChoiceViolationError
+
+PreviousgenerateVideoNextAI_APICallError
+
+- 
+- 
+- 
+- 
+
+## 
+- 
+- 
+- 
+- 
+- 
+
+- 
+
+- 
+
+## 
+- 
+- 
+- 
+- 
+
+## 
+- 
+- 
+- 
+- 
+
+## 
+- 
+
+- 
+- 
+
+- 
+- 
+- 
+
+## 
+- 
+
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+
+## 
+- 
+- 
+
+- 
+- 
+
+- 
+
+- 
+
+## 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+
+## 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+
+## 
+- 
+- 
+- 
+- 
+- 
+
+## 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+
+## 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+
+## 
+- 
+- 
+- 
+- 
+- 
+
+Copy page
+
+Copy for LLMView MarkdownAsk AI about this page

@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PhotoCritic phone prototype</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#F5B13D}a:hover{color:#FFD08A}
+button{font-family:inherit}
+textarea::placeholder,input::placeholder{color:rgba(244,244,242,.55)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #0F1012; color: #F4F4F2; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, system-ui, sans-serif; font-size: 15px; line-height: 1.45">
+
+<!-- ============ SETUP ============ -->
+<sc-if value="{{isSetup}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column; padding: 56px 24px 28px; box-sizing: border-box; gap: 22px; overflow-y: auto">
+  <sc-if value="{{isEditing}}" hint-placeholder-val="{{ false }}">
+    <button type="button" onClick="{{cancelEdit}}" aria-label="Back" style="align-self: flex-start; margin: -10px 0 -10px -12px; width: 44px; height: 44px; border: 0; background: transparent; color: #F4F4F2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+    </button>
+  </sc-if>
+  <sc-if value="{{isFirstRun}}" hint-placeholder-val="{{ true }}">
+  <div style="display: flex; align-items: center; gap: 10px">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F5B13D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3.2"></circle><path d="M12 3v5.8M21 12h-5.8M12 21v-5.8M3 12h5.8"></path></svg>
+    <span style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, system-ui, sans-serif; font-weight: 600; font-size: 18px; letter-spacing: .2px">PhotoCritic</span>
+  </div>
+  </sc-if>
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, system-ui, sans-serif; font-weight: 600; font-size: 28px; line-height: 1.15">{{setupTitle}}</h1>
+    <p style="margin: 0; color: rgba(244,244,242,.72)">{{setupIntro}}</p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <span style="font-size: 12px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: rgba(244,244,242,.66)">Provider</span>
+    <div style="display: flex; gap: 8px">
+      <sc-for list="{{providers}}" as="p" hint-placeholder-count="3">
+        <button type="button" onClick="{{p.pick}}" aria-pressed="{{p.pressed}}" style="{{p.style}}">{{p.name}}</button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <span style="font-size: 12px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: rgba(244,244,242,.66)">Model</span>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <sc-for list="{{models}}" as="m" hint-placeholder-count="2">
+        <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="{{m.style}}">
+          <span style="font-weight: 600">{{m.label}}</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: rgba(245,177,61,.16); color: #F5B13D">{{m.tier}}</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <label for="apikey" style="font-size: 12px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: rgba(244,244,242,.66)">API key</label>
+    <input id="apikey" type="password" autocomplete="off" placeholder="{{keyPlaceholder}}" onInput="{{onKey}}" style="height: 48px; border-radius: 12px; border: 1px solid {{keyBorder}}; background: #1C1D21; color: #F4F4F2; padding: 0 14px; font-size: 15px; font-family: inherit">
+    <sc-if value="{{showKeyError}}" hint-placeholder-val="{{ false }}">
+      <span role="alert" style="color: #FF8A7A; font-size: 13px">Paste a key to continue. If you pasted one, check that it is for the provider selected above.</span>
+    </sc-if>
+    <a href="#" style="font-size: 14px">Where do I get a key?</a>
+  </div>
+
+  <sc-if value="{{isFirstRun}}" hint-placeholder-val="{{ true }}">
+  <button type="button" onClick="{{toggleShare}}" aria-pressed="{{shareOn}}" style="display: flex; align-items: center; gap: 14px; text-align: left; background: #17181B; border: 1px solid rgba(255,255,255,.10); border-radius: 14px; padding: 14px; color: #F4F4F2; cursor: pointer">
+    <span style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+      <span style="font-weight: 600">Share usage and crash data</span>
+      <span style="font-size: 13px; color: rgba(244,244,242,.68)">Off unless you turn it on. Never includes photos, questions, answers or keys.</span>
+    </span>
+    <span style="{{switchTrack}}"><span style="{{switchKnob}}"></span></span>
+  </button>
+  </sc-if>
+
+  <button type="button" onClick="{{finishSetup}}" style="margin-top: auto; height: 52px; border: 0; border-radius: 14px; background: #F5B13D; color: #1A1206; font-weight: 600; font-size: 16px; cursor: pointer">{{setupCta}}</button>
+</div>
+</sc-if>
+
+<!-- ============ HOME ============ -->
+<sc-if value="{{isHome}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0">
+
+  <!-- photo or empty state -->
+  <sc-if value="{{hasPhoto}}" hint-placeholder-val="{{ true }}">
+    <button type="button" onClick="{{collapse}}" aria-label="Photo of a café storefront. Tap to collapse the conversation." style="position: absolute; inset: 0; border: 0; padding: 0; background: #33475A; cursor: pointer; overflow: hidden">
+      <span style="position: absolute; left: 0; right: 0; top: 0; height: 300px; background: #3E556B"></span>
+      <span style="position: absolute; left: 30px; right: 30px; top: 150px; bottom: 120px; background: #6B4A3A; border-radius: 4px"></span>
+      <span style="position: absolute; left: 30px; right: 30px; top: 228px; height: 46px; background: repeating-linear-gradient(90deg, #E9E3D6 0 26px, #B7493B 26px 52px); border-radius: 0 0 10px 10px"></span>
+      <span style="position: absolute; left: 70px; right: 70px; top: 170px; height: 46px; background: #1E1C1B; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #F1E6C8; font-family: Georgia, serif; font-weight: 600; font-size: 20px; letter-spacing: 3px">LUNA CAFÉ</span>
+      <span style="position: absolute; left: 56px; width: 130px; top: 300px; height: 170px; background: #E8B86A; border-radius: 4px; opacity: .9"></span>
+      <span style="position: absolute; right: 56px; width: 110px; top: 300px; height: 240px; background: #2A221E; border-radius: 4px"></span>
+      <span style="position: absolute; left: 200px; width: 120px; top: 330px; height: 130px; background: #2B2F2C; border: 4px solid #8A6A4A; border-radius: 4px; color: #E7E7E0; font-size: 11px; line-height: 1.5; padding: 8px; box-sizing: border-box; text-align: left; white-space: pre-line">TODAY
+Cardamom bun 3.50
+Flat white 3.20
+OPEN 7–15</span>
+      <span style="position: absolute; left: 0; right: 0; bottom: 0; height: 130px; background: #5B5F63"></span>
+    </button>
+  </sc-if>
+  <sc-if value="{{noPhoto}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; box-sizing: border-box">
+      <p style="margin: 0 0 8px; color: rgba(244,244,242,.72); text-align: center">Pick a photo to ask about.</p>
+      <button type="button" onClick="{{takePhoto}}" style="width: 100%; height: 64px; border-radius: 16px; border: 0; background: #F5B13D; color: #1A1206; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>
+        Take photo
+      </button>
+      <button type="button" onClick="{{takePhoto}}" style="width: 100%; height: 64px; border-radius: 16px; border: 1px solid rgba(255,255,255,.16); background: #17181B; color: #F4F4F2; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"></rect><circle cx="9" cy="10" r="1.8"></circle><path d="M20.5 16l-5-5-8 8.5"></path></svg>
+        Choose from Photos
+      </button>
+    </div>
+  </sc-if>
+
+  <!-- top bar -->
+  <div style="position: absolute; left: 16px; right: 16px; top: 52px; display: flex; align-items: center; justify-content: space-between">
+    <button type="button" onClick="{{goSettings}}" aria-label="Settings" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid rgba(255,255,255,.14); background: rgba(15,16,18,.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); color: #F4F4F2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><circle cx="16" cy="7" r="2"></circle><circle cx="10" cy="17" r="2"></circle></svg>
+    </button>
+    <sc-if value="{{hasPhoto}}" hint-placeholder-val="{{ true }}">
+      <button type="button" onClick="{{askNewPhoto}}" aria-label="New photo" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid rgba(255,255,255,.14); background: rgba(15,16,18,.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); color: #F4F4F2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="13" height="13" rx="2"></rect><path d="M19.5 3v6M16.5 6h6"></path></svg>
+      </button>
+    </sc-if>
+    <sc-if value="{{noPhoto}}" hint-placeholder-val="{{ false }}">
+      <span style="width: 44px; height: 44px"></span>
+    </sc-if>
+  </div>
+
+  <!-- conversation sheet -->
+  <div style="{{sheetStyle}}">
+    <button type="button" onClick="{{toggleSheet}}" aria-label="{{handleLabel}}" style="align-self: center; width: 120px; height: 28px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none">
+      <span style="width: 40px; height: 5px; border-radius: 3px; background: rgba(244,244,242,.45)"></span>
+    </button>
+
+    <div style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column-reverse; gap: 14px; padding: 0 16px 6px">
+      <sc-for list="{{messagesRev}}" as="msg" hint-placeholder-count="2">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <sc-if value="{{msg.isUser}}" hint-placeholder-val="{{ false }}">
+            <div style="align-self: flex-end; max-width: 80%; background: rgba(245,177,61,.18); border: 1px solid rgba(245,177,61,.35); padding: 9px 13px; border-radius: 16px 16px 4px 16px">{{msg.text}}</div>
+          </sc-if>
+          <sc-if value="{{msg.isAi}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <span style="white-space: pre-wrap">{{msg.text}}<sc-if value="{{msg.streaming}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="color: #F5B13D"> ▍</span></sc-if></span>
+              <sc-if value="{{msg.stopped}}" hint-placeholder-val="{{ false }}">
+                <span style="align-self: flex-start; font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,.10); color: rgba(244,244,242,.8)">Stopped · not used in later answers</span>
+              </sc-if>
+              <sc-if value="{{msg.hasCard}}" hint-placeholder-val="{{ false }}">
+                <div style="border: 1px solid rgba(255,255,255,.16); background: rgba(10,10,11,.55); border-radius: 12px; overflow: hidden">
+                  <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px 8px 14px; border-bottom: 1px solid rgba(255,255,255,.10)">
+                    <span style="font-size: 12px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: rgba(244,244,242,.66)">Text in photo</span>
+                    <span style="display: flex; gap: 6px">
+                      <button type="button" onClick="{{copied}}" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.16); background: transparent; color: #F4F4F2; font-size: 13px; cursor: pointer">Copy</button>
+                      <button type="button" onClick="{{shared}}" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.16); background: transparent; color: #F4F4F2; font-size: 13px; cursor: pointer">Share</button>
+                    </span>
+                  </div>
+                  <pre style="margin: 0; padding: 12px 14px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap">{{msg.card}}</pre>
+                </div>
+              </sc-if>
+              <sc-if value="{{msg.done}}" hint-placeholder-val="{{ true }}">
+              <span style="display: flex; gap: 16px">
+                <button type="button" onClick="{{copied}}" style="border: 0; background: transparent; padding: 4px 0; color: rgba(244,244,242,.72); font-size: 13px; cursor: pointer">Copy answer</button>
+                <button type="button" onClick="{{openReport}}" style="border: 0; background: transparent; padding: 4px 0; color: rgba(244,244,242,.72); font-size: 13px; cursor: pointer">Report</button>
+              </span>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{showChips}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; gap: 8px; padding: 6px 16px 0; flex: none">
+        <button type="button" onClick="{{askIdentify}}" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.18); background: rgba(15,16,18,.45); color: #F4F4F2; font-size: 14px; cursor: pointer">Identify</button>
+        <button type="button" onClick="{{askExplain}}" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.18); background: rgba(15,16,18,.45); color: #F4F4F2; font-size: 14px; cursor: pointer">Explain</button>
+        <button type="button" onClick="{{askText}}" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.18); background: rgba(15,16,18,.45); color: #F4F4F2; font-size: 14px; cursor: pointer">Copy text</button>
+      </div>
+    </sc-if>
+
+    <div style="display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px 30px 16px; flex: none">
+      <label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Ask about this photo</label>
+      <textarea id="q" rows="1" disabled="{{noPhoto}}" placeholder="{{inputHint}}" onInput="{{onQ}}" style="flex: 1; min-height: 44px; max-height: 120px; resize: none; border-radius: 22px; border: 1px solid rgba(255,255,255,.18); background: rgba(10,10,11,.5); color: #F4F4F2; padding: 11px 16px; font-size: 15px; font-family: inherit; box-sizing: border-box"></textarea>
+      <sc-if value="{{notStreaming}}" hint-placeholder-val="{{ true }}">
+      <button type="button" onClick="{{askTyped}}" aria-label="Send" disabled="{{noPhoto}}" style="{{sendStyle}}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"></path></svg>
+      </button>
+      </sc-if>
+      <sc-if value="{{isStreaming}}" hint-placeholder-val="{{ false }}">
+      <button type="button" onClick="{{stop}}" aria-label="Stop answer" style="flex: none; width: 44px; height: 44px; border-radius: 22px; border: 1px solid rgba(255,255,255,.22); background: #F4F4F2; color: #121214; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2.5" fill="currentColor"></rect></svg>
+      </button>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- consent -->
+  <sc-if value="{{consentOpen}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: flex-end">
+      <div role="dialog" aria-label="Consent before sending" style="width: 100%; background: #17181B; border-radius: 22px 22px 0 0; border-top: 1px solid rgba(255,255,255,.12); padding: 22px 22px 34px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+        <h2 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, system-ui, sans-serif; font-size: 21px; font-weight: 600">Send this photo to {{providerName}}?</h2>
+        <p style="margin: 0; color: rgba(244,244,242,.75); font-size: 14px">To answer, PhotoCritic sends {{providerName}} a smaller copy of your photo with location data removed, plus your questions. This uses your API key.</p>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: rgba(244,244,242,.75)">
+          <span>• How long {{providerName}} keeps it: [retention text from Remote Config]</span>
+          <span>• Used for training: [provider policy text]</span>
+          <span>• PhotoCritic itself keeps no photos or messages.</span>
+          <span>• You are asked once for each provider, and again if this text changes.</span>
+        </div>
+        <a href="#" style="font-size: 14px">Read the privacy policy</a>
+        <div style="display: flex; gap: 10px; margin-top: 4px">
+          <button type="button" onClick="{{declineConsent}}" style="flex: 1; height: 50px; border-radius: 14px; border: 1px solid rgba(255,255,255,.18); background: transparent; color: #F4F4F2; font-weight: 600; cursor: pointer">Not now</button>
+          <button type="button" onClick="{{acceptConsent}}" style="flex: 1.4; height: 50px; border-radius: 14px; border: 0; background: #F5B13D; color: #1A1206; font-weight: 600; cursor: pointer">Agree and send</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- confirm new photo -->
+  <sc-if value="{{confirmOpen}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 28px; box-sizing: border-box">
+      <div role="alertdialog" aria-label="Start over" style="width: 100%; background: #1C1D21; border-radius: 18px; border: 1px solid rgba(255,255,255,.12); padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">Start over with a new photo?</h2>
+        <p style="margin: 0; font-size: 14px; color: rgba(244,244,242,.75)">This conversation will be cleared. PhotoCritic keeps nothing from it.</p>
+        <div style="display: flex; gap: 10px">
+          <button type="button" onClick="{{closeConfirm}}" style="flex: 1; height: 46px; border-radius: 12px; border: 1px solid rgba(255,255,255,.18); background: transparent; color: #F4F4F2; font-weight: 600; cursor: pointer">Cancel</button>
+          <button type="button" onClick="{{newPhoto}}" style="flex: 1; height: 46px; border-radius: 12px; border: 0; background: #F5B13D; color: #1A1206; font-weight: 600; cursor: pointer">New photo</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- report -->
+  <sc-if value="{{reportOpen}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: flex-end">
+      <div role="dialog" aria-label="Report this answer" style="width: 100%; background: #17181B; border-radius: 22px 22px 0 0; border-top: 1px solid rgba(255,255,255,.12); padding: 22px 22px 34px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+        <h2 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, system-ui, sans-serif; font-size: 21px; font-weight: 600">Report this answer</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <sc-for list="{{categories}}" as="c" hint-placeholder-count="4">
+            <button type="button" onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="{{c.style}}">{{c.label}}</button>
+          </sc-for>
+        </div>
+        <label for="reason" style="font-size: 14px; color: rgba(244,244,242,.75)">What was wrong? If it matters, describe what was in the photo. The photo itself is not sent.</label>
+        <textarea id="reason" rows="3" style="border-radius: 12px; border: 1px solid rgba(255,255,255,.18); background: #1C1D21; color: #F4F4F2; padding: 10px 12px; font-size: 15px; font-family: inherit; resize: none"></textarea>
+        <span style="font-size: 13px; color: rgba(244,244,242,.66)">Sent with the report: your note, the question and this answer, and the model name. Kept for 90 days.</span>
+        <div style="display: flex; gap: 10px">
+          <button type="button" onClick="{{closeReport}}" style="flex: 1; height: 50px; border-radius: 14px; border: 1px solid rgba(255,255,255,.18); background: transparent; color: #F4F4F2; font-weight: 600; cursor: pointer">Cancel</button>
+          <button type="button" onClick="{{submitReport}}" style="flex: 1.4; height: 50px; border-radius: 14px; border: 0; background: #F5B13D; color: #1A1206; font-weight: 600; cursor: pointer">Send report</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- ============ SETTINGS ============ -->
+<sc-if value="{{isSettings}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column; padding: 52px 0 24px; box-sizing: border-box">
+  <div style="display: flex; align-items: center; gap: 6px; padding: 0 12px 12px">
+    <button type="button" onClick="{{goHome}}" aria-label="Back" style="width: 44px; height: 44px; border: 0; background: transparent; color: #F4F4F2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+    </button>
+    <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, system-ui, sans-serif; font-size: 22px; font-weight: 600">Settings</h1>
+  </div>
+  <div style="display: flex; flex-direction: column; padding: 0 16px; gap: 22px; overflow-y: auto">
+    <div style="display: flex; flex-direction: column; background: #17181B; border: 1px solid rgba(255,255,255,.10); border-radius: 16px">
+      <button type="button" onClick="{{editModel}}" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 52px; padding: 0 16px; border: 0; border-bottom: 1px solid rgba(255,255,255,.08); background: transparent; color: #F4F4F2; font-size: 15px; text-align: left; cursor: pointer"><span>Provider</span><span style="color: rgba(244,244,242,.72)">{{providerName}} ›</span></button>
+      <button type="button" onClick="{{editModel}}" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 52px; padding: 0 16px; border: 0; border-bottom: 1px solid rgba(255,255,255,.08); background: transparent; color: #F4F4F2; font-size: 15px; text-align: left; cursor: pointer"><span>Model</span><span style="color: rgba(244,244,242,.72)">{{modelLabel}} ›</span></button>
+      <div style="display: flex; justify-content: space-between; align-items: center; min-height: 52px; padding: 0 16px"><span>API key</span><span style="color: rgba(244,244,242,.72)">•••• 4f2a · Replace</span></div>
+    </div>
+    <span style="font-size: 13px; color: rgba(244,244,242,.66); margin-top: -14px; padding: 0 4px">Changing provider or model ends the current conversation.</span>
+
+    <div style="display: flex; flex-direction: column; background: #17181B; border: 1px solid rgba(255,255,255,.10); border-radius: 16px">
+      <button type="button" onClick="{{toggleShare}}" aria-pressed="{{shareOn}}" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 0 16px; border: 0; border-bottom: 1px solid rgba(255,255,255,.08); background: transparent; color: #F4F4F2; text-align: left; cursor: pointer; font-size: 15px">
+        <span>Share usage and crash data</span>
+        <span style="{{switchTrack}}"><span style="{{switchKnob}}"></span></span>
+      </button>
+      <a href="#" style="display: flex; justify-content: space-between; align-items: center; min-height: 52px; padding: 0 16px; color: #F4F4F2; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.08)"><span>Privacy policy</span><span style="color: rgba(244,244,242,.72)">›</span></a>
+      <div style="display: flex; justify-content: space-between; align-items: center; min-height: 52px; padding: 0 16px"><span>Support ID</span><span style="color: rgba(244,244,242,.72); font-size: 13px">{{supportId}}</span></div>
+    </div>
+    <span style="font-size: 13px; color: rgba(244,244,242,.66); padding: 0 4px">PhotoCritic [version] · TestFlight</span>
+  </div>
+</div>
+</sc-if>
+
+<!-- toast -->
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}">
+  <div role="status" style="position: absolute; left: 24px; right: 24px; top: 108px; background: #F4F4F2; color: #121214; border-radius: 12px; padding: 12px 14px; font-size: 14px; font-weight: 500; text-align: center">{{toast}}</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      screen: 'setup', editing: false, provider: 'anthropic', model: 'claude-sonnet-5-5', key: '', keyError: false,
+      saved: null, share: false, hasPhoto: false, expanded: false, consented: {}, consentOpen: false,
+      pending: null, messages: [], streaming: false, confirmOpen: false, reportOpen: false, category: 'wrong',
+      q: '', toast: ''
+    };
+  }
+  modelsFor(p) {
+    return {
+      openai: [{ id: 'gpt-6-astra', label: 'GPT-6 Astra', tier: 'Best' }, { id: 'openai-fast', label: '[Fast model to be chosen]', tier: 'Fast' }],
+      anthropic: [{ id: 'claude-haiku-5-5', label: 'Claude Haiku 5.5', tier: 'Fast' }, { id: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5', tier: 'Best' }],
+      gemini: [{ id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash-Lite', tier: 'Fast' }, { id: 'gemini-4-hydrogen', label: 'Gemini 4 Hydrogen', tier: 'Best' }]
+    }[p];
+  }
+  flash(t) {
+    this.setState({ toast: t });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: '' }), 2200);
+  }
+  ask(kind) {
+    const s = this.state;
+    if (!s.hasPhoto || s.streaming) return;
+    const q = kind === 'identify' ? 'What is this?' : kind === 'explain' ? 'Explain this photo.' : kind === 'text' ? 'Copy the text in this photo.' : (s.q.trim() || 'What is the sign above the door made of?');
+    if (!s.consented[s.provider]) { this.setState({ consentOpen: true, pending: { kind, q } }); return; }
+    this.answer(kind, q);
+  }
+  answer(kind, q) {
+    const label = this.currentModel().label;
+    let a;
+    if (kind === 'identify') a = { text: 'A café storefront: a hanging sign reading "Luna Café", a striped awning, a lit front window, and a chalkboard menu beside the door.' };
+    else if (kind === 'explain') a = { text: 'It looks like an early street scene. The window is lit and the chalkboard lists today’s specials, so the café is probably open. The opening hours on the board are 7 to 15. The awning is rolled out, which usually means the café expects sun or customers sitting outside. Nobody is in the frame, so this may have been taken just after opening.' };
+    else if (kind === 'text') a = { text: 'Here is the text I can read:', card: 'LUNA CAFÉ\nTODAY\nCardamom bun 3.50\nFlat white 3.20\nOPEN 7–15' };
+    else a = { text: 'The sign looks like painted wood in a dark frame, with cream lettering. I cannot be sure from this distance; a closer photo of the sign would help.' };
+    const id = Date.now();
+    const words = a.text.split(' ');
+    const msgs = this.state.messages.concat([{ role: 'user', text: q }, { id, role: 'ai', model: label, text: '', full: a.text, card: a.card || '', streaming: true }]);
+    this.setState({ messages: msgs, q: '', streaming: true, expanded: kind === 'text' ? true : this.state.expanded });
+    let n = 0;
+    clearInterval(this._s);
+    this._s = setInterval(() => {
+      n += 1;
+      const done = n >= words.length;
+      this.setState({
+        streaming: !done,
+        messages: this.state.messages.map((m) => (m.id === id ? { ...m, text: words.slice(0, n).join(' '), streaming: !done, cardShown: done } : m))
+      });
+      if (done) clearInterval(this._s);
+    }, 140);
+  }
+  stop() {
+    clearInterval(this._s);
+    this.setState({
+      streaming: false,
+      messages: this.state.messages.map((m) => (m.streaming ? { ...m, streaming: false, stopped: true } : m))
+    });
+  }
+  currentModel() {
+    const ms = this.modelsFor(this.state.provider);
+    return ms.find((m) => m.id === this.state.model) || ms[0];
+  }
+  renderVals() {
+    const s = this.state;
+    const names = { openai: 'OpenAI', anthropic: 'Anthropic', gemini: 'Google Gemini' };
+    const pill = (on) => 'height: 44px; padding: 0 14px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid ' + (on ? '#F5B13D' : 'rgba(255,255,255,.16)') + '; background: ' + (on ? 'rgba(245,177,61,.14)' : '#17181B') + '; color: #F4F4F2';
+    const providers = ['openai', 'anthropic', 'gemini'].map((id) => ({
+      name: names[id], pressed: s.provider === id ? 'true' : 'false', style: pill(s.provider === id) + '; flex: 1',
+      pick: () => this.setState({ provider: id, model: this.modelsFor(id)[1].id, keyError: false })
+    }));
+    const models = this.modelsFor(s.provider).map((m) => ({
+      label: m.label, tier: m.tier, pressed: s.model === m.id ? 'true' : 'false',
+      style: pill(s.model === m.id) + '; display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 14px; text-align: left',
+      pick: () => this.setState({ model: m.id })
+    }));
+    const cats = [['wrong', 'Wrong answer'], ['offensive', 'Offensive'], ['unsafe', 'Unsafe'], ['other', 'Other']].map(([id, label]) => ({
+      label, pressed: s.category === id ? 'true' : 'false', style: pill(s.category === id) + '; height: 38px; border-radius: 999px',
+      pick: () => this.setState({ category: id })
+    }));
+    const messagesRev = s.messages.map((m) => {
+      const isUser = m.role === 'user';
+      const hasCard = !!m.card && !!m.cardShown;
+      return { isUser, isAi: !isUser, text: m.text, model: m.model || '', card: m.card || '', hasCard, streaming: !!m.streaming, stopped: !!m.stopped, done: !isUser && !m.streaming };
+    }).reverse();
+    // D27: solid tint of at least 65% under all text; D28: two heights, collapsed sized to content
+    const sheetBg = s.expanded ? 'rgba(23,24,27,.94)' : (s.hasPhoto ? 'rgba(23,24,27,.72)' : '#17181B');
+    const sheetStyle = 'position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; border-radius: 24px 24px 0 0; border-top: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(22px) saturate(120%); -webkit-backdrop-filter: blur(22px) saturate(120%); transition: background .28s ease; ' +
+      (s.expanded ? 'height: 736px; ' : 'max-height: 360px; ') + 'background: ' + sheetBg;
+    const sendOn = s.hasPhoto;
+    const saved = { provider: s.provider, model: s.model };
+    return {
+      isSetup: s.screen === 'setup', isHome: s.screen === 'home', isSettings: s.screen === 'settings',
+      isEditing: s.editing, isFirstRun: !s.editing,
+      setupTitle: s.editing ? 'Provider and model' : 'Connect an AI provider',
+      setupIntro: s.editing ? 'Changing provider or model ends the current conversation. Keys stay on this device.' : 'Pick a provider and a model. PhotoCritic sends your photo and questions to that provider, using your own API key. Usage is billed to your account with that provider.',
+      setupCta: s.editing ? 'Check key and save' : 'Check key and continue',
+      cancelEdit: () => this.setState({ screen: 'settings', editing: false, provider: s.saved.provider, model: s.saved.model, keyError: false }),
+      editModel: () => this.setState({ screen: 'setup', editing: true, saved }),
+      providers, models, categories: cats, providerName: names[s.provider], modelLabel: this.currentModel().label,
+      keyPlaceholder: 'Paste your ' + names[s.provider] + ' API key',
+      keyBorder: s.keyError ? '#FF8A7A' : 'rgba(255,255,255,.16)', showKeyError: s.keyError,
+      onKey: (e) => this.setState({ key: e.target.value, keyError: false }),
+      shareOn: s.share ? 'true' : 'false',
+      switchTrack: 'flex: none; width: 50px; height: 30px; border-radius: 15px; position: relative; transition: background .2s; background: ' + (s.share ? '#F5B13D' : 'rgba(255,255,255,.22)'),
+      switchKnob: 'position: absolute; top: 3px; width: 24px; height: 24px; border-radius: 12px; background: #FFFFFF; transition: left .2s; left: ' + (s.share ? '23px' : '3px'),
+      toggleShare: () => this.setState({ share: !s.share }),
+      finishSetup: () => {
+        if (!s.key.trim() && !(s.editing && s.provider === s.saved.provider)) { this.setState({ keyError: true }); return; }
+        if (s.editing) {
+          const changed = s.saved.provider !== s.provider || s.saved.model !== s.model;
+          clearInterval(this._s);
+          this.setState({ screen: 'home', editing: false, ...(changed ? { messages: [], streaming: false, expanded: false } : {}) });
+          if (changed) this.flash('Now using ' + this.currentModel().label + '. New conversation.');
+        } else this.setState({ screen: 'home' });
+      },
+      hasPhoto: s.hasPhoto, noPhoto: !s.hasPhoto,
+      takePhoto: () => this.setState({ hasPhoto: true }),
+      goSettings: () => this.setState({ screen: 'settings' }), goHome: () => this.setState({ screen: 'home' }),
+      askNewPhoto: () => (s.messages.length ? this.setState({ confirmOpen: true }) : this.setState({ hasPhoto: false })),
+      closeConfirm: () => this.setState({ confirmOpen: false }),
+      newPhoto: () => { clearInterval(this._s); this.setState({ confirmOpen: false, messages: [], streaming: false, hasPhoto: false, expanded: false }); },
+      sheetStyle, toggleSheet: () => this.setState({ expanded: !s.expanded }), collapse: () => this.setState({ expanded: false }),
+      handleLabel: s.expanded ? 'Collapse conversation' : 'Expand conversation',
+      messagesRev, showChips: s.hasPhoto && !s.expanded && !s.streaming,
+      inputHint: s.hasPhoto ? 'Ask about this photo…' : 'Choose a photo to start',
+      onQ: (e) => this.setState({ q: e.target.value }),
+      askIdentify: () => this.ask('identify'), askExplain: () => this.ask('explain'), askText: () => this.ask('text'), askTyped: () => this.ask('typed'),
+      isStreaming: s.streaming, notStreaming: !s.streaming, stop: () => this.stop(),
+      sendStyle: 'flex: none; width: 44px; height: 44px; border-radius: 22px; border: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; ' + (sendOn ? 'background: #F5B13D; color: #1A1206' : 'background: rgba(255,255,255,.12); color: rgba(244,244,242,.45)'),
+      consentOpen: s.consentOpen,
+      acceptConsent: () => { const p = s.pending; this.setState({ consented: { ...s.consented, [s.provider]: true }, consentOpen: false, pending: null }, () => p && this.answer(p.kind, p.q)); },
+      declineConsent: () => this.setState({ consentOpen: false, pending: null }),
+      confirmOpen: s.confirmOpen, reportOpen: s.reportOpen,
+      openReport: () => this.setState({ reportOpen: true }), closeReport: () => this.setState({ reportOpen: false }),
+      submitReport: () => { this.setState({ reportOpen: false }); this.flash('Report sent. Report ID 7F3A-21C9'); },
+      copied: () => this.flash('Copied'), shared: () => this.flash('Share sheet opens here'),
+      supportId: s.share ? 'a91f…c3e2' : 'Turn on sharing to get one',
+      hasToast: !!s.toast, toast: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>
