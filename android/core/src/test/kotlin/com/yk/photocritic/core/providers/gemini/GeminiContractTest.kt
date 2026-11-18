@@ -100,7 +100,13 @@ class GeminiContractTest {
     private fun request(input: JsonObject): TurnRequest {
         fun string(name: String) = input.getValue(name).jsonPrimitive.content
         return TurnRequest(
-            model = ModelSettings(string("modelId"), input.getValue("maxOutputTokens").jsonPrimitive.int, contextTokens = 1_000_000),
+            model =
+                ModelSettings(
+                    string("modelId"),
+                    input.getValue("maxOutputTokens").jsonPrimitive.int,
+                    contextTokens = 1_000_000,
+                    thinkingLevel = string("thinkingLevel"),
+                ),
             history =
                 input.getValue("history").jsonArray.mapIndexed { i, turn ->
                     val t = turn.jsonObject

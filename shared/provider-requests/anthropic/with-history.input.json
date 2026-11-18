@@ -9,6 +9,7 @@
   "question": "How far is the summit?",
   "promptKind": "free",
   "maxOutputTokens": 1024,
+  "thinkingLevel": "",
   "imageDetail": null,
   "image": "shared/images/test.jpg"
 }

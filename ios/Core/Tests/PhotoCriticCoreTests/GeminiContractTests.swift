@@ -38,7 +38,8 @@ struct GeminiContractTests {
             model: ModelSettings(
                 modelID: try #require(input["modelId"] as? String),
                 maxOutputTokens: try #require(input["maxOutputTokens"] as? Int),
-                contextTokens: 1_000_000
+                contextTokens: 1_000_000,
+                thinkingLevel: try #require(input["thinkingLevel"] as? String)
             ),
             history: history.enumerated().map { index, turn in
                 NeutralTurn(question: turn["question"] ?? "", answerText: turn["answerText"] ?? "", imageVersionID: "img\(index)")

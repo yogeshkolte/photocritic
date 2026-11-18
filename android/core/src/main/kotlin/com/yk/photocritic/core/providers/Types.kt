@@ -40,6 +40,8 @@ data class ModelSettings(
     val modelId: String,
     val maxOutputTokens: Int,
     val contextTokens: Int,
+    /** How much the model may think before answering; empty sends nothing (provider default). */
+    val thinkingLevel: String = "",
 )
 
 class TurnRequest(

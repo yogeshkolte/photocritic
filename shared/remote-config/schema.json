@@ -211,6 +211,7 @@
           "maxBytes",
           "imageDetail",
           "maxOutputTokens",
+          "thinkingLevel",
           "contextTokens",
           "status",
           "replacementId",
@@ -259,6 +260,14 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 128000
+          },
+          "thinkingLevel": {
+            "enum": [
+              "",
+              "low",
+              "medium",
+              "high"
+            ]
           },
           "contextTokens": {
             "type": "integer",

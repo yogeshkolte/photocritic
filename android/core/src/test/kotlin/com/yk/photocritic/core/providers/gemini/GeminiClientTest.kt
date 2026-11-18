@@ -131,7 +131,31 @@ class GeminiClientTest {
             val config = body.getValue("generationConfig").jsonObject
             assertEquals("MEDIA_RESOLUTION_HIGH", config.getValue("mediaResolution").jsonPrimitive.content)
             assertEquals("512", config.getValue("maxOutputTokens").jsonPrimitive.content)
+            assertFalse("thinkingConfig" in config, "an empty thinking level sends no thinkingConfig")
             assertTrue(body.toString().contains("fenced block"))
+        }
+
+    @Test
+    fun `a thinking level is sent as thinkingConfig`() =
+        runBlocking {
+            server.enqueue(stream(chunk("Hi", finish = "STOP")))
+            val base = request()
+            val withLevel = TurnRequest(base.model.copy(thinkingLevel = "low"), base.history, base.question, base.image, base.promptKind)
+            client().send(withLevel, key).toList()
+            val config =
+                Json
+                    .parseToJsonElement(server.takeRequest().body!!.utf8())
+                    .jsonObject
+                    .getValue("generationConfig")
+                    .jsonObject
+            assertEquals(
+                "low",
+                config
+                    .getValue("thinkingConfig")
+                    .jsonObject
+                    .getValue("thinkingLevel")
+                    .jsonPrimitive.content,
+            )
         }
 
     @Test

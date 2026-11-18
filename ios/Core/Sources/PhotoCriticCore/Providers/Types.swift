@@ -45,11 +45,14 @@ public struct ModelSettings: Equatable, Sendable {
     public let modelID: String
     public let maxOutputTokens: Int
     public let contextTokens: Int
+    /// How much the model may think before answering; empty sends nothing (provider default).
+    public let thinkingLevel: String
 
-    public init(modelID: String, maxOutputTokens: Int, contextTokens: Int) {
+    public init(modelID: String, maxOutputTokens: Int, contextTokens: Int, thinkingLevel: String = "") {
         self.modelID = modelID
         self.maxOutputTokens = maxOutputTokens
         self.contextTokens = contextTokens
+        self.thinkingLevel = thinkingLevel
     }
 }
 

@@ -26,8 +26,14 @@ enum GeminiWire {
     }
 
     struct GenerationConfig: Encodable {
+        // Gemini counts thinking against this limit (Phase 0, 2026-11-18).
         let maxOutputTokens: Int
         let mediaResolution: String?
+        let thinkingConfig: ThinkingConfig?
+    }
+
+    struct ThinkingConfig: Encodable {
+        let thinkingLevel: String
     }
 
     struct StreamChunk: Decodable {
@@ -74,7 +80,11 @@ enum GeminiWire {
         let body = GenerateRequest(
             systemInstruction: Content(parts: [Part(text: SystemPrompt.forKind(request.promptKind))]),
             contents: contents,
-            generationConfig: GenerationConfig(maxOutputTokens: request.model.maxOutputTokens, mediaResolution: resolution)
+            generationConfig: GenerationConfig(
+                maxOutputTokens: request.model.maxOutputTokens,
+                mediaResolution: resolution,
+                thinkingConfig: request.model.thinkingLevel.isEmpty ? nil : ThinkingConfig(thinkingLevel: request.model.thinkingLevel)
+            )
         )
         return try JSONEncoder().encode(body)
     }

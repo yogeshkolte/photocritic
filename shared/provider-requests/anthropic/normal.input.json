@@ -4,6 +4,7 @@
   "question": "What does the sign say?",
   "promptKind": "extract",
   "maxOutputTokens": 1024,
+  "thinkingLevel": "",
   "imageDetail": null,
   "image": "shared/images/test.jpg"
 }

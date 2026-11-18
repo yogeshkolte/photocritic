@@ -43,8 +43,15 @@ internal object GeminiWire {
 
     @Serializable
     data class GenerationConfig(
+        // Gemini counts thinking against this limit (Phase 0, 2026-11-18).
         val maxOutputTokens: Int,
         val mediaResolution: String? = null,
+        val thinkingConfig: ThinkingConfig? = null,
+    )
+
+    @Serializable
+    data class ThinkingConfig(
+        val thinkingLevel: String,
     )
 
     @Serializable
@@ -98,7 +105,14 @@ internal object GeminiWire {
             GenerateRequest(
                 systemInstruction = Content(parts = listOf(Part(text = SystemPrompt.forKind(request.promptKind)))),
                 contents = contents,
-                generationConfig = GenerationConfig(request.model.maxOutputTokens, resolution),
+                generationConfig =
+                    GenerationConfig(
+                        request.model.maxOutputTokens,
+                        resolution,
+                        request.model.thinkingLevel
+                            .takeIf { it.isNotEmpty() }
+                            ?.let(::ThinkingConfig),
+                    ),
             )
         return json.encodeToString(GenerateRequest.serializer(), body)
     }

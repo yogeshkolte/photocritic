@@ -24,6 +24,9 @@
   ],
   "generationConfig": {
     "maxOutputTokens": 1024,
-    "mediaResolution": "MEDIA_RESOLUTION_HIGH"
+    "mediaResolution": "MEDIA_RESOLUTION_HIGH",
+    "thinkingConfig": {
+      "thinkingLevel": "low"
+    }
   }
 }

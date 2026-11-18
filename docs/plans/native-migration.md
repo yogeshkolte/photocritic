@@ -80,6 +80,7 @@ AskRequest
   image: JPEG bytes          // sent on the first turn only (design §3)
   imageDetail: low | high    // OpenAI detail / Gemini media resolution
   maxOutputTokens: Int
+  thinkingLevel: low | medium | high | ""   // "" = provider default, nothing sent
 
 ProviderEvent
   TextDelta(text)

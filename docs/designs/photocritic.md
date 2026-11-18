@@ -643,13 +643,23 @@ written; the Gemini row was checked on 2026-11-17.
 | Endpoint | `POST https://api.openai.com/v1/responses` | `POST https://api.anthropic.com/v1/messages` | `POST https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse` |
 | Key header | `Authorization: Bearer <key>` | `x-api-key: <key>`, plus `anthropic-version: 2023-06-01` | `x-goog-api-key: <key>` |
 | Image | `input_image` part, `data:image/jpeg;base64,…`, `detail` from the model entry | `image` block, `source.type: base64`, `media_type: image/jpeg` | `inline_data` part, `mime_type: image/jpeg`; `mediaResolution` in `generationConfig` |
-| Required fields | `stream: true`; **`store: false`**, because the Responses API otherwise keeps response data for 30 days ([OpenAI data controls](../../research/openai-your-data.txt)); `max_output_tokens` | `stream: true`; `max_tokens` (required by the API) | `generationConfig.maxOutputTokens`; no sampling parameters |
+| Required fields | `stream: true`; **`store: false`**, because the Responses API otherwise keeps response data for 30 days ([OpenAI data controls](../../research/openai-your-data.txt)); `max_output_tokens` | `stream: true`; `max_tokens` (required by the API) | `generationConfig.maxOutputTokens`; `generationConfig.thinkingConfig.thinkingLevel` when the model's `thinkingLevel` is set; no sampling parameters |
 | Text events | `response.output_text.delta` | `content_block_delta` with `text_delta` | each `data:` object: `candidates[0].content.parts[].text` |
 | End and failure events | `response.completed`; `response.incomplete` (length or content filter); `response.refusal.delta` (refusal text); `response.failed`; `error` | `message_delta` (`stop_reason`), `message_stop`; `error` event after a 200 | `finishReason` on the last object (`STOP`, `MAX_TOKENS`, `SAFETY`, …); `promptFeedback.blockReason` |
 | Request ID | `x-request-id` header | `request-id` header | No header; body `responseId`. Failed calls carry none |
 
 All three providers receive the model's `maxOutputTokens` from Remote
 Config (§8), so answers have the same length limit everywhere.
+
+Gemini counts thinking tokens against `maxOutputTokens`. In Phase 0
+(2026-11-18) a "describe this photo" question on Gemini 4 Hydrogen used
+1,400 to 1,900 thinking tokens; at a limit of 2048 some answers were cut
+off and some had no text at all. So each model also has a `thinkingLevel`
+in Remote Config (`low`, `medium`, `high`, or empty for the provider's
+default, which sends nothing), and the template sets `maxOutputTokens` to
+8192. The limit is a cap, so a higher value costs nothing unless the model
+uses it. Gemini sends the level as `thinkingConfig.thinkingLevel`; how
+OpenAI and Anthropic map it is decided with those clients in Phase 2.
 
 ### 4. Network client (`core/net`)
 
@@ -795,7 +805,7 @@ validator is tested against the valid and invalid samples next to it.
 | `config_meta`         | `configVersion`, `publishedAt`                                                                                                                                                                                              |
 | `kill_switch`         | `appDisabled`, message, `minSupportedAppVersion`, `updateUrl`, `disabledProviders[]`, `disabledModels[]`, `bannerMessage`, `reportsDisabled`                                                                                |
 | `providers`           | per provider: `enabled`, `displayName`, `baseUrl` (must match the allowlist), `keyHelpUrl`, `consentTextVersion`                                                                                                            |
-| `models`              | per model: `provider`, `id`, `displayName`, `label` (`Fast`/`Best`, display only), `maxLongEdgePx`, `maxBytes`, `imageDetail`, `maxOutputTokens`, `contextTokens`, `status`, `replacementId`, `minAppVersion`              |
+| `models`              | per model: `provider`, `id`, `displayName`, `label` (`Fast`/`Best`, display only), `maxLongEdgePx`, `maxBytes`, `imageDetail`, `maxOutputTokens`, `thinkingLevel` (`low`/`medium`/`high`/empty), `contextTokens`, `status`, `replacementId`, `minAppVersion`              |
 | `consent_texts`       | per provider: `version`, `effectiveDate`, `summary[]`, `policyUrl`                                                                                                                                                          |
 | `privacy_policy`      | `version` (of the policy bundled in the app), optional `url` (empty until a hosted copy exists)                                                                                                                             |
 

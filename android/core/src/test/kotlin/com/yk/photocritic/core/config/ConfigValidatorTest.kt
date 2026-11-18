@@ -5,6 +5,7 @@ import com.yk.photocritic.core.config.ConfigFixtures.APP_VERSION
 import com.yk.photocritic.core.config.ConfigFixtures.raw
 import com.yk.photocritic.core.config.ConfigFixtures.template
 import com.yk.photocritic.core.config.ConfigFixtures.templateWith
+import com.yk.photocritic.core.providers.ModelSettings
 import com.yk.photocritic.core.providers.ProviderId
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -38,6 +39,8 @@ class ConfigValidatorTest {
         assertEquals(setOf(ProviderId.OPENAI, ProviderId.ANTHROPIC, ProviderId.GEMINI), values.providers.keys)
         assertEquals("gemini-4-hydrogen", values.models.first().id)
         assertEquals(ModelStatus.ACTIVE, values.models.first().status)
+        assertEquals(ModelSettings("gemini-4-hydrogen", 8192, 1_000_000, "low"), values.models.first().settings)
+        assertEquals("", values.models[1].thinkingLevel)
         assertEquals(AppVersion(0, 1, 0), values.killSwitch.minSupportedAppVersion)
         assertEquals(
             3,
@@ -92,6 +95,7 @@ class ConfigValidatorTest {
         assertInvalid("models[0].maxLongEdgePx", JsonPrimitive(100))
         assertInvalid("models[0].maxBytes", JsonPrimitive(30_000_000))
         assertInvalid("models[0].imageDetail", JsonPrimitive("ultra"))
+        assertInvalid("models[0].thinkingLevel", JsonPrimitive("minimal"))
         assertInvalid("models[0].status", JsonPrimitive("gone"))
         assertInvalid("models[0].minAppVersion", JsonPrimitive(""))
         assertInvalid("consent_texts.gemini.effectiveDate", JsonPrimitive("17 Nov 2026"))

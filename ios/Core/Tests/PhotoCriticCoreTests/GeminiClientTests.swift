@@ -77,6 +77,7 @@ struct GeminiClientTests {
         let config = try #require(body["generationConfig"] as? [String: Any])
         #expect(config["mediaResolution"] as? String == "MEDIA_RESOLUTION_HIGH")
         #expect(config["maxOutputTokens"] as? Int == 512)
+        #expect(config["thinkingConfig"] == nil)
     }
 
     @Test func invalidKeyGivesBeforeResponseErrorWithoutTheKeyInDetail() async throws {

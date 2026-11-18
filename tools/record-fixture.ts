@@ -27,6 +27,8 @@ type Input = {
   question: string;
   promptKind: PromptKind;
   maxOutputTokens: number;
+  /** `low`, `medium`, `high`, or empty for the provider default (Remote Config `thinkingLevel`). */
+  thinkingLevel: string;
   imageDetail: string | null;
   image: string;
 };
@@ -131,6 +133,7 @@ function requestBody(provider: ProviderName, input: Input, imageBase64: string):
         generationConfig: {
           maxOutputTokens: input.maxOutputTokens,
           ...(input.imageDetail?.startsWith('MEDIA_RESOLUTION_') ? { mediaResolution: input.imageDetail } : {}),
+          ...(input.thinkingLevel ? { thinkingConfig: { thinkingLevel: input.thinkingLevel } } : {}),
         },
       };
   }
@@ -268,6 +271,8 @@ function baseInput(provider: ProviderName, overrides: Partial<Input> = {}): Inpu
     question: 'What does the sign say?',
     promptKind: 'extract',
     maxOutputTokens: 1024,
+    // Gemini counts thinking against maxOutputTokens; the template sends low (Phase 0, 2026-11-18).
+    thinkingLevel: provider === 'gemini' ? 'low' : '',
     imageDetail: p.imageDetail,
     image: IMAGE,
     ...overrides,

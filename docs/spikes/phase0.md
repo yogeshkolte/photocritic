@@ -95,9 +95,17 @@ template's 2048, a "describe this image" question used 1,421 to 1,923
 thinking tokens; one run in three on the Mac was cut off (`MAX_TOKENS`),
 and on the phone three runs ended `LENGTH` with no text at all. The
 extract prompt used 223. `thinkingConfig.thinkingLevel: "low"` brought a
-describe question to 610 thinking tokens with a full answer. To decide
-before Phase 1.2: send a thinking setting per model from Remote Config,
-raise `maxOutputTokens`, or both.
+describe question to 610 thinking tokens with a full answer; at a limit of
+8192, `low` used about 820 and the default about 1,600. Gemini 4 Argon
+reported no thinking tokens at any level and accepted the setting.
+
+Decided (author, 2026-11-18): both. Each model has a `thinkingLevel` in
+Remote Config (Hydrogen `low`, Argon empty for the default), and
+`maxOutputTokens` is 8192 in the template. The phone run above used 8192
+with the default level; `GeminiPhoneTest` now uses the template values.
+Rerun on the phone with them (8192, `low`), twice: all 9 pass; 8 deltas
+each, `STOP`, first text after 4.4 and 4.8 s (7.4 s before), Stop 7 and
+16 ms, no logcat line holds the key.
 
 ## Firebase and platform checks
 

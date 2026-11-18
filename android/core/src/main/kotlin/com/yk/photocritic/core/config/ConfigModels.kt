@@ -58,13 +58,15 @@ data class ModelConfig(
     val maxBytes: Int,
     val imageDetail: String,
     val maxOutputTokens: Int,
+    /** `low`, `medium`, `high`, or empty for the provider's default. */
+    val thinkingLevel: String,
     val contextTokens: Int,
     val status: ModelStatus,
     /** Empty when there is no replacement. */
     val replacementId: String,
     val minAppVersion: AppVersion,
 ) {
-    val settings: ModelSettings get() = ModelSettings(id, maxOutputTokens, contextTokens)
+    val settings: ModelSettings get() = ModelSettings(id, maxOutputTokens, contextTokens, thinkingLevel)
 }
 
 data class ConsentText(

@@ -145,6 +145,7 @@ object ConfigValidator {
                 "maxBytes",
                 "imageDetail",
                 "maxOutputTokens",
+                "thinkingLevel",
                 "contextTokens",
                 "status",
                 "replacementId",
@@ -159,6 +160,7 @@ object ConfigValidator {
                 maxBytes = m["maxBytes"].int(min = 10_000, max = 20_000_000),
                 imageDetail = m["imageDetail"].oneOf(IMAGE_DETAILS),
                 maxOutputTokens = m["maxOutputTokens"].int(min = 1, max = 128_000),
+                thinkingLevel = m["thinkingLevel"].oneOf(THINKING_LEVELS),
                 contextTokens = m["contextTokens"].int(min = 1000, max = 10_000_000),
                 status = m["status"].oneOf(ModelStatus.entries.map { it.wire }).let { s -> ModelStatus.entries.first { it.wire == s } },
                 replacementId = m["replacementId"].string(maxLength = 100),
@@ -300,6 +302,7 @@ object ConfigValidator {
     private const val MAX_SUMMARY_ITEMS = 8
     private val PROVIDER_KEYS = ProviderId.entries.map { it.wire }
     private val LABELS = listOf("Fast", "Best", "")
+    private val THINKING_LEVELS = listOf("", "low", "medium", "high")
     private val IMAGE_DETAILS =
         listOf("low", "high", "auto", "MEDIA_RESOLUTION_LOW", "MEDIA_RESOLUTION_MEDIUM", "MEDIA_RESOLUTION_HIGH", "none")
     private val HTTPS_URL = Regex("""https://\S+""")

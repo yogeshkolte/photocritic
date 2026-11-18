@@ -69,7 +69,7 @@ class GeminiPhoneTest {
         maxOutputTokens: Int = TEMPLATE_MAX_OUTPUT_TOKENS,
         history: List<NeutralTurn> = emptyList(),
     ) = TurnRequest(
-        model = ModelSettings(MODEL, maxOutputTokens, contextTokens = 1_000_000),
+        model = ModelSettings(MODEL, maxOutputTokens, contextTokens = 1_000_000, thinkingLevel = TEMPLATE_THINKING_LEVEL),
         history = history,
         question = question,
         image = SendCopy(jpeg, 0, 0, "MEDIA_RESOLUTION_HIGH"),
@@ -224,7 +224,6 @@ class GeminiPhoneTest {
                     request(
                         question = "Describe this image in about 150 words.",
                         kind = PromptKind.FREE,
-                        maxOutputTokens = LIVE_MAX_OUTPUT_TOKENS,
                     ),
                     key!!,
                 ).collect {
@@ -299,7 +298,6 @@ class GeminiPhoneTest {
                             request(
                                 question = "Describe this image in at least 600 words.",
                                 kind = PromptKind.FREE,
-                                maxOutputTokens = LIVE_MAX_OUTPUT_TOKENS,
                             ),
                             key!!,
                         ).collect {
@@ -361,14 +359,8 @@ class GeminiPhoneTest {
         const val MODEL = "gemini-4-hydrogen"
         const val STOP_LIMIT_MS = 2_000L
 
-        /** `maxOutputTokens` for the model in `shared/remote-config/template.json`. */
-        const val TEMPLATE_MAX_OUTPUT_TOKENS = 2048
-
-        /**
-         * The live text checks test the client, not the token budget: Gemini
-         * counts thinking against `maxOutputTokens`, and at 2048 a describe
-         * question can use it all before any text (measured 2026-11-18).
-         */
-        const val LIVE_MAX_OUTPUT_TOKENS = 8192
+        /** `maxOutputTokens` and `thinkingLevel` for the model in `shared/remote-config/template.json`. */
+        const val TEMPLATE_MAX_OUTPUT_TOKENS = 8192
+        const val TEMPLATE_THINKING_LEVEL = "low"
     }
 }
