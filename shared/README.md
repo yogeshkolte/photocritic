@@ -17,7 +17,8 @@ any file in this folder is followed by both apps in the same pull request
 | `vectors/app-version.json` | Version comparisons and strings that are not versions (file 14). | `AppVersionTest` |
 | `telemetry/events.json` | Every Analytics event, its parameters with types (`string`, `integer`) and its trigger (file 33). | `EventsTest` |
 | `redaction/` | Redaction inputs and expected outputs (file 14). | `RedactTest` (both apps) |
-| `token-estimates.json`, other `vectors/` | Added as their code arrives (design file 14). | |
+| `token-estimates.json` | Per provider `charsPerToken` and the image-token rule, measured 2026-11-18 (`docs/spikes/phase0.md`). | History trimming (Phase 2) |
+| other `vectors/` | Added as their code arrives (design file 14). | |
 
 ## Fixtures
 

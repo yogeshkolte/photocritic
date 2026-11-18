@@ -2,12 +2,12 @@
   "CONFIG_FETCH_TIMEOUT_MS": { "value": 10000, "unit": "ms", "status": "fixed" },
   "DEFAULT_LONG_EDGE_PX": { "value": 2048, "unit": "px", "status": "fixed" },
   "JPEG_QUALITY": { "value": 0.8, "unit": "ratio", "status": "fixed" },
-  "HISTORY_TURNS_CAP": { "value": 10, "unit": "turns", "status": "provisional" },
+  "HISTORY_TURNS_CAP": { "value": 10, "unit": "turns", "status": "fixed" },
   "MAX_QUESTION_CHARS": { "value": 2000, "unit": "chars", "status": "provisional" },
-  "CONNECT_TIMEOUT_MS": { "value": 15000, "unit": "ms", "status": "provisional" },
-  "REQUEST_TIMEOUT_MS": { "value": 120000, "unit": "ms", "status": "provisional" },
+  "CONNECT_TIMEOUT_MS": { "value": 15000, "unit": "ms", "status": "fixed" },
+  "REQUEST_TIMEOUT_MS": { "value": 120000, "unit": "ms", "status": "fixed" },
   "MAX_REPORT_CONVERSATION_CHARS": { "value": 20000, "unit": "chars", "status": "provisional" },
   "REPORT_DAILY_LIMIT_PER_INSTALL": { "value": 10, "unit": "count", "status": "provisional" },
   "REPORT_RETENTION_DAYS": { "value": 90, "unit": "days", "status": "provisional" },
-  "REPORT_WRITE_TIMEOUT_MS": { "value": 10000, "unit": "ms", "status": "provisional" }
+  "REPORT_WRITE_TIMEOUT_MS": { "value": 10000, "unit": "ms", "status": "fixed" }
 }

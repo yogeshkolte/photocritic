@@ -1,0 +1,40 @@
+{
+  "measuredAt": "2026-11-18",
+  "method": "Each provider's token counter (Gemini countTokens, Anthropic count_tokens, OpenAI responses/input_tokens) on the app's four prompts, a filler answer and 6,000 characters of English prose; images are JPEG at quality 80. charsPerToken is rounded down from the lowest measured ratio, so estimates run high and history is trimmed early rather than late.",
+  "providers": {
+    "gemini": {
+      "model": "gemini-4-hydrogen",
+      "charsPerToken": 3.4,
+      "measuredCharsPerToken": { "prompts": [3.82, 3.75, 3.88, 3.68], "fillerAnswer": 3.44, "prose": 3.96 },
+      "image": {
+        "rule": "perResolution",
+        "tokens": { "MEDIA_RESOLUTION_LOW": 280, "MEDIA_RESOLUTION_MEDIUM": 560, "MEDIA_RESOLUTION_HIGH": 1120 },
+        "note": "The same at 768, 1024 and 2048 px long edge: the count depends only on mediaResolution."
+      }
+    },
+    "anthropic": {
+      "model": "claude-haiku-5-5",
+      "charsPerToken": 2.9,
+      "measuredCharsPerToken": { "prompts": [3.43, 3.43, 3.36, 3.42], "fillerAnswer": 3.15, "prose": 2.97 },
+      "image": {
+        "rule": "pixelsPerToken",
+        "pixelsPerToken": 750,
+        "measured": { "768x576": 591, "1024x768": 1039, "1568x1176": 2355, "2048x1536": 4073 },
+        "note": "width x height / 750 is within 5% of the count up to 2048x1536, and above it."
+      }
+    },
+    "openai": {
+      "model": "gpt-5.4-mini",
+      "charsPerToken": 4.0,
+      "measuredCharsPerToken": { "prompts": [4.85, 4.82, 4.64, 4.88], "fillerAnswer": 4.27, "prose": 4.2 },
+      "image": {
+        "rule": "patches",
+        "patchPx": 32,
+        "tokensPerPatch": 1.2,
+        "maxTokensHigh": 2942,
+        "measured": { "768x576 low": 519, "768x576 high": 519, "1024x768 low": 922, "1024x768 high": 922, "2048x1536 low": 3687, "2048x1536 high": 2942 },
+        "note": "Not the tile rule the design expected: about 1.2 tokens per 32x32 patch, with detail high capped near 2,942 tokens. Provisional; measured again with the OpenAI client in Phase 2."
+      }
+    }
+  }
+}
