@@ -34,6 +34,12 @@ style:
 complexity:
   LongParameterList:
     functionThreshold: 7
+  # Screens are built from many small private composables; the size rules
+  # count layout code, so composables are exempt, as for FunctionNaming.
+  LongMethod:
+    ignoreAnnotated: ['Composable']
+  TooManyFunctions:
+    ignoreAnnotatedFunctions: ['Composable']
 naming:
   FunctionNaming:
     # Compose functions are PascalCase.

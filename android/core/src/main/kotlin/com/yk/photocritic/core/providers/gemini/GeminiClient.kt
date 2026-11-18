@@ -7,16 +7,22 @@ import com.yk.photocritic.core.net.ProviderHttp
 import com.yk.photocritic.core.net.ProviderRequest
 import com.yk.photocritic.core.net.SseEvent
 import com.yk.photocritic.core.net.SseParser
+import com.yk.photocritic.core.providers.Capabilities
 import com.yk.photocritic.core.providers.FinishReason
+import com.yk.photocritic.core.providers.ImagePlacement
+import com.yk.photocritic.core.providers.KeyCheckResult
+import com.yk.photocritic.core.providers.ModelSettings
 import com.yk.photocritic.core.providers.PcPhase
 import com.yk.photocritic.core.providers.Provider
 import com.yk.photocritic.core.providers.ProviderId
+import com.yk.photocritic.core.providers.Streaming
 import com.yk.photocritic.core.providers.TurnEvent
 import com.yk.photocritic.core.providers.TurnRequest
 import com.yk.photocritic.core.providers.shared.ToPcError
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.SerializationException
 import java.io.IOException
@@ -31,6 +37,51 @@ class GeminiClient(
     private val baseUrl: String = Allowlist.BASE_URLS.getValue("gemini"),
 ) : Provider {
     override val id = ProviderId.GEMINI
+
+    override val capabilities =
+        Capabilities(
+            acceptsImages = true,
+            imagePlacement = ImagePlacement.ANY_TURN,
+            streaming = Streaming.TOKENS,
+            usageReporting = false,
+            dataLeavesDevice = true,
+        )
+
+    /**
+     * A minimal text-only `generateContent` call (§3): a model list does not
+     * prove inference is enabled. Only the response status is read; the
+     * setup screen says this uses a few tokens.
+     */
+    override suspend fun checkKey(
+        apiKey: String,
+        model: ModelSettings,
+    ): KeyCheckResult {
+        val request =
+            ProviderRequest(
+                url = "$baseUrl/v1beta/models/${model.modelId}:generateContent",
+                headers = mapOf("x-goog-api-key" to apiKey),
+                jsonBody = GeminiWire.keyCheckBody(model),
+                requestIdHeader = null,
+            )
+
+        fun failed(
+            status: Int?,
+            code: String?,
+            message: String,
+        ) = KeyCheckResult.Failed(ToPcError.of(PcPhase.BEFORE_RESPONSE, status, code, null, message, apiKey))
+        return try {
+            val head = http.exchange(request).first() as HttpChunk.Head
+            val body = head.errorBody ?: return KeyCheckResult.Ok
+            val error = apiError(body)
+            failed(head.status, error?.status, error?.message ?: "HTTP ${head.status}")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: HostNotAllowedException) {
+            failed(null, "host-not-allowed", e.message ?: "Host not allowed.")
+        } catch (e: IOException) {
+            failed(null, e::class.simpleName, e.message ?: "Network error.")
+        }
+    }
 
     override fun send(
         request: TurnRequest,
@@ -80,14 +131,7 @@ class GeminiClient(
         ) {
             headSeen = true
             val body = head.errorBody ?: return
-            val error =
-                try {
-                    GeminiWire.json.decodeFromString(GeminiWire.ErrorEnvelope.serializer(), body).error
-                } catch (_: SerializationException) {
-                    null
-                } catch (_: IllegalArgumentException) {
-                    null
-                }
+            val error = apiError(body)
             fail(out, PcPhase.BEFORE_RESPONSE, head.status, error?.status, error?.message ?: "HTTP ${head.status}")
         }
 
@@ -173,3 +217,12 @@ class GeminiClient(
         }
     }
 }
+
+private fun apiError(body: String): GeminiWire.ApiError? =
+    try {
+        GeminiWire.json.decodeFromString(GeminiWire.ErrorEnvelope.serializer(), body).error
+    } catch (_: SerializationException) {
+        null
+    } catch (_: IllegalArgumentException) {
+        null
+    }

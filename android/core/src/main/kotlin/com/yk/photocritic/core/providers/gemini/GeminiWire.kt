@@ -1,5 +1,6 @@
 package com.yk.photocritic.core.providers.gemini
 
+import com.yk.photocritic.core.providers.ModelSettings
 import com.yk.photocritic.core.providers.TurnRequest
 import com.yk.photocritic.core.providers.shared.SystemPrompt
 import kotlinx.serialization.Serializable
@@ -16,7 +17,7 @@ internal object GeminiWire {
 
     @Serializable
     data class GenerateRequest(
-        val systemInstruction: Content,
+        val systemInstruction: Content?,
         val contents: List<Content>,
         val generationConfig: GenerationConfig,
     )
@@ -85,6 +86,23 @@ internal object GeminiWire {
         val message: String? = null,
         val status: String? = null,
     )
+
+    /** The key check's request: one short text question, no image (§3). */
+    fun keyCheckBody(model: ModelSettings): String =
+        json.encodeToString(
+            GenerateRequest.serializer(),
+            GenerateRequest(
+                systemInstruction = null,
+                contents = listOf(Content("user", listOf(Part(text = "Reply with OK.")))),
+                generationConfig =
+                    GenerationConfig(
+                        KEY_CHECK_MAX_TOKENS,
+                        thinkingConfig = model.thinkingLevel.takeIf { it.isNotEmpty() }?.let(::ThinkingConfig),
+                    ),
+            ),
+        )
+
+    private const val KEY_CHECK_MAX_TOKENS = 16
 
     /**
      * The image goes in the first user message, then the earlier turns, then

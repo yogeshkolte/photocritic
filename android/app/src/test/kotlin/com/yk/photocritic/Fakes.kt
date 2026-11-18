@@ -6,7 +6,10 @@ import androidx.test.core.app.ApplicationProvider
 import com.yk.photocritic.core.config.AppVersion
 import com.yk.photocritic.core.config.ConfigResult
 import com.yk.photocritic.core.config.ConfigValidator
+import com.yk.photocritic.core.config.Snapshot
 import com.yk.photocritic.core.providers.ProviderId
+import com.yk.photocritic.core.providers.ProviderRegistry
+import com.yk.photocritic.core.providers.fake.FakeProvider
 import com.yk.photocritic.features.image.Cleanup
 import com.yk.photocritic.features.image.ImagePipeline
 import com.yk.photocritic.platform.config.ConfigLoad
@@ -96,6 +99,9 @@ fun testContainer(
     config: ConfigSource = TestConfig.source(),
     keys: FakeKeyStore = FakeKeyStore(),
     telemetry: FakeTelemetryBackend = FakeTelemetryBackend(),
+    provider: FakeProvider = FakeProvider(),
+    /** Robolectric's ImageDecoder hangs on bytes that are not an image; tests of that case use 27. */
+    sdkInt: Int = android.os.Build.VERSION.SDK_INT,
 ): AppContainer {
     val files = JsonFiles(File(root, "files"))
     val cleanup = Cleanup(File(root, "cache"))
@@ -108,9 +114,29 @@ fun testContainer(
         consent = ConsentStore(files),
         reports = ReportStore(files),
         config = config,
+        providers = ProviderRegistry(listOf(provider)),
         telemetry = Telemetry(telemetry),
         cleanup = cleanup,
-        imagePipeline = ImagePipeline(ApplicationProvider.getApplicationContext<Context>().contentResolver, cleanup.sendDir),
+        imagePipeline = ImagePipeline(ApplicationProvider.getApplicationContext<Context>().contentResolver, cleanup.sendDir, sdkInt),
         connectivity = null,
     )
+}
+
+/** The template's validated snapshot. */
+fun testSnapshot(): Snapshot =
+    (ConfigValidator.validate(TestConfig.templateValues(), TestConfig.APP_VERSION) as ConfigResult.Valid).snapshot
+
+/** Polls [condition] until it holds; ViewModels here mix the main thread and real IO threads. */
+fun waitFor(
+    what: String,
+    timeoutMs: Long = 5_000,
+    condition: () -> Boolean,
+) {
+    val end = System.currentTimeMillis() + timeoutMs
+    while (!condition()) {
+        org.robolectric.shadows.ShadowLooper
+            .idleMainLooper()
+        check(System.currentTimeMillis() < end) { "timed out waiting for $what" }
+        Thread.sleep(5)
+    }
 }

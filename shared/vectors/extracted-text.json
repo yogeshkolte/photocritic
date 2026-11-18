@@ -1,0 +1,64 @@
+{
+  "description": "ExtractedText.parse cases (design §3, file 14). Each case gives an answer and the segments it splits into, in order: {type: text or card, text}.",
+  "cases": [
+    {
+      "name": "plain answer",
+      "answer": "It is a trail sign on a wooden post.",
+      "segments": [{ "type": "text", "text": "It is a trail sign on a wooden post." }]
+    },
+    {
+      "name": "one card between text",
+      "answer": "The sign says:\n```text\nHILLTOP TRAIL\nSummit 2.4 km\n```\nIt is a trail sign.",
+      "segments": [
+        { "type": "text", "text": "The sign says:" },
+        { "type": "card", "text": "HILLTOP TRAIL\nSummit 2.4 km" },
+        { "type": "text", "text": "It is a trail sign." }
+      ]
+    },
+    {
+      "name": "card only, keeps blank lines and indentation inside",
+      "answer": "```text\nLine 1\n\n  Line 3\n```",
+      "segments": [{ "type": "card", "text": "Line 1\n\n  Line 3" }]
+    },
+    {
+      "name": "several cards",
+      "answer": "Front:\n```text\nA\n```\nBack:\n```text\nB\n```",
+      "segments": [
+        { "type": "text", "text": "Front:" },
+        { "type": "card", "text": "A" },
+        { "type": "text", "text": "Back:" },
+        { "type": "card", "text": "B" }
+      ]
+    },
+    {
+      "name": "tilde fence",
+      "answer": "~~~text\nOPEN 7-19\n~~~",
+      "segments": [{ "type": "card", "text": "OPEN 7-19" }]
+    },
+    {
+      "name": "unclosed fence stays plain text (still streaming)",
+      "answer": "The sign says:\n```text\nHILLTOP TRA",
+      "segments": [{ "type": "text", "text": "The sign says:\n```text\nHILLTOP TRA" }]
+    },
+    {
+      "name": "fence in the middle of a line is not a fence",
+      "answer": "Use ```text\nfor cards.\n```",
+      "segments": [{ "type": "text", "text": "Use ```text\nfor cards.\n```" }]
+    },
+    {
+      "name": "other languages are not cards",
+      "answer": "```python\nprint(1)\n```",
+      "segments": [{ "type": "text", "text": "```python\nprint(1)\n```" }]
+    },
+    {
+      "name": "mixed fences do not close each other",
+      "answer": "```text\nA\n~~~\nB\n```",
+      "segments": [{ "type": "card", "text": "A\n~~~\nB" }]
+    },
+    {
+      "name": "empty answer",
+      "answer": "",
+      "segments": []
+    }
+  ]
+}

@@ -141,6 +141,28 @@ class ImagePipeline(
             }
         }
 
+    /**
+     * The original, decoded for the screen (§6): downsampled to at most
+     * [maxLongEdgePx] with EXIF orientation applied, kept in memory only.
+     * Null when the photo cannot be read.
+     */
+    suspend fun decodeForDisplay(
+        uri: Uri,
+        maxLongEdgePx: Int,
+    ): Bitmap? =
+        withContext(Dispatchers.IO) {
+            try {
+                val format = InputFormat.read(resolver, uri)
+                if (unsupported(format) != null) null else decode(uri, maxLongEdgePx)
+            } catch (_: IOException) {
+                null
+            } catch (_: SecurityException) {
+                null
+            } catch (_: OutOfMemoryError) {
+                null
+            }
+        }
+
     private fun unsupported(format: InputFormat): String? =
         when {
             format == InputFormat.HEIC && sdkInt < Build.VERSION_CODES.P -> "heic-unsupported"

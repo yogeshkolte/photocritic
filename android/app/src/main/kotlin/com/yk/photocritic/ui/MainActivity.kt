@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -19,7 +20,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { AppNavigation(startup, ::openUrl) }
+        enableEdgeToEdge()
+        val metrics = resources.displayMetrics
+        // Room for pinch to zoom without decoding a 48 MP original (§6).
+        val displayMaxPx = (maxOf(metrics.widthPixels, metrics.heightPixels) * 2).coerceAtMost(MAX_DISPLAY_PX)
+        setContent { AppNavigation(startup, (application as PhotoCriticApp).container, displayMaxPx, ::openUrl) }
     }
 
     private fun openUrl(url: String) {
@@ -28,5 +33,9 @@ class MainActivity : ComponentActivity() {
         } catch (_: ActivityNotFoundException) {
             // No browser or store app: nothing to open.
         }
+    }
+
+    private companion object {
+        const val MAX_DISPLAY_PX = 4096
     }
 }

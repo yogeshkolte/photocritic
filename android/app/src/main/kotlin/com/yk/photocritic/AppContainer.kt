@@ -2,6 +2,10 @@ package com.yk.photocritic
 
 import android.content.Context
 import com.yk.photocritic.core.config.AppVersion
+import com.yk.photocritic.core.config.Tuning
+import com.yk.photocritic.core.net.ProviderHttp
+import com.yk.photocritic.core.providers.ProviderRegistry
+import com.yk.photocritic.core.providers.gemini.GeminiClient
 import com.yk.photocritic.features.image.Cleanup
 import com.yk.photocritic.features.image.ImagePipeline
 import com.yk.photocritic.platform.config.ConfigSource
@@ -21,8 +25,8 @@ import com.yk.photocritic.platform.telemetry.Telemetry
 import java.io.File
 
 /**
- * Every dependency, passed by hand (design Assumptions, file 37). Phase 1.1
- * holds the foundations; providers, reports and the session arrive in 1.2.
+ * Every dependency, passed by hand (design Assumptions, file 37). Reports
+ * arrive in Phase 1.4.
  * Tests build one from fakes with the primary constructor.
  */
 @Suppress("LongParameterList") // One holder for every dependency, by design.
@@ -35,6 +39,7 @@ class AppContainer(
     val consent: ConsentStore,
     val reports: ReportStore,
     val config: ConfigSource,
+    val providers: ProviderRegistry,
     val telemetry: Telemetry,
     val cleanup: Cleanup,
     val imagePipeline: ImagePipeline,
@@ -55,6 +60,14 @@ class AppContainer(
                 consent = ConsentStore(files),
                 reports = ReportStore(files),
                 config = RemoteConfigLoader(FirebaseRemoteConfigBackend()),
+                providers =
+                    ProviderRegistry(
+                        listOf(
+                            GeminiClient(
+                                ProviderHttp(connectTimeoutMs = Tuning.CONNECT_TIMEOUT_MS, requestTimeoutMs = Tuning.REQUEST_TIMEOUT_MS),
+                            ),
+                        ),
+                    ),
                 telemetry = Telemetry(FirebaseTelemetryBackend(context)),
                 cleanup = cleanup,
                 imagePipeline = ImagePipeline(context.contentResolver, cleanup.sendDir),

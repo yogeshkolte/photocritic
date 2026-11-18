@@ -252,4 +252,68 @@ class GeminiClientTest {
             assertEquals("host-not-allowed", error.providerCode)
             assertEquals(0, server.requestCount)
         }
+
+    @Test
+    fun `the key check makes one small generateContent call with the key only in the header`() =
+        runBlocking {
+            server.enqueue(
+                MockResponse
+                    .Builder()
+                    .code(200)
+                    .body("""{"candidates":[]}""")
+                    .build(),
+            )
+            val model = ModelSettings("gemini-4-hydrogen", 8192, 1_000_000, "low")
+            assertEquals(com.yk.photocritic.core.providers.KeyCheckResult.Ok, client().checkKey(key, model))
+            val sent = server.takeRequest()
+            assertTrue(sent.url.encodedPath.endsWith("/models/gemini-4-hydrogen:generateContent"))
+            assertEquals(key, sent.headers["x-goog-api-key"])
+            assertFalse(sent.url.toString().contains(key))
+            val config =
+                Json
+                    .parseToJsonElement(sent.body!!.utf8())
+                    .jsonObject
+                    .getValue("generationConfig")
+                    .jsonObject
+            assertEquals("16", config.getValue("maxOutputTokens").jsonPrimitive.content)
+            assertEquals(
+                "low",
+                config
+                    .getValue("thinkingConfig")
+                    .jsonObject
+                    .getValue("thinkingLevel")
+                    .jsonPrimitive.content,
+            )
+            assertFalse(sent.body!!.utf8().contains("inlineData"))
+        }
+
+    @Test
+    fun `a rejected key gives a before-response failure without the key`() =
+        runBlocking {
+            server.enqueue(
+                MockResponse
+                    .Builder()
+                    .code(401)
+                    .body("""{"error":{"code":401,"message":"API key not valid: $key","status":"UNAUTHENTICATED"}}""")
+                    .build(),
+            )
+            val result = client().checkKey(key, ModelSettings("gemini-4-hydrogen", 8192, 1_000_000))
+            val error = (result as com.yk.photocritic.core.providers.KeyCheckResult.Failed).error
+            assertEquals(PcPhase.BEFORE_RESPONSE, error.phase)
+            assertEquals(401, error.httpStatus)
+            assertEquals("UNAUTHENTICATED", error.providerCode)
+            assertFalse(error.detail.contains(key))
+            assertEquals(1, server.requestCount)
+        }
+
+    @Test
+    fun `a key check to a disallowed host sends nothing`() =
+        runBlocking {
+            val blocked =
+                GeminiClient(ProviderHttp(HostPolicy(setOf("api.example.invalid"), false), 2_000, 5_000), server.url("").toString())
+            val result = blocked.checkKey(key, ModelSettings("gemini-4-hydrogen", 8192, 1_000_000))
+            assertEquals("host-not-allowed", (result as com.yk.photocritic.core.providers.KeyCheckResult.Failed).error.providerCode)
+            assertEquals(0, server.requestCount)
+            assertTrue(blocked.capabilities.dataLeavesDevice)
+        }
 }

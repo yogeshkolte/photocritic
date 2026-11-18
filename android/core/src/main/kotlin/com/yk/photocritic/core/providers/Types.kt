@@ -88,16 +88,63 @@ sealed interface TurnEvent {
     ) : TurnEvent
 }
 
+/** Where a model needs the photo in the request (§3). */
+enum class ImagePlacement { ANY_TURN, FINAL_TURN_ONLY }
+
+/** Whether answers arrive in pieces or all at once. */
+enum class Streaming { TOKENS, WHOLE }
+
+/**
+ * What a provider can do (§3), so the screens need no provider checks. An
+ * on-device provider (Phase 2) reports `dataLeavesDevice = false` and skips
+ * the consent sheet.
+ */
+data class Capabilities(
+    val acceptsImages: Boolean,
+    val imagePlacement: ImagePlacement,
+    val streaming: Streaming,
+    val usageReporting: Boolean,
+    val dataLeavesDevice: Boolean,
+)
+
+/** The result of checking a key on the setup screen (§3, G10). */
+sealed interface KeyCheckResult {
+    data object Ok : KeyCheckResult
+
+    data class Failed(
+        val error: PcError,
+    ) : KeyCheckResult
+}
+
 /**
  * A provider client (§3). `send` emits text deltas, then exactly one [TurnEvent.Done]
  * or [TurnEvent.Error]. Cancelling the collector cancels the request (Stop).
- * Availability, key checks and capabilities arrive with the Phase 2 interface (file 24).
+ * Availability, `prepare` and `dispose` arrive with on-device providers in Phase 2.
  */
 interface Provider {
     val id: ProviderId
+
+    val capabilities: Capabilities
+
+    /** One small call that proves the key works for [model]; cancellable. Never retried. */
+    suspend fun checkKey(
+        apiKey: String,
+        model: ModelSettings,
+    ): KeyCheckResult
 
     fun send(
         request: TurnRequest,
         apiKey: String,
     ): Flow<TurnEvent>
+}
+
+/** The providers this build has a client for. OpenAI and Anthropic join in Phase 1.3. */
+class ProviderRegistry(
+    providers: List<Provider>,
+) {
+    private val byId = providers.associateBy { it.id }
+
+    fun get(id: ProviderId): Provider? = byId[id]
+
+    val ids: Set<ProviderId> get() = byId.keys
 }

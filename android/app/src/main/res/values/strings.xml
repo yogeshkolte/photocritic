@@ -8,8 +8,84 @@
     <string name="update_required">This version of PhotoCritic is no longer supported. Please update the app.</string>
     <string name="update_button">Update</string>
 
-    <!-- Placeholders until Phase 1.2 builds setup and home. -->
-    <string name="setup_placeholder">Setup (Phase 1.2)</string>
-    <string name="home_placeholder">Home (Phase 1.2)</string>
     <string name="loading">Loading</string>
+
+    <!-- Shared: the one generic error (G12, §7) and its details. -->
+    <string name="generic_error">Something went wrong. Please try again.</string>
+    <string name="show_details">Show details</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="details_title">Details</string>
+    <string name="details_where">Where</string>
+    <string name="details_http_status">HTTP status</string>
+    <string name="details_provider_code">Provider code</string>
+    <string name="details_request_id">Request ID</string>
+    <string name="details_detail">Details</string>
+    <string name="phase_before_response">Before the answer</string>
+    <string name="phase_mid_stream">During the answer</string>
+    <string name="phase_finish">At the end of the answer</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="copied">Copied</string>
+
+    <!-- CUJ 5: new photo, or provider or model change. -->
+    <string name="confirm_clear">This conversation will be cleared. PhotoCritic keeps nothing from it.</string>
+    <string name="confirm_continue">Continue</string>
+
+    <!-- SetupScreen (file 38, CUJ 1, G9, G10, G18). -->
+    <string name="setup_title">Set up PhotoCritic</string>
+    <string name="setup_title_edit">Provider and model</string>
+    <string name="setup_byok">PhotoCritic uses your own API key. Questions are billed to your account with the provider. The key stays on this device, and you need to enter it again if you reinstall the app.</string>
+    <string name="setup_provider">Provider</string>
+    <string name="setup_model">Model</string>
+    <string name="setup_pick_model">Pick a model.</string>
+    <string name="setup_no_providers">No providers are available right now.</string>
+    <string name="tag_preview">Preview</string>
+    <string name="tag_ending_soon">Ending soon. Switch to %1$s.</string>
+    <string name="setup_key">API key</string>
+    <string name="setup_key_saved">A key is saved. Leave this empty to keep it.</string>
+    <string name="setup_key_help">Get a %1$s key</string>
+    <string name="setup_key_show">Show key</string>
+    <string name="setup_key_hide">Hide key</string>
+    <string name="setup_gemini_cost">Checking a Gemini key uses a few tokens.</string>
+    <string name="setup_share">Share usage and crash data</string>
+    <string name="setup_share_detail">Helps find problems. Never includes photos, questions, answers or keys. You can change this later.</string>
+    <string name="setup_continue">Check key and continue</string>
+    <string name="setup_save">Save</string>
+    <string name="setup_checking">Checking the key</string>
+    <string name="back">Back</string>
+
+    <!-- HomeScreen (file 38, G19). -->
+    <string name="home_empty_title">Ask about a photo</string>
+    <string name="home_empty_body">Take a photo or choose one, then ask what it shows.</string>
+    <string name="take_photo">Take photo</string>
+    <string name="choose_photo">Choose from Photos</string>
+    <string name="settings">Settings</string>
+    <string name="new_photo">New photo</string>
+    <string name="photo_description">Your photo</string>
+    <string name="preparing_photo">Preparing the photo</string>
+    <string name="camera_unavailable">No camera app is available.</string>
+    <string name="offline">You\'re offline. Questions can\'t be sent.</string>
+
+    <!-- Conversation (G2–G5, CUJ 2–4). -->
+    <string name="starter_identify">Identify</string>
+    <string name="starter_explain">Explain</string>
+    <string name="starter_copy_text">Copy text</string>
+    <string name="composer_hint">Ask about this photo</string>
+    <string name="send">Send</string>
+    <string name="stop">Stop</string>
+    <string name="tag_stopped">Stopped</string>
+    <string name="tag_failed">Failed</string>
+    <string name="card_title">Text in photo</string>
+    <string name="copy">Copy</string>
+    <string name="share">Share</string>
+    <string name="copy_answer">Copy answer</string>
+    <string name="answering">Answering</string>
+
+    <!-- ConsentSheet (G13). -->
+    <string name="consent_title">Before you send to %1$s</string>
+    <string name="consent_effective">Effective %1$s</string>
+    <string name="consent_policy">%1$s privacy policy</string>
+    <string name="consent_app_policy">PhotoCritic privacy policy</string>
+    <string name="consent_not_now">Not now</string>
+    <string name="consent_agree">Agree and send</string>
 </resources>
