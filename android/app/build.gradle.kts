@@ -72,8 +72,10 @@ android {
         unitTests.all { it.systemProperty("pc.repoRoot", rootProject.projectDir.parentFile.absolutePath) }
     }
 
-    // Device checks read the shared test images (Phase 0 step 6, file 50).
+    // Device checks read the shared test images (Phase 0 step 6, file 50)
+    // and the recorded provider responses (file 39).
     sourceSets["androidTest"].assets.directories += "../../shared/images"
+    sourceSets["androidTest"].assets.directories += "../../shared"
 }
 
 dependencies {
@@ -111,6 +113,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.okhttp.mockwebserver)
 }
 
 // Fails on any permission in the merged release manifest outside the

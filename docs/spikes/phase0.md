@@ -76,14 +76,28 @@ recorded fixtures (step 4) replace those, and the phone runs below remain.
 
 | Test | Android | iOS |
 | --- | --- | --- |
-| Key only in its header; never in the URL, logs or `detail` | | |
-| Text streams in more than one delta | | |
-| Image carries the model's detail or resolution setting | | |
-| Disallowed host and any redirect refused before data is sent | | |
-| Exactly one request per question, including on errors | | |
-| Stop ends the stream and the request | | |
-| Errors carry status, provider code and request ID where sent | | |
-| Recorded streams give the expected events | Done 2026-11-17 on the JVM (`GeminiContractTest`); phone run pending | Done 2026-11-17 under `swift test` (`GeminiContractTests`); phone run pending |
+| Key only in its header; never in the URL, logs or `detail` | Done (Samsung SM-E176B, API 37, 2026-11-18): the mock server sees the key only in `x-goog-api-key`; no event holds it; 0 logcat lines hold the real key after the run | |
+| Text streams in more than one delta | Done: 9 deltas, 900 characters, `STOP`, request ID from `responseId`. First text after 7.4 s (thinking), total 7.9 s. Needed `maxOutputTokens` 8192, see below | |
+| Image carries the model's detail or resolution setting | Done: body has `inlineData` and `mediaResolution: MEDIA_RESOLUTION_HIGH` | |
+| Disallowed host and any redirect refused before data is sent | Done: disallowed host gives `host-not-allowed` with 0 requests; a 302 gives an error with status 302 and the redirect target gets 0 requests | |
+| Exactly one request per question, including on errors | Done: one request each for 500, 503, 429, 400 and a stream cut mid-answer | |
+| Stop ends the stream and the request | Done (live): the collector ends 7 ms after Stop, with no event after it | |
+| Errors carry status, provider code and request ID where sent | Done (live): invalid key gives 401 `UNAUTHENTICATED`, unknown model 404 `NOT_FOUND`; Gemini sends no request ID on errors | |
+| Recorded streams give the expected events | Done 2026-11-17 on the JVM (`GeminiContractTest`) and 2026-11-18 on the phone (5 recordings) | Done 2026-11-17 under `swift test` (`GeminiContractTests`); phone run pending |
+
+Run with `GeminiPhoneTest` (`app/src/androidTest/.../providers/`). The run
+script writes the key into the app's private files through stdin, because
+`adbd` logs the command line of `am instrument` arguments.
+
+**Thinking uses the answer budget (found 2026-11-18).** Gemini counts
+thinking tokens against `maxOutputTokens`. With the app's prompts and the
+template's 2048, a "describe this image" question used 1,421 to 1,923
+thinking tokens; one run in three on the Mac was cut off (`MAX_TOKENS`),
+and on the phone three runs ended `LENGTH` with no text at all. The
+extract prompt used 223. `thinkingConfig.thinkingLevel: "low"` brought a
+describe question to 610 thinking tokens with a full answer. To decide
+before Phase 1.2: send a thinking setting per model from Remote Config,
+raise `maxOutputTokens`, or both.
 
 ## Firebase and platform checks
 
