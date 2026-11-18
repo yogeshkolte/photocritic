@@ -1,0 +1,9 @@
+{
+  "modelId": "gemini-4-hydrogen",
+  "history": [],
+  "question": "What does the sign say?",
+  "promptKind": "extract",
+  "maxOutputTokens": 1024,
+  "imageDetail": "MEDIA_RESOLUTION_HIGH",
+  "image": "shared/images/test.jpg"
+}

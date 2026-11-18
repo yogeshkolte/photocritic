@@ -6,6 +6,7 @@
   "scripts": {
     "config:validate": "tsx validate-config.ts",
     "fixture:record": "tsx record-fixture.ts",
+    "fixture:check": "tsx record-fixture.ts --check",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

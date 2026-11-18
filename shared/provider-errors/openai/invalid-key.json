@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-11-18T01:50:42.369Z",
+  "provider": "openai",
+  "model": "gpt-5.4-mini",
+  "note": "A well-formed key that does not exist.",
+  "status": 401,
+  "headers": {
+    "content-type": "text/plain",
+    "x-request-id": "<request-id>"
+  },
+  "expected": [
+    {
+      "type": "error",
+      "error": {
+        "phase": "before-response",
+        "httpStatus": 401,
+        "providerCode": "invalid_api_key",
+        "requestId": "<request-id>"
+      }
+    }
+  ],
+  "body": "{\n  \"error\": {\n    \"message\": \"Incorrect API key provided: sk-proj-********************************0000. You can find your API key at https://platform.openai.com/account/api-keys.\",\n    \"type\": \"invalid_request_error\",\n    \"code\": \"invalid_api_key\",\n    \"param\": null\n  },\n  \"status\": 401\n}"
+}

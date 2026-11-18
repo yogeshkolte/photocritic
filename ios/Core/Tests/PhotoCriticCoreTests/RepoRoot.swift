@@ -17,4 +17,11 @@ enum RepoRoot {
     static func shared(_ path: String) throws -> Data {
         try Data(contentsOf: url.appendingPathComponent("shared").appendingPathComponent(path))
     }
+
+    /// The `.json` file names in a `shared/` folder, sorted; empty if the folder does not exist.
+    static func sharedJSONFiles(_ folder: String) -> [String] {
+        let dir = url.appendingPathComponent("shared").appendingPathComponent(folder)
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
+        return names.filter { $0.hasSuffix(".json") }.sorted()
+    }
 }

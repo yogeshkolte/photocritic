@@ -1,0 +1,22 @@
+{
+  "recordedAt": "2026-11-18T01:50:23.711Z",
+  "provider": "gemini",
+  "model": "gemini-4-hydrogen",
+  "note": "A well-formed key that does not exist.",
+  "status": 401,
+  "headers": {
+    "content-type": "text/event-stream"
+  },
+  "expected": [
+    {
+      "type": "error",
+      "error": {
+        "phase": "before-response",
+        "httpStatus": 401,
+        "providerCode": "UNAUTHENTICATED",
+        "requestId": null
+      }
+    }
+  ],
+  "body": "{\n  \"error\": {\n    \"code\": 401,\n    \"message\": \"API key not valid. Please pass a valid API key.\",\n    \"status\": \"UNAUTHENTICATED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.ErrorInfo\",\n        \"reason\": \"ACCESS_TOKEN_TYPE_UNSUPPORTED\",\n        \"metadata\": {\n          \"method\": \"google.ai.generativelanguage.v1beta.GenerativeService.StreamGenerateContent\",\n          \"service\": \"generativelanguage.googleapis.com\"\n        }\n      }\n    ]\n  }\n}\n"
+}

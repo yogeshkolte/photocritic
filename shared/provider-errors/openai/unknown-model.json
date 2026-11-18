@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-11-18T01:50:42.646Z",
+  "provider": "openai",
+  "model": "photocritic-no-such-model",
+  "note": "A model id the provider does not have.",
+  "status": 404,
+  "headers": {
+    "content-type": "application/json",
+    "x-request-id": "<request-id>"
+  },
+  "expected": [
+    {
+      "type": "error",
+      "error": {
+        "phase": "before-response",
+        "httpStatus": 404,
+        "providerCode": "model_not_found",
+        "requestId": "<request-id>"
+      }
+    }
+  ],
+  "body": "{\n  \"error\": {\n    \"message\": \"The model `photocritic-no-such-model` does not exist or you do not have access to it.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"code\": \"model_not_found\"\n  }\n}"
+}

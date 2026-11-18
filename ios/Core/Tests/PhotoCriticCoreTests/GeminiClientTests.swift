@@ -2,8 +2,9 @@ import Foundation
 import Testing
 @testable import PhotoCriticCore
 
-/// Gemini client against a stub that speaks the §3a stream format. The shared
-/// recorded fixtures (file 13) replace these hand-written streams in Phase 0 step 4.
+/// Gemini client against a stub that speaks the §3a stream format. Hand-written
+/// streams cover what cannot be recorded on demand (safety stop, blocked prompt,
+/// mid-stream error); `GeminiContractTests` replays the recordings.
 struct GeminiClientTests {
     let host = StubProtocol.newHost()
     let key = "AQ.test-key-0123456789abcdefghij"

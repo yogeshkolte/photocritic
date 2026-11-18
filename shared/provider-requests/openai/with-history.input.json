@@ -1,0 +1,14 @@
+{
+  "modelId": "gpt-5.4-mini",
+  "history": [
+    {
+      "question": "What is in this photo?",
+      "answerText": "A trail sign on a wooden post, under a clear sky."
+    }
+  ],
+  "question": "How far is the summit?",
+  "promptKind": "free",
+  "maxOutputTokens": 1024,
+  "imageDetail": "high",
+  "image": "shared/images/test.jpg"
+}

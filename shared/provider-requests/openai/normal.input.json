@@ -1,0 +1,9 @@
+{
+  "modelId": "gpt-5.4-mini",
+  "history": [],
+  "question": "What does the sign say?",
+  "promptKind": "extract",
+  "maxOutputTokens": 1024,
+  "imageDetail": "high",
+  "image": "shared/images/test.jpg"
+}

@@ -1,0 +1,40 @@
+{
+  "recordedAt": "2026-11-18T01:50:21.573Z",
+  "provider": "gemini",
+  "model": "gemini-4-hydrogen",
+  "note": "Second turn: one earlier turn in history.",
+  "status": 200,
+  "headers": {
+    "content-type": "text/event-stream"
+  },
+  "expected": [
+    {
+      "type": "text",
+      "delta": "According to the sign in"
+    },
+    {
+      "type": "text",
+      "delta": " the image, the distance to the summit is shown on the second line:\n\n```text\nSummit 2.4 km\n"
+    },
+    {
+      "type": "text",
+      "delta": "```\n\nIt is 2.4 kilometers away."
+    },
+    {
+      "type": "done",
+      "finishReason": "stop",
+      "servedModel": "gemini-4-hydrogen",
+      "requestId": "<request-id>"
+    }
+  ],
+  "sseLines": [
+    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"According to the sign in\"}],\"role\": \"model\"},\"index\": 0}],\"usageMetadata\": {\"promptTokenCount\": 1220,\"candidatesTokenCount\": 5,\"totalTokenCount\": 1726,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 140},{\"modality\": \"IMAGE\",\"tokenCount\": 1080}],\"candidatesTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 5}],\"thoughtsTokenCount\": 501,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-4-hydrogen\",\"responseId\": \"<request-id>\"}",
+    "",
+    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \" the image, the distance to the summit is shown on the second line:\\n\\n```text\\nSummit 2.4 km\\n\"}],\"role\": \"model\"},\"index\": 0}],\"usageMetadata\": {\"promptTokenCount\": 1220,\"candidatesTokenCount\": 31,\"totalTokenCount\": 1752,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 140},{\"modality\": \"IMAGE\",\"tokenCount\": 1080}],\"candidatesTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 31}],\"thoughtsTokenCount\": 501,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-4-hydrogen\",\"responseId\": \"<request-id>\"}",
+    "",
+    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"```\\n\\nIt is 2.4 kilometers away.\"}],\"role\": \"model\"},\"index\": 0}],\"usageMetadata\": {\"promptTokenCount\": 1220,\"candidatesTokenCount\": 42,\"totalTokenCount\": 1763,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 140},{\"modality\": \"IMAGE\",\"tokenCount\": 1080}],\"candidatesTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 42}],\"thoughtsTokenCount\": 501,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-4-hydrogen\",\"responseId\": \"<request-id>\"}",
+    "",
+    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"\",\"thoughtSignature\": \"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\"}],\"role\": \"model\"},\"finishReason\": \"STOP\",\"index\": 0}],\"usageMetadata\": {\"promptTokenCount\": 1268,\"candidatesTokenCount\": 46,\"totalTokenCount\": 1815,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 188},{\"modality\": \"IMAGE\",\"tokenCount\": 1080}],\"candidatesTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 46}],\"thoughtsTokenCount\": 501,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-4-hydrogen\",\"responseId\": \"<request-id>\"}",
+    ""
+  ]
+}

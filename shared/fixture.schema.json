@@ -5,7 +5,10 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["recordedAt", "provider", "model", "status", "headers", "expected"],
-  "oneOf": [{ "required": ["sseLines"] }, { "required": ["body"] }],
+  "oneOf": [
+    { "properties": { "sseLines": { "$ref": "#/properties/sseLines" } }, "required": ["sseLines"] },
+    { "properties": { "body": { "$ref": "#/properties/body" } }, "required": ["body"] }
+  ],
   "$defs": {
     "event": {
       "oneOf": [

@@ -1,0 +1,40 @@
+{
+  "recordedAt": "2026-11-18T01:50:17.364Z",
+  "provider": "gemini",
+  "model": "gemini-4-hydrogen",
+  "note": "Normal answer.",
+  "status": 200,
+  "headers": {
+    "content-type": "text/event-stream"
+  },
+  "expected": [
+    {
+      "type": "text",
+      "delta": "```text\n"
+    },
+    {
+      "type": "text",
+      "delta": "HILLTOP TRAIL\nSummit 2.4 km\nOpen 7:00 - 19:00"
+    },
+    {
+      "type": "text",
+      "delta": "\n```\nIt is an illustrated trail information sign."
+    },
+    {
+      "type": "done",
+      "finishReason": "stop",
+      "servedModel": "gemini-4-hydrogen",
+      "requestId": "<request-id>"
+    }
+  ],
+  "sseLines": [
+    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"```text\\n\"}],\"role\": \"model\"},\"index\": 0}],\"usageMetadata\": {\"promptTokenCount\": 1250,\"candidatesTokenCount\": 3,\"totalTokenCount\": 1432,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 170},{\"modality\": \"IMAGE\",\"tokenCount\": 1080}],\"candidatesTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 3}],\"thoughtsTokenCount\": 179,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-4-hydrogen\",\"responseId\": \"<request-id>\"}",
+    "",
+    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"HILLTOP TRAIL\\nSummit 2.4 km\\nOpen 7:00 - 19:00\"}],\"role\": \"model\"},\"index\": 0}],\"usageMetadata\": {\"promptTokenCount\": 1250,\"candidatesTokenCount\": 27,\"totalTokenCount\": 1456,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 170},{\"modality\": \"IMAGE\",\"tokenCount\": 1080}],\"candidatesTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 27}],\"thoughtsTokenCount\": 179,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-4-hydrogen\",\"responseId\": \"<request-id>\"}",
+    "",
+    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"\\n```\\nIt is an illustrated trail information sign.\"}],\"role\": \"model\"},\"index\": 0}],\"usageMetadata\": {\"promptTokenCount\": 1250,\"candidatesTokenCount\": 38,\"totalTokenCount\": 1467,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 170},{\"modality\": \"IMAGE\",\"tokenCount\": 1080}],\"candidatesTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 38}],\"thoughtsTokenCount\": 179,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-4-hydrogen\",\"responseId\": \"<request-id>\"}",
+    "",
+    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"\",\"thoughtSignature\": \"Et8GCtwGAWkUfRMB4j6InL/rZmlVnUQQErHEuVvzVv+ae3H3rYy6rk3r08u23ywzaRkZt2muO7gwveVIW6gcDVcndVxq2+2JT+AXlSVM3n0rd9QJeOow4sqJsOpm1LqnJI8S1NA0JaXrGMGmIblmugdF/64fUY1jcnIuW+Ox/xmvOzvcJMx6VHj2cK23Cr12OIyN6PqGJdBtGSaC3wzfuTkX8DyyqNtxvauzgRr7+ioVXtWVp4vQ/yyMO+US6hsTrS1NqZJPd85/UbzMn56b4E1V5l9Y8KsTijWsthL6p2SJkY2n5seGkA4SNP+rYIzklUQYWiDSb/oN9KHe2QvGy0GT+9jSXorGKuxMeOhZqzVlj3+/WStPioUY7idEGFDEk67znkHLFKrSgIh0IKitGs516r9AnFbzO4KppSbiwRiqSk/199Uh47NTPHE2HCCDFWNq/0wmorEJbpclNhUDITofmQocx8nRaK2knUX18EHgFfZczC8Bg8oonaULG9skpoWcnAOB/LN3d9pmxhNUlHC3RnUXaIhXLL5DsmyCoaVi5Ukw05M7KYaA08sMlkzZUxkzc2LEeq4a24fFN21EMWNqiIyJd78a7lvNts+0k0yzr4XrheY3MrKo6YsxVwz7PlfoE9dwZkyW+DsPLfeolc8T4r3MfvVav/jJ0/eB4Toog90N6NnBhATAyCWXdM1ZeVrKZkj61ZsWlg3QJHttjFgR9Li0b+KTJiyBgLC/K5CmW/J4dZ5Fnsr/TaCMAlPG1QKD6a1F2q8U6HSub1BPOLDP069uAhwQjUQVM/AK6cWBul1CoC1JvChokh2vFpvDxxTmetd6CWikNiOvhph4x87u/wxnqJK05miBVj0rNnDnUtKtxvmpOXkpiCvQic5/ZPc++zaymk5Qopl7iCc0xv4W0YlhJgPLOocT2wJJr4XIGIAWMevAe2/OrkCu7CaqvYRpaQ4cu8AMKKHTiAzdElttV+TP8Q+2oCNzkoMExr4hOd0NWtw65aoc0v/A76EGSohQwLH4bevM7liS0IrwE/0SC/wTlIKYoDxWh3hTLalJMdYvm93A+golFYYT7yiVyoaEf5XQrYrW/hWJzah5FKXVD3COMhx77h4VrPb8iw02M2oWANqTaOw8uVd9Qh8vhMQ=\"}],\"role\": \"model\"},\"finishReason\": \"STOP\",\"index\": 0}],\"usageMetadata\": {\"promptTokenCount\": 1288,\"candidatesTokenCount\": 42,\"totalTokenCount\": 1509,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 208},{\"modality\": \"IMAGE\",\"tokenCount\": 1080}],\"candidatesTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 42}],\"thoughtsTokenCount\": 179,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-4-hydrogen\",\"responseId\": \"<request-id>\"}",
+    ""
+  ]
+}

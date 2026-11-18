@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-11-18T01:50:47.897Z",
+  "provider": "anthropic",
+  "model": "claude-haiku-5-5",
+  "note": "A well-formed key that does not exist.",
+  "status": 401,
+  "headers": {
+    "content-type": "application/json",
+    "request-id": "<request-id>"
+  },
+  "expected": [
+    {
+      "type": "error",
+      "error": {
+        "phase": "before-response",
+        "httpStatus": 401,
+        "providerCode": "authentication_error",
+        "requestId": "<request-id>"
+      }
+    }
+  ],
+  "body": "{\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"<request-id>\"}"
+}

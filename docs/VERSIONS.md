@@ -13,7 +13,7 @@ Android versions live in `android/gradle/libs.versions.toml`; iOS versions in
 | Android Gradle Plugin | 9.5.1 | Latest stable (9.6 is alpha) |
 | Kotlin | 2.4.21 | Latest stable (2.5 is RC) |
 | compileSdk / targetSdk / minSdk | 37 / 36 / 24 | Compile against the newest platform; target the level Play requires; minimum per Q2 |
-| JDK | 17 (Zulu) | Build JDK; also CI |
+| JDK | 17 (Zulu) | Build JDK; also CI. `android/gradle/gradle-daemon-jvm.properties` makes Gradle pick a JDK 17 even when the default Java is newer |
 | Compose BOM | 2026.09.00 | Latest stable BOM |
 | AndroidX core-ktx | 1.19.1 | |
 | AndroidX activity-compose | 1.13.0 | Photo Picker contracts |

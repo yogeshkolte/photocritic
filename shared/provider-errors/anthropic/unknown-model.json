@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-11-18T01:50:48.280Z",
+  "provider": "anthropic",
+  "model": "photocritic-no-such-model",
+  "note": "A model id the provider does not have.",
+  "status": 404,
+  "headers": {
+    "content-type": "application/json",
+    "request-id": "<request-id>"
+  },
+  "expected": [
+    {
+      "type": "error",
+      "error": {
+        "phase": "before-response",
+        "httpStatus": 404,
+        "providerCode": "not_found_error",
+        "requestId": "<request-id>"
+      }
+    }
+  ],
+  "body": "{\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: photocritic-no-such-model\"},\"request_id\":\"<request-id>\"}"
+}

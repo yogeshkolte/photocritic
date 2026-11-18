@@ -1,0 +1,304 @@
+{
+  "recordedAt": "2026-11-18T01:50:39.103Z",
+  "provider": "openai",
+  "model": "gpt-5.4-mini",
+  "note": "Normal answer.",
+  "status": 200,
+  "headers": {
+    "content-type": "text/event-stream; charset=utf-8",
+    "x-request-id": "<request-id>"
+  },
+  "expected": [
+    {
+      "type": "text",
+      "delta": "```"
+    },
+    {
+      "type": "text",
+      "delta": "text"
+    },
+    {
+      "type": "text",
+      "delta": "\n"
+    },
+    {
+      "type": "text",
+      "delta": "H"
+    },
+    {
+      "type": "text",
+      "delta": "ILL"
+    },
+    {
+      "type": "text",
+      "delta": "TOP"
+    },
+    {
+      "type": "text",
+      "delta": " TRA"
+    },
+    {
+      "type": "text",
+      "delta": "IL"
+    },
+    {
+      "type": "text",
+      "delta": "\n"
+    },
+    {
+      "type": "text",
+      "delta": "Summ"
+    },
+    {
+      "type": "text",
+      "delta": "it"
+    },
+    {
+      "type": "text",
+      "delta": " "
+    },
+    {
+      "type": "text",
+      "delta": "2"
+    },
+    {
+      "type": "text",
+      "delta": "."
+    },
+    {
+      "type": "text",
+      "delta": "4"
+    },
+    {
+      "type": "text",
+      "delta": " km"
+    },
+    {
+      "type": "text",
+      "delta": "\n"
+    },
+    {
+      "type": "text",
+      "delta": "Open"
+    },
+    {
+      "type": "text",
+      "delta": " "
+    },
+    {
+      "type": "text",
+      "delta": "7"
+    },
+    {
+      "type": "text",
+      "delta": ":"
+    },
+    {
+      "type": "text",
+      "delta": "00"
+    },
+    {
+      "type": "text",
+      "delta": " -"
+    },
+    {
+      "type": "text",
+      "delta": " "
+    },
+    {
+      "type": "text",
+      "delta": "19"
+    },
+    {
+      "type": "text",
+      "delta": ":"
+    },
+    {
+      "type": "text",
+      "delta": "00"
+    },
+    {
+      "type": "text",
+      "delta": "\n"
+    },
+    {
+      "type": "text",
+      "delta": "``"
+    },
+    {
+      "type": "text",
+      "delta": "`\n\n"
+    },
+    {
+      "type": "text",
+      "delta": "This"
+    },
+    {
+      "type": "text",
+      "delta": " is"
+    },
+    {
+      "type": "text",
+      "delta": " a"
+    },
+    {
+      "type": "text",
+      "delta": " trail"
+    },
+    {
+      "type": "text",
+      "delta": " information"
+    },
+    {
+      "type": "text",
+      "delta": " sign"
+    },
+    {
+      "type": "text",
+      "delta": "."
+    },
+    {
+      "type": "done",
+      "finishReason": "stop",
+      "servedModel": "gpt-5.4-mini-2026-03-17",
+      "requestId": "<request-id>"
+    }
+  ],
+  "sseLines": [
+    "event: response.created",
+    "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_084e7944bb1fcc51016afd046e5a6c87d2871185635cb9d6bc\",\"object\":\"response\",\"created_at\":1794966638,\"status\":\"in_progress\",\"access_programs\":null,\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0.0,\"image\":{\"context_compression\":\"disabled\"},\"incomplete_details\":null,\"input_transformations\":[],\"instructions\":\"You answer questions about one photo the user has taken or chosen. Answer in plain text, without Markdown headings, bold text or tables. Be specific about what you can see, and say so when something is unclear or not visible in the photo. When your answer includes text copied exactly from the photo, put that text in a fenced block that starts with ```text on its own line and ends with ``` on its own line, keeping the photo's line breaks. Put only text from the photo inside such a block.\\n\\nCopy all readable text in this photo exactly as written, in reading order, inside a ```text block. Do not correct spelling. If some text is unreadable, write [unreadable] in its place. After the block, add one short line saying what kind of document or sign it is.\",\"max_output_tokens\":1024,\"max_tool_calls\":null,\"model\":\"gpt-5.4-mini-2026-03-17\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0.0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"24h\",\"reasoning\":{\"context\":\"current_turn\",\"effort\":\"none\",\"mode\":\"standard\",\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1.0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":0.98,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+    "",
+    "event: response.in_progress",
+    "data: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_084e7944bb1fcc51016afd046e5a6c87d2871185635cb9d6bc\",\"object\":\"response\",\"created_at\":1794966638,\"status\":\"in_progress\",\"access_programs\":null,\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0.0,\"image\":{\"context_compression\":\"disabled\"},\"incomplete_details\":null,\"input_transformations\":[],\"instructions\":\"You answer questions about one photo the user has taken or chosen. Answer in plain text, without Markdown headings, bold text or tables. Be specific about what you can see, and say so when something is unclear or not visible in the photo. When your answer includes text copied exactly from the photo, put that text in a fenced block that starts with ```text on its own line and ends with ``` on its own line, keeping the photo's line breaks. Put only text from the photo inside such a block.\\n\\nCopy all readable text in this photo exactly as written, in reading order, inside a ```text block. Do not correct spelling. If some text is unreadable, write [unreadable] in its place. After the block, add one short line saying what kind of document or sign it is.\",\"max_output_tokens\":1024,\"max_tool_calls\":null,\"model\":\"gpt-5.4-mini-2026-03-17\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0.0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"24h\",\"reasoning\":{\"context\":\"current_turn\",\"effort\":\"none\",\"mode\":\"standard\",\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1.0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":0.98,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+    "",
+    "event: response.output_item.added",
+    "data: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"phase\":\"final_answer\",\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
+    "",
+    "event: response.content_part.added",
+    "data: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"```\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"U1cY6uF2OTzng\",\"output_index\":0,\"sequence_number\":4}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"text\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"fhwLNEdGp2dN\",\"output_index\":0,\"sequence_number\":5}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\n\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"QJkLVvu4zVIzEgi\",\"output_index\":0,\"sequence_number\":6}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"H\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"gokTIrU5jzJoyXl\",\"output_index\":0,\"sequence_number\":7}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"ILL\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"Un7NjD3reG0wy\",\"output_index\":0,\"sequence_number\":8}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"TOP\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"lqzB0y2tLG0pw\",\"output_index\":0,\"sequence_number\":9}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" TRA\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"6rjBJ8N7fcA0\",\"output_index\":0,\"sequence_number\":10}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"IL\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"MgznRLpIIVT92H\",\"output_index\":0,\"sequence_number\":11}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\n\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"Faggf9t1JbbKRZW\",\"output_index\":0,\"sequence_number\":12}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"Summ\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"788oTnjOsUfM\",\"output_index\":0,\"sequence_number\":13}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"it\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"RAcdynz4YzT5II\",\"output_index\":0,\"sequence_number\":14}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" \",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"yuhHChlCKYvjylJ\",\"output_index\":0,\"sequence_number\":15}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"2\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"pHcNkUamkVuoFae\",\"output_index\":0,\"sequence_number\":16}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\".\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"fo6wage2SgqWdf8\",\"output_index\":0,\"sequence_number\":17}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"4\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"pQxHe1peealw3dz\",\"output_index\":0,\"sequence_number\":18}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" km\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"M9mnyWbErsUK7\",\"output_index\":0,\"sequence_number\":19}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\n\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"L0eVgafnoZpH43D\",\"output_index\":0,\"sequence_number\":20}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"Open\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"xzzKeeXvUYQB\",\"output_index\":0,\"sequence_number\":21}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" \",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"83H0oInHqydG3xb\",\"output_index\":0,\"sequence_number\":22}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"7\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"9o1j8Xp8Ufg217P\",\"output_index\":0,\"sequence_number\":23}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\":\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"q0zH2CN4ut967GB\",\"output_index\":0,\"sequence_number\":24}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"00\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"4jAJ2V7e5hTEGo\",\"output_index\":0,\"sequence_number\":25}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" -\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"rm8sgdPcO2h6Ii\",\"output_index\":0,\"sequence_number\":26}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" \",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"XBJv1MDZaO9ySfz\",\"output_index\":0,\"sequence_number\":27}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"19\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"Keoz5EFhaaSsbY\",\"output_index\":0,\"sequence_number\":28}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\":\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"rhBNKXU86qcKK1R\",\"output_index\":0,\"sequence_number\":29}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"00\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"30w719ZqAf7Zx8\",\"output_index\":0,\"sequence_number\":30}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\n\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"ZeRGb5mDXAkYnZx\",\"output_index\":0,\"sequence_number\":31}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"``\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"Jx3hcISumAsnx9\",\"output_index\":0,\"sequence_number\":32}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"`\\n\\n\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"avjeyfCffLkac\",\"output_index\":0,\"sequence_number\":33}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"This\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"lHuOOS0csjaa\",\"output_index\":0,\"sequence_number\":34}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" is\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"rORplkG3yX8UQ\",\"output_index\":0,\"sequence_number\":35}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" a\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"xAF6YkaSVlAFxM\",\"output_index\":0,\"sequence_number\":36}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" trail\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"UrCekg75dm\",\"output_index\":0,\"sequence_number\":37}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" information\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"I7pe\",\"output_index\":0,\"sequence_number\":38}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" sign\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"MXVl7c2gMVM\",\"output_index\":0,\"sequence_number\":39}",
+    "",
+    "event: response.output_text.delta",
+    "data: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\".\",\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"obfuscation\":\"1AtIyIBN0r9oRr9\",\"output_index\":0,\"sequence_number\":40}",
+    "",
+    "event: response.output_text.done",
+    "data: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":41,\"text\":\"```text\\nHILLTOP TRAIL\\nSummit 2.4 km\\nOpen 7:00 - 19:00\\n```\\n\\nThis is a trail information sign.\"}",
+    "",
+    "event: response.content_part.done",
+    "data: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"```text\\nHILLTOP TRAIL\\nSummit 2.4 km\\nOpen 7:00 - 19:00\\n```\\n\\nThis is a trail information sign.\"},\"sequence_number\":42}",
+    "",
+    "event: response.output_item.done",
+    "data: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"```text\\nHILLTOP TRAIL\\nSummit 2.4 km\\nOpen 7:00 - 19:00\\n```\\n\\nThis is a trail information sign.\"}],\"phase\":\"final_answer\",\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":43}",
+    "",
+    "event: response.completed",
+    "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_084e7944bb1fcc51016afd046e5a6c87d2871185635cb9d6bc\",\"object\":\"response\",\"created_at\":1794966638,\"status\":\"completed\",\"access_programs\":null,\"background\":false,\"completed_at\":1794966639,\"error\":null,\"frequency_penalty\":0.0,\"image\":{\"context_compression\":\"disabled\"},\"incomplete_details\":null,\"input_transformations\":[],\"instructions\":\"You answer questions about one photo the user has taken or chosen. Answer in plain text, without Markdown headings, bold text or tables. Be specific about what you can see, and say so when something is unclear or not visible in the photo. When your answer includes text copied exactly from the photo, put that text in a fenced block that starts with ```text on its own line and ends with ``` on its own line, keeping the photo's line breaks. Put only text from the photo inside such a block.\\n\\nCopy all readable text in this photo exactly as written, in reading order, inside a ```text block. Do not correct spelling. If some text is unreadable, write [unreadable] in its place. After the block, add one short line saying what kind of document or sign it is.\",\"max_output_tokens\":1024,\"max_tool_calls\":null,\"model\":\"gpt-5.4-mini-2026-03-17\",\"moderation\":null,\"output\":[{\"id\":\"msg_084e7944bb1fcc51016afd046f5de487d2bc3cefb1f98d19cc\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"```text\\nHILLTOP TRAIL\\nSummit 2.4 km\\nOpen 7:00 - 19:00\\n```\\n\\nThis is a trail information sign.\"}],\"phase\":\"final_answer\",\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0.0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"24h\",\"reasoning\":{\"context\":\"current_turn\",\"effort\":\"none\",\"mode\":\"standard\",\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":false,\"temperature\":1.0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":0.98,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":641,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cache_write_tokens_details\":{\"ttl_12h_tokens\":0,\"ttl_30m_tokens\":0},\"cached_tokens\":0},\"output_tokens\":41,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":682},\"user\":null,\"metadata\":{}},\"sequence_number\":44}",
+    ""
+  ]
+}

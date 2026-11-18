@@ -1,0 +1,22 @@
+{
+  "recordedAt": "2026-11-18T01:50:23.633Z",
+  "provider": "gemini",
+  "model": "gemini-4-hydrogen",
+  "note": "Length limit (16 output tokens); ends normally.",
+  "status": 200,
+  "headers": {
+    "content-type": "text/event-stream"
+  },
+  "expected": [
+    {
+      "type": "done",
+      "finishReason": "length",
+      "servedModel": "gemini-4-hydrogen",
+      "requestId": "<request-id>"
+    }
+  ],
+  "sseLines": [
+    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"\"}],\"role\": \"model\"},\"finishReason\": \"MAX_TOKENS\",\"index\": 0,\"continuationToken\": \"AWkUfROjRon0SjV7/bliIDyuHYx12DMjWkVhKW/iYahLPy7Icnky2ELSX91w0YH+Otv28wsNaG+desPIa8hVjQjnmiLefkZQ12tH1/3iC3E1Jjw1zYdoNMmcyFuYZkb7DRPck/me6Ya11fu1qXz9tYUsasctHYbhqmtGQOIOdcPlpoz0JfOgFqmLnZ3b9uXBIHAVRlwb3/JUQ15sN8sE8+MctTHRNiToVGDn3ik/ZT4ZC66C44G0n6P9jOJC2adr82AMnsqcIinQ/Ov2MYcHaolTXIVRFabPhobIdnM20nVU4v5jNid4ZQVj2lukbXsZS1bMgsREAAnyOWN3SVkpREE5rLEjFcMPlEd/Z86E9mL7G+9X\"}],\"usageMetadata\": {\"promptTokenCount\": 1246,\"candidatesTokenCount\": 3,\"totalTokenCount\": 1262,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 166},{\"modality\": \"IMAGE\",\"tokenCount\": 1080}],\"candidatesTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 3}],\"thoughtsTokenCount\": 13,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-4-hydrogen\",\"responseId\": \"<request-id>\"}",
+    ""
+  ]
+}

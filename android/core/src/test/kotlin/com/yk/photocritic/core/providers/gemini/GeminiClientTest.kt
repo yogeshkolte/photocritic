@@ -28,7 +28,8 @@ import org.junit.jupiter.api.Test
 
 /**
  * Gemini client against a local server that speaks the §3a stream format.
- * The shared recorded fixtures (file 13) replace these hand-written streams in Phase 0 step 4.
+ * Hand-written streams cover what cannot be recorded on demand (safety stop,
+ * blocked prompt, mid-stream error); [GeminiContractTest] replays the recordings.
  */
 class GeminiClientTest {
     private lateinit var server: MockWebServer
