@@ -4,6 +4,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
 }
@@ -67,6 +68,8 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        // Tests read shared/ from the repository (file 39).
+        unitTests.all { it.systemProperty("pc.repoRoot", rootProject.projectDir.parentFile.absolutePath) }
     }
 
     // Device checks read the shared test images (Phase 0 step 6, file 50).
@@ -76,7 +79,11 @@ android {
 dependencies {
     implementation(project(":core"))
 
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
@@ -94,6 +101,8 @@ dependencies {
 
     testImplementation(libs.junit4)
     testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.test.core)
     testImplementation(platform(libs.compose.bom))
     testImplementation(libs.compose.ui.test.junit4)
     debugImplementation(libs.compose.ui.test.manifest)

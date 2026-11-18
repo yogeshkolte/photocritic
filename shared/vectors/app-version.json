@@ -1,0 +1,13 @@
+{
+  "description": "Version comparisons (design file 14). expected: -1 if a < b, 0 if equal, 1 if a > b. invalid: strings that are not a version.",
+  "comparisons": [
+    { "a": "1.10.0", "b": "1.9.0", "expected": 1 },
+    { "a": "1.9.0", "b": "1.10.0", "expected": -1 },
+    { "a": "0.1.0", "b": "0.1.0", "expected": 0 },
+    { "a": "2.0.0", "b": "1.99.99", "expected": 1 },
+    { "a": "1.0.10", "b": "1.0.9", "expected": 1 },
+    { "a": "0.0.1", "b": "0.1.0", "expected": -1 },
+    { "a": "10.0.0", "b": "9.0.0", "expected": 1 }
+  ],
+  "invalid": ["", "1", "1.2", "1.2.3.4", "v1.2.3", "1.2.x", "1.2.3-beta", " 1.2.3", "1..3"]
+}

@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">PhotoCritic</string>
-    <string name="phase0_placeholder">Phase 0 build</string>
+
+    <!-- DisabledScreen (file 38, CUJ 9, CUJ 7). No Try again button (AR2). -->
+    <string name="config_unavailable">PhotoCritic couldn\'t load its settings. Check your connection and restart the app.</string>
+    <string name="app_disabled_default">PhotoCritic is not available right now.</string>
+    <string name="update_required">This version of PhotoCritic is no longer supported. Please update the app.</string>
+    <string name="update_button">Update</string>
+
+    <!-- Placeholders until Phase 1.2 builds setup and home. -->
+    <string name="setup_placeholder">Setup (Phase 1.2)</string>
+    <string name="home_placeholder">Home (Phase 1.2)</string>
+    <string name="loading">Loading</string>
 </resources>

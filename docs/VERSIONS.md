@@ -20,7 +20,7 @@ Android versions live in `android/gradle/libs.versions.toml`; iOS versions in
 | AndroidX lifecycle | 2.11.0 | ViewModel, runtime-compose |
 | Navigation Compose | 2.10.2 | |
 | AndroidX ExifInterface | 1.4.2 | Orientation on the `BitmapFactory` path (§6) |
-| kotlinx.coroutines | 1.11.0 | |
+| kotlinx.coroutines (core, test, play-services) | 1.11.0 | `play-services` awaits Firebase tasks (files 32, 33) |
 | kotlinx.serialization | 1.13.0 | |
 | OkHttp (and mockwebserver3) | 5.5.1 | The one HTTP client (§4) |
 | Firebase Android BoM | 35.2.0 | Remote Config, Analytics, Crashlytics, Firestore |

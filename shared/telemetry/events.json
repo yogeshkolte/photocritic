@@ -1,0 +1,33 @@
+{
+  "description": "Every Analytics event both apps may send (design file 33). Parameter types: string or integer. Nothing is sent while sharing is off.",
+  "events": {
+    "pc_session_start": {
+      "params": { "provider": "string", "model": "string", "config_version": "integer" },
+      "trigger": "home first shows after a cold start"
+    },
+    "pc_image_prepared": {
+      "params": { "source": "string", "input_format": "string", "prepare_ms": "integer", "sent_long_edge_px": "integer", "sent_bytes": "integer" },
+      "trigger": "a send copy is built"
+    },
+    "pc_question_sent": {
+      "params": { "provider": "string", "model": "string", "turn_index": "integer", "starter_prompt": "string" },
+      "trigger": "Send"
+    },
+    "pc_answer_received": {
+      "params": { "provider": "string", "model": "string", "time_to_first_token_ms": "integer", "total_ms": "integer", "input_tokens": "integer", "output_tokens": "integer", "finish_reason": "string" },
+      "trigger": "a done event"
+    },
+    "pc_request_failed": {
+      "params": { "provider": "string", "model": "string", "phase": "string", "http_status": "integer" },
+      "trigger": "an error event"
+    },
+    "pc_report_submitted": {
+      "params": { "provider": "string", "model": "string", "category": "string", "result": "string" },
+      "trigger": "a report attempt ends"
+    },
+    "pc_config_fetch": {
+      "params": { "result": "string", "config_version": "integer", "ms": "integer" },
+      "trigger": "the startup fetch ends"
+    }
+  }
+}

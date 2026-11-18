@@ -14,7 +14,10 @@ any file in this folder is followed by both apps in the same pull request
 | `fixture.schema.json` | Format of the recorded provider responses. | Contract tests |
 | `provider-streams/`, `provider-errors/`, `provider-requests/` | Recorded responses and expected request bodies, per provider (Phase 0 step 4). | Contract tests |
 | `images/test.jpg` | The image every recording and request fixture uses: a 768×512 trail sign drawn for this project, so it can be shared freely. | `fixture:record`, contract tests |
-| `redaction/`, `token-estimates.json`, `vectors/`, `telemetry/` | Added as their code arrives (design files 9, 14, 33). | |
+| `vectors/app-version.json` | Version comparisons and strings that are not versions (file 14). | `AppVersionTest` |
+| `telemetry/events.json` | Every Analytics event, its parameters with types (`string`, `integer`) and its trigger (file 33). | `EventsTest` |
+| `redaction/` | Redaction inputs and expected outputs (file 14). | `RedactTest` (both apps) |
+| `token-estimates.json`, other `vectors/` | Added as their code arrives (design file 14). | |
 
 ## Fixtures
 
