@@ -29,6 +29,7 @@ Android versions live in `android/gradle/libs.versions.toml`; iOS versions in
 | JUnit Jupiter | 6.1.3 | `:core` tests |
 | JUnit 4 | 4.13.2 | `:app` (Robolectric, Compose UI tests) |
 | Robolectric | 4.18 | Runs SDK 35 in tests (see notes) |
+| AndroidX Test (runner, core) / ext-junit | 1.7.0 / 1.3.0 | Device checks in `app/src/androidTest` (Phase 0 step 6) |
 | Turbine | 1.2.1 | Flow tests |
 | Kover | 0.9.11 | 80% line coverage on `:core` |
 | detekt | 1.23.8 | Latest stable (2.0 is alpha); runs on Kotlin 2.0.21 internally |

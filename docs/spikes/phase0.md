@@ -89,27 +89,27 @@ recorded fixtures (step 4) replace those, and the phone runs below remain.
 
 | Check | Result |
 | --- | --- |
-| Collection-off key names (Android manifest, iOS `Info.plist`) | |
-| `getAppInstanceId` with collection off and on | |
-| Crashlytics unsent reports before opt-in (Q10) | |
-| Firestore memory cache leaves no report text on disk | |
-| Server timestamp plus offset for `expireAt` (file 36) | |
-| Analytics reserved event names (file 33) | |
+| Collection-off key names (Android manifest, iOS `Info.plist`) | Android: `firebase_analytics_collection_enabled` and `firebase_crashlytics_collection_enabled` read back as false; Crashlytics reports collection off (emulators API 24, 30 and 36 (Google APIs), 2026-11-17, `app/src/androidTest/.../phase0/`). iOS in Phase 1.a |
+| `getAppInstanceId` with collection off and on | Android: returns the same ID with collection off, on, and off again, on all three API levels. So `Telemetry.instanceIdOrNull()` has an ID whether or not sharing is on; whether a report carries it while sharing is off is a design choice (file 30), not an SDK limit |
+| Crashlytics unsent reports before opt-in (Q10) | Android: a non-fatal recorded with collection off is held on the device (`checkForUnsentReports` true in the next process, files under `files/.crashlytics.v3/`) and removed by `deleteUnsentReports`. The event write is asynchronous: a process that ends within about a second can lose it |
+| Firestore memory cache leaves no report text on disk | Android: with `MemoryCacheSettings` and the network off, the pending write's text is not found anywhere under the app's data directory; with `PersistentCacheSettings` (control) it is found. Same on API 24, 30, 36 |
+| Server timestamp plus offset for `expireAt` (file 36) | Not possible: Firestore Android 27.2.0 `FieldValue` has `serverTimestamp()` but no offset (`increment` is numbers only). File 36's fallback applies: no `expireAt`; `reports:purge` deletes by `createdAt` plus `REPORT_RETENTION_DAYS` |
+| Analytics reserved event names (file 33) | All seven events start with `pc_`: none is a reserved name or uses a reserved prefix (`firebase_`, `google_`, `ga_`); all are under 40 characters. A test against `shared/telemetry/events.json` follows in Phase 1.1 |
 | Merged-manifest permission list (file 17) | Done 2026-11-17: `INTERNET`, `ACCESS_NETWORK_STATE`, `WAKE_LOCK`, `BIND_GET_INSTALL_REFERRER_SERVICE`, `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` |
-| Atomic file writes on both platforms | |
-| HEIC on API 24–27 and AVIF on API 24–30 give `image-error` (Q2) | |
+| Atomic file writes on both platforms | Android: `AtomicFile` keeps the previous file after a failed write and after a write interrupted before `finishWrite`, on API 24, 30 and 36. iOS in Phase 1.a |
+| HEIC on API 24–27 and AVIF on API 24–30 give `image-error` (Q2) | Android, with `shared/images/test.heic` and `test.avif`: API 24 decodes neither (BitmapFactory); API 30 decodes HEIC but not AVIF (both decoders); API 36 decodes both. API 26–27 not run; they use the same BitmapFactory path as 24 |
 | Harness output compared with the Android pipeline (file 40) | |
 
 ## Measurements
 
 | Item | Result |
 | --- | --- |
-| Image-size accuracy (Q5) | |
-| `HISTORY_TURNS_CAP` | |
-| Token estimates per provider (`shared/token-estimates.json`) | |
+| Image-size accuracy (Q5) | Moved to Phase 1.1 (author, 2026-11-18): measured with the real app code |
+| `HISTORY_TURNS_CAP` | Moved to Phase 1.1 (author, 2026-11-18): measured with the real app code |
+| Token estimates per provider (`shared/token-estimates.json`) | Moved to Phase 1.1 (author, 2026-11-18): measured with the real app code |
 | Anthropic automatic caching fields | `usage.cache_creation_input_tokens` and `cache_read_input_tokens` present (2026-11-17); behaviour across turns not measured yet |
-| `CONNECT_TIMEOUT_MS`, `REQUEST_TIMEOUT_MS` from measured first-token and total times | |
-| `REPORT_WRITE_TIMEOUT_MS` | |
+| `CONNECT_TIMEOUT_MS`, `REQUEST_TIMEOUT_MS` from measured first-token and total times | Moved to Phase 1.1 (author, 2026-11-18): measured with the real app code |
+| `REPORT_WRITE_TIMEOUT_MS` | Moved to Phase 1.1 (author, 2026-11-18): measured with the real app code |
 
 ## Historical note: Expo-era AI SDK check (2026-11-17)
 

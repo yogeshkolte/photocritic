@@ -833,12 +833,12 @@ ends.
 | `REQUEST_TIMEOUT_MS`             | Phase 0  | `core/net`                             |
 | `MAX_REPORT_CONVERSATION_CHARS`  | Phase 0  | report text cap (§10), Firestore rules |
 | `REPORT_DAILY_LIMIT_PER_INSTALL` | Phase 0  | report daily limit                     |
-| `REPORT_RETENTION_DAYS`          | Phase 0  | report `expireAt` (Q6)                 |
+| `REPORT_RETENTION_DAYS`          | Phase 0  | `reports:purge` cut-off (Q6)           |
 | `REPORT_WRITE_TIMEOUT_MS`        | Phase 0  | report service (§10)                   |
 
 Because the report limits are code constants, `firestore.rules` uses the
 same literal numbers where rules can check them (`HISTORY_TURNS_CAP` for the
-conversation list length, `REPORT_RETENTION_DAYS` for `expireAt`);
+conversation list length);
 `MAX_REPORT_CONVERSATION_CHARS` is enforced by the apps only. A test reads
 `shared/tuning.json` and the rules file and fails if they differ.
 
@@ -1450,8 +1450,10 @@ Files by phase (a file split across phases lists the part):
 
 Decisions made during drafting (Open Questions Q6–Q10, Q12):
 
-- **Q6 report retention:** free Spark plan; reports carry `expireAt`; old
-  reports are removed with a manual script.
+- **Q6 report retention:** free Spark plan; old reports are removed with a
+  manual script that deletes by `createdAt` plus `REPORT_RETENTION_DAYS`
+  (reports carry no `expireAt`: Phase 0 found the SDK cannot write a server
+  timestamp plus an offset).
 - **Q7 report writes:** create-only rules, no App Check, no sign-in.
 - **Q8 backup:** all app files excluded from iOS and Android backup; no
   restore handling.
@@ -1564,9 +1566,8 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
 
 - **Type / Scope**: Firestore security rules.
 - **Proposed Changes**: `reports/{reportId}`: allow `create` only, when the
-  document ID equals `reportId`, `createdAt == request.time`, `expireAt ==
-  request.time + duration.value(REPORT_RETENTION_DAYS, 'd')` (the number
-  written as a literal), every field matches the file 30 table (type and
+  document ID equals `reportId`, `createdAt == request.time`, every field
+  matches the file 30 table (type and
   size limit), `conversation` is a list of at most `HISTORY_TURNS_CAP × 2 +
   2` items (a literal; rules cannot read app code or Remote Config, and
   cannot check the items inside a list, AR3), `category` is one of the four
@@ -1591,7 +1592,7 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
   demo-photocritic "jest"`. Tests: valid create allowed; read, update,
   delete and list denied; missing or extra fields, wrong types, each string
   over its limit, a `conversation` list longer than the limit, wrong
-  `createdAt`, wrong or missing `expireAt`, and any image field rejected. A
+  `createdAt`, and any image field rejected. A
   test reads `shared/tuning.json` and fails if the literals in the rules
   differ (AR3).
 
@@ -1708,7 +1709,8 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
   the template ETag with `If-Match`. `fixture:record` calls a provider with
   a key from an environment variable, saves the raw response and replaces
   keys and request IDs before writing to `shared/`. `reports:purge`
-  (Firebase Admin SDK) deletes reports whose `expireAt` has passed (Q6).
+  (Firebase Admin SDK) deletes reports whose `createdAt` is older than
+  `REPORT_RETENTION_DAYS` (Q6).
   `sync-shared.sh` copies `shared/prompts/` into the iOS package (file 11).
   **Why:** with no in-app values, validation before publishing is the only
   protection against a bad publish (AR2).
@@ -1916,7 +1918,6 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
     | --- | --- | --- |
     | `reportId` | string, equals the document ID | 36 (UUID) |
     | `createdAt` | timestamp | set by `ReportService`; rules: `== request.time` |
-    | `expireAt` | timestamp | set by `ReportService`; rules: `request.time` plus `REPORT_RETENTION_DAYS` |
     | `appVersion`, `osVersion` | string | 32 each |
     | `platform` | `android` or `ios` | |
     | `locale` | string | 35 |
@@ -2014,11 +2015,10 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
 
 - **Type / Scope**: Firestore write.
 - **Proposed Changes**: Sets `MemoryCacheSettings` before first use; takes
-  the file 30 document, adds `createdAt` and `expireAt` from the Firestore
-  server timestamp (Phase 0 checks that the SDK can write a server
-  timestamp plus an offset for `expireAt`; if it cannot, `expireAt` is left
-  out, the rules drop that check, and `reports:purge` deletes by
-  `createdAt` plus `REPORT_RETENTION_DAYS`), and writes it under a new
+  the file 30 document, adds `createdAt` as the Firestore server timestamp
+  (no `expireAt`: Phase 0 found `FieldValue` cannot add an offset to a
+  server timestamp, so `reports:purge` deletes by `createdAt` plus
+  `REPORT_RETENTION_DAYS`), and writes it under a new
   random UUID for each attempt. Returns sent, failed (not confirmed within
   `REPORT_WRITE_TIMEOUT_MS`) or limit reached. A write shown as failed may
   still arrive later, so a second attempt can create a duplicate report;
