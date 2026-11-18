@@ -343,7 +343,9 @@ contradicts the accepted behavior described here.
   Kotlin and once in Swift, roughly 1.7 to 2 times the work of one
   cross-platform app (an estimate), and the two copies can drift. The
   mitigation is the shared test data in `shared/`, which both apps must
-  pass, and doing each phase on Android first, then iOS.
+  pass, and building the whole Android app first (Phase 1), then iOS
+  against the finished Android app and test data (Phase 1.a; author
+  decision 2026-11-17). Until Phase 1.a, iOS covers only what Phase 0 built.
 
 ## Critical User Journeys (CUJs)
 
@@ -537,7 +539,7 @@ Rules:
 - Only `providers/` knows vendor names, vendor request formats and vendor
   JSON types. Nothing vendor-specific (request bodies, event types, error
   bodies) leaves a client. This keeps vendor details in one folder per app
-  and lets on-device providers be added in Phase 5 behind the same
+  and lets on-device providers be added in Phase 2 behind the same
   interface.
 - Only `core/net` creates an HTTP client, and only `providers/` calls it.
   Only `platform/telemetry` imports Firebase Analytics or Crashlytics.
@@ -980,7 +982,7 @@ the brainstorm choice of Expo and React Native (answer 7).
   `a1f4c49`).
 - **Cons**: A JavaScript bridge and native-module dependencies for camera,
   secure storage, Firebase and the sheet; the sheet library still to be
-  chosen (Q3); on-device models in Phase 5 through React Native wrappers
+  chosen (Q3); on-device models in a later phase through React Native wrappers
   (llama.rn, ExecuTorch) instead of the platform frameworks.
 - **Reason for Rejection**: Rejected by author (2026-11-17), in favor of
   native apps.
@@ -1338,7 +1340,7 @@ that the Vercel AI SDK was final):
 
 ### Future Improvements
 
-- **On-device models** (Phase 5): image-capable on-device providers first
+- **On-device models** (Phase 2): image-capable on-device providers first
   (Apple Foundation Models, Android ML Kit GenAI), with a download and
   storage feature (`features/models/`), then the local-versus-cloud
   benchmark.
@@ -1389,7 +1391,12 @@ them here before Phase 0 if they are wrong.
 
 ### Implementation order
 
-Each phase ends with both apps passing CI. Phase numbers match the brief.
+Author decision (2026-11-17): Phase 1 finishes the Android app with every
+feature, through a Play internal-track tester release; Phase 1.a then builds
+the iOS app to the same feature set. Each phase and step ends with CI
+passing. During Phase 1 the iOS job keeps running, so the iOS code from
+Phase 0 must stay green when `shared/` changes, but iOS gains no new
+features until Phase 1.a.
 
 1.  **Phase 0, setup and spikes.**
     1. Remove the Expo stack (file 1) in one commit, which also creates
@@ -1403,20 +1410,29 @@ Each phase ends with both apps passing CI. Phase numbers match the brief.
        `fixture:record`, `sync-shared.sh`), so the `shared` CI job passes.
     4. Record provider streams and errors for all three providers with
        spend-capped keys; confirm the wire-format table (§3a, Q1).
-    5. Build `core/net` and the Gemini client on both platforms and run the
-       client acceptance tests (Verification Plan) on a phone.
-    6. Firebase behavior checks, the image-size accuracy test (Q5), and HEIC
-       on API 24–27 and AVIF on API 24–30 (Q2), as listed under file 50.
-2.  **Phase 1, foundations.** Storage, install marker, Remote Config with
-    snapshot and validation, telemetry wrapper, image pipeline (both apps).
-3.  **Phase 2, Gemini end to end.** Provider interface, the Gemini client,
-    error conversion, consent, setup, home screen, Stop, text cards (both
-    apps).
-4.  **Phase 3, Anthropic then OpenAI.** Same contract tests (both apps).
-5.  **Phase 4, polish and tester release.** Reports, Settings, wide layout,
-    accessibility, privacy documents, store forms, TestFlight and Play
-    internal track.
-6.  **Phase 5, on-device evaluation.** Apple Foundation Models and Android
+    5. Build `core/net` and the Gemini client on both platforms; run the
+       client acceptance tests (Verification Plan) on an Android phone.
+    6. On Android: Firebase behavior checks, the image-size accuracy test
+       (Q5), and HEIC on API 24–27 and AVIF on API 24–30 (Q2), as listed
+       under file 50. The iOS rows of file 50 move to Phase 1.a.
+2.  **Phase 1, the complete Android app.** In four steps, each ending with
+    a signed Android build:
+    1. **1.1 Foundations.** Storage, install marker, Remote Config with
+       snapshot and validation, telemetry wrapper, image pipeline.
+    2. **1.2 Gemini end to end.** Provider interface, the Gemini client,
+       error conversion, consent, setup, home screen, Stop, text cards.
+    3. **1.3 Anthropic then OpenAI.** Contract tests against the
+       recordings; the canary; the harness.
+    4. **1.4 Polish and Android tester release.** Reports, Settings, wide
+       layout, accessibility, Firestore rules and their tests, author
+       tools, privacy documents, Play Data safety form, Play internal
+       track.
+3.  **Phase 1.a, the iOS app.** The iOS rows of file 50 (iPhone acceptance
+    tests, Firebase checks, atomic writes); then the same features in the
+    order of Phase 1 steps 1.1–1.4, passing the same contract tests and
+    vectors in `shared/`; App Store privacy form and TestFlight. Needs the
+    Apple Developer account.
+4.  **Phase 2, on-device evaluation.** Apple Foundation Models and Android
     ML Kit GenAI behind the same provider interface. Starts after the first
     external tester build ships or a harness baseline is recorded (D40).
     Not detailed here.
@@ -1425,11 +1441,12 @@ Files by phase (a file split across phases lists the part):
 
 | Phase | Files |
 | --- | --- |
-| 0 | 1–3, 5, 7, 9–14, 15 (`validate-config`, `record-fixture`, `sync-shared.sh`), 16–25, 27 (Gemini; kept and finished in Phase 2), 41–45 (Net, provider types and shared code, Gemini), 49, 50 |
-| 1 | 26, 31–35, 38 and 46 (startup and `DisabledScreen`), tests for these in 39 and 47 |
-| 2 | 28, 29, 30 (consent), 37, 38 and 46 (setup, home, consent sheet), tests in 39 and 47 |
-| 3 | 27 and 45 (Anthropic, OpenAI), 4, 40 |
-| 4 | 6, 8, 15 (`publish-remote-config`, `purge-reports`), 30 (report), 36, 38 and 46 (Settings, report sheet, wide layout), 48, 51–54; `assets/` deleted (file 1) |
+| 0 | 1–3, 5, 7, 9–14, 15 (`validate-config`, `record-fixture`, `sync-shared.sh`), 16–25, 27 (Gemini; kept and finished in 1.2), 41–45 (Net, provider types and shared code, Gemini), 49, 50 |
+| 1.1 | 26, 31–35, 38 (startup and `DisabledScreen`), tests for these in 39 |
+| 1.2 | 28, 29, 30 (consent), 37, 38 (setup, home, consent sheet), tests in 39 |
+| 1.3 | 27 (Anthropic, OpenAI), 4, 40 |
+| 1.4 | 6, 8, 15 (`publish-remote-config`, `purge-reports`), 30 (report), 36, 38 (Settings, report sheet, wide layout), 48 and 51–54 (Android parts) |
+| 1.a | 45 (everything not built in Phase 0), 46, 47, the iOS parts of 48 and 52–54; `assets/` deleted (file 1) once 22 and 46 hold the final icons |
 
 Decisions made during drafting (Open Questions Q6–Q10, Q12):
 
@@ -1477,7 +1494,7 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
   move `firestore.rules`, `firestore.indexes.json`, `firebase.json` and
   `.firebaserc` into `firebase/` (files 5–7). Rewrite `docs/spikes/phase0.md`
   (file 50) in the same commit. `assets/` stays as the icon source until
-  Phase 4, when files 22 and 46 hold the final icons; it is deleted then.
+  Phase 1.a, when files 22 and 46 hold the final icons; it is deleted then.
   **Why:** the React Native stack is replaced (author decision,
   2026-11-17).
 
@@ -1513,13 +1530,13 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
     "$(ios/scripts/sim-destination.sh)"`, where the script picks the newest
     available iPhone simulator.
   - `shared` (Ubuntu, Node, JDK 17 for the emulator): `npm ci` and `npm run
-    config:validate` in `tools/`; from Phase 4, `npm ci` and `npm run
+    config:validate` in `tools/`; from Phase 1.4, `npm ci` and `npm run
     test:emulator` in `firebase/rules-test/`.
   No provider keys in CI except for file 4. **Why:** lint, unit, contract
   and build checks run for both apps on every push; the manual checks are in
   the Verification Plan.
 
-##### 4. `.github/workflows/canary.yml` (Create, Phase 3)
+##### 4. `.github/workflows/canary.yml` (Create, Phase 1.3)
 
 - **Type / Scope**: Scheduled CI job.
 - **Proposed Changes**: Daily at 05:00 UTC: `./gradlew :harness:run
@@ -1543,7 +1560,7 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
   Firestore rules and indexes paths; emulator port. The `react-native`
   section is removed: collection defaults now live in files 17 and 43.
 
-##### 6. `firebase/firestore.rules` (Move, Modify in Phase 4)
+##### 6. `firebase/firestore.rules` (Move, Modify in Phase 1.4)
 
 - **Type / Scope**: Firestore security rules.
 - **Proposed Changes**: `reports/{reportId}`: allow `create` only, when the
@@ -1554,7 +1571,7 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
   2` items (a literal; rules cannot read app code or Remote Config, and
   cannot check the items inside a list, AR3), `category` is one of the four
   values, no field outside the table, and no image field. Deny read, update,
-  delete and list everywhere. Deny-all until Phase 4. The header comment
+  delete and list everywhere. Deny-all until Phase 1.4. The header comment
   names `shared/tuning.json` as the source of the literals. **Why:** the app
   has no sign-in and no App Check, so the rules are the only write
   protection (G15).
@@ -1565,7 +1582,7 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
 - **Proposed Changes**: Empty index list (no queries from the apps); kept so
   the CLI deploy is reproducible.
 
-##### 8. `firebase/rules-test/package.json`, `firebase/rules-test/reports.rules.test.ts` (Create, Phase 4)
+##### 8. `firebase/rules-test/package.json`, `firebase/rules-test/reports.rules.test.ts` (Create, Phase 1.4)
 
 - **Type / Scope**: Firestore emulator tests (Node).
 - **Proposed Changes**: Dependencies `jest`, `ts-jest`,
@@ -1585,7 +1602,7 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
 - **Type / Scope**: Format description, fixture schema, test image.
 - **Proposed Changes**: The README describes every file under `shared/` and
   the rule that a change there is followed by both apps in the same pull
-  request. `fixture.schema.json` is the JSON Schema for the files in file 13.
+  request (until Phase 1.a, iOS only for the parts it already has). `fixture.schema.json` is the JSON Schema for the files in file 13.
   Expected events are written as `{"type": "text", "delta": "…"}`,
   `{"type": "done", "finishReason": "stop" | "length", "servedModel": "…",
   "requestId": "…" | null}` and `{"type": "error", "error": {"phase":
@@ -1846,7 +1863,7 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
   | Consent version | `consent_texts.<p>.version`; must equal `providers.<p>.consentTextVersion` |
   | `privacy_policy.version` | Shown in Settings next to the bundled privacy policy |
 
-##### 27. `android/core/.../providers/gemini/GeminiClient.kt`, `anthropic/AnthropicClient.kt`, `openai/OpenAiClient.kt`, each with `<Provider>Wire.kt` (for example `GeminiWire.kt`) (Create; Gemini in Phase 0 and 2, others in Phase 3)
+##### 27. `android/core/.../providers/gemini/GeminiClient.kt`, `anthropic/AnthropicClient.kt`, `openai/OpenAiClient.kt`, each with `<Provider>Wire.kt` (for example `GeminiWire.kt`) (Create; Gemini in Phase 0 and 1.2, others in Phase 1.3)
 
 - **Type / Scope**: Provider clients.
 - **Proposed Changes**: Each implements `Provider` with the request format,
@@ -1869,7 +1886,7 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
   `final-turn-only`, `streaming: whole`, no usage, `dataLeavesDevice =
   true` (so the consent flow runs in tests), to test that the screens handle
   a final-turn-only, whole-response provider with no usage data before
-  Phase 5. Used only by tests and the `devDebug` fake container (file 37).
+  Phase 2. Used only by tests and the `devDebug` fake container (file 37).
 
 ##### 29. `android/core/.../session/SessionTypes.kt`, `SessionMachine.kt` (Create)
 
@@ -2349,8 +2366,8 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
 - **Compilation/Build**: `./gradlew assembleDevDebug assembleProdRelease
   :app:checkPermissions`; `xcodegen && xcodebuild build` for the
   `PhotoCritic-Dev` and `PhotoCritic-Prod` schemes. A signed Android build
-  at the end of every phase from Phase 1; a signed iOS build once the Apple
-  Developer account exists, and at the latest at the end of Phase 4.
+  at the end of every Phase 1 step; a signed iOS build once the Apple
+  Developer account exists, and at the latest at the end of Phase 1.a.
 - **Unit Tests**: `./gradlew :core:test :app:testDevDebugUnitTest`; `swift
   test` in `ios/Core`; `xcodebuild test` for `PhotoCriticTests`. Both apps
   run the same provider contract tests against `shared/`.
@@ -2374,7 +2391,7 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
   Swift).
 - **E2E/Integration**: Firestore emulator rules tests; Compose UI tests and
   XCUITests for CUJs 1–9 plus consent once per provider, with the fake
-  container; the daily canary from Phase 3; an iOS 17.0 simulator run and
+  container; the daily canary from Phase 1.3; an iOS 17.0 simulator run and
   `SecureKeysTest` on an API 24 phone before each tester release; the
   manual smoke test with live keys on both platforms (invalid key, revoked
   key, old unrestricted Gemini key, spend-capped key per provider,
@@ -2384,8 +2401,8 @@ where the module package is `core` for `:core` and empty for `:app`. iOS
   `crashlyticsreports-pa.googleapis.com` (Remote Config and Installations
   calls are expected; Phase 0 confirms the host list); an iOS reinstall on
   a physical device wipes keys.
-- **Measurements**: `./gradlew :harness:run` before Phase 2 ends (Gemini
-  baseline), before Phase 4 ends (all providers) and before each tester
+- **Measurements**: `./gradlew :harness:run` before Phase 1.2 ends (Gemini
+  baseline), before Phase 1.4 ends (all providers) and before each tester
   release; time to first token, photo preparation time, cold start and
   frame rate recorded on one reference phone per platform (chosen in Phase
   0: the oldest test phone available, API 24–27 on Android if possible).

@@ -4,6 +4,10 @@ Status of each Phase 0 item for the native apps (design: Detailed
 Implementation Plan, Implementation order and file 50). **Result** is filled
 in with evidence (device, build, date).
 
+Author decision 2026-11-17: Phase 1 finishes the Android app first; iOS
+follows in Phase 1.a. The iOS column and iOS-only checks below are done in
+Phase 1.a, not Phase 0.
+
 ## Setup
 
 | Item | Result |
@@ -15,7 +19,7 @@ in with evidence (device, build, date).
 | iOS scaffold (files 41–44): builds, lint and one test pass | Done 2026-11-17: `swift test`, `swiftlint --strict`, app build with Firebase 13.1.1 and the dev plist, app unit test and UI launch test on the iOS 27.2 simulator |
 | CI for both apps (file 3) | Done 2026-11-17: android, ios and shared jobs pass on GitHub (`1e01f86`) |
 | `shared/` README, fixture schema, prompts, Remote Config schema and template; `tools/` validate and record scripts | Done 2026-11-17: `config:validate` passes the template and rejects all 6 invalid samples; `fixture:record` and `fixture:check` (step 4) |
-| Expo project on expo.dev deleted (author, D1) | Pending: needs the author's password on expo.dev |
+| Expo project on expo.dev deleted (author, D1) | Done 2026-11-17 by the author |
 
 ## Wire formats (§3a, Q1)
 
