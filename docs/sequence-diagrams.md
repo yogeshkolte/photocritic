@@ -1,0 +1,581 @@
+# PhotoCritic: Sequence Diagrams
+
+These diagrams show how the parts of the Android app talk to each other, as
+built at the end of Phase 1.2. Each one names the code it comes from, so a
+diagram can be checked against the source. Section 10 (reports) is designed
+but not built yet; it follows design §10 and CUJ 6.
+
+The design is [docs/designs/photocritic.md](designs/photocritic.md). The
+session states are in §5, errors in §7, config in §8 and storage in §9.
+
+Paths are short forms of `android/app/src/main/kotlin/com/yk/photocritic/`
+(app) and `android/core/src/main/kotlin/com/yk/photocritic/core/` (core).
+
+## Contents
+
+1. [Cold start](#1-cold-start)
+2. [Setup: check the key and save](#2-setup-check-the-key-and-save)
+3. [Choose or take a photo](#3-choose-or-take-a-photo)
+4. [Ask a question: the consent gate](#4-ask-a-question-the-consent-gate)
+5. [Stream an answer from Gemini](#5-stream-an-answer-from-gemini)
+6. [Stop an answer](#6-stop-an-answer)
+7. [Errors, Show details and Dismiss](#7-errors-show-details-and-dismiss)
+8. [New photo, or a change in Settings](#8-new-photo-or-a-change-in-settings)
+9. [Usage and crash data sharing](#9-usage-and-crash-data-sharing)
+10. [Report an answer (Phase 1.4, not built)](#10-report-an-answer-phase-14-not-built)
+
+What leaves the phone, and where it goes:
+
+| Interaction        | Goes to                    | What is sent                                            |
+| ------------------ | -------------------------- | ------------------------------------------------------- |
+| Config fetch       | Firebase Remote Config     | The standard fetch request; nothing about the user      |
+| Key check          | The provider (Gemini)      | The key in a header, and the text "Reply with OK."      |
+| Question           | The provider (Gemini)      | The key in a header, the photo copy, history, question  |
+| Analytics events   | Firebase Analytics         | Only when sharing is on; redacted, no text or keys      |
+| Crash reports      | Firebase Crashlytics       | Only when sharing is on; messages redacted              |
+| Report (1.4)       | Firestore `reports/{id}`   | Conversation text and settings; never the photo or key  |
+
+---
+
+## 1. Cold start
+
+`ui/AppNavigation.kt` (`Startup.run`), `platform/config/RemoteConfigLoader.kt`,
+`platform/storage/InstallMarker.kt`, `core/config/KillSwitch.kt`.
+
+The launch screen stays up until this finishes. The order is fixed: photo
+files are removed before anything else, and keys are wiped on a fresh install
+before any of them can be read.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant UI as MainActivity / AppNavigation
+    participant SVM as StartupViewModel
+    participant ST as Startup
+    participant CL as Cleanup
+    participant IM as InstallMarker
+    participant K as SecureKeys
+    participant S as SettingsStore
+    participant RC as RemoteConfigLoader
+    participant FB as Firebase Remote Config
+    participant KS as KillSwitch
+    participant T as Telemetry
+
+    UI->>SVM: create (route = Loading)
+    UI->>UI: show LaunchScreen
+    SVM->>ST: run()
+    ST->>CL: atLaunch()
+    Note over CL: deletes cache/send and cache/camera
+    ST->>IM: ensure(appVersion)
+    alt marker missing (fresh install)
+        IM->>K: deleteAll()
+        IM->>IM: write install marker
+    else marker present or unreadable
+        Note over IM: nothing is wiped
+    end
+    ST->>S: read()
+    S-->>ST: provider, models, shareUsage
+    ST->>RC: load(appVersion)
+    RC->>FB: fetchAndActivate() with timeout CONFIG_FETCH_TIMEOUT_MS
+    alt fetched, or throttled with earlier values
+        FB-->>RC: activated values
+        RC->>RC: ConfigValidator.validate()
+    else failed or timed out
+        FB-->>RC: error / no reply
+    end
+    RC-->>ST: ConfigLoad(config, result, ms)
+    alt config unavailable or invalid
+        ST-->>SVM: Disabled(ConfigUnavailable)
+    else config valid
+        ST->>K: get(saved provider)
+        K-->>ST: key present or not
+        ST->>KS: evaluate(snapshot, saved choice)
+        KS-->>ST: AppDisabled / UpdateRequired / Setup / Home
+        ST-->>SVM: matching route
+    end
+    opt shareUsage was on
+        ST->>T: setSharing(true)
+    end
+    ST->>T: log(pc_config_fetch) (dropped while sharing is off)
+    SVM-->>UI: route
+    UI->>UI: show DisabledScreen, SetupScreen or HomeScreen
+```
+
+---
+
+## 2. Setup: check the key and save
+
+`features/setup/SetupViewModel.kt`, `ui/SetupScreen.kt`,
+`core/providers/gemini/GeminiClient.kt` (`checkKey`).
+
+The typed key lives only in the screen's local state until `save` is called.
+A key is checked before it is stored. When a key is already saved and the
+field is left empty, no check is made.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant SS as SetupScreen
+    participant VM as SetupViewModel
+    participant S as SettingsStore
+    participant K as SecureKeys
+    participant G as GeminiClient
+    participant API as Gemini API
+    participant T as Telemetry
+    participant NAV as AppNavigation
+
+    VM->>S: read()
+    VM->>VM: list enabled providers that have a client
+    VM->>VM: select saved provider, or the only one
+    VM->>K: get(provider) (only to know if a key is saved)
+    VM-->>SS: providers, models, hasSavedKey (no model picked)
+    U->>SS: pick a model
+    SS->>VM: selectModel(id)
+    U->>SS: type key, tap "Check key and continue"
+    SS->>VM: save(typedKey)
+    VM-->>SS: status = Checking (spinner)
+    opt a key was typed
+        VM->>G: checkKey(key, model)
+        G->>API: POST :generateContent<br/>x-goog-api-key, "Reply with OK.", maxOutputTokens 16
+        alt 2xx
+            API-->>G: response head
+            G-->>VM: Ok
+        else non-2xx, network error or host not allowed
+            API-->>G: error status / no reply
+            G-->>VM: Failed(PcError, key redacted)
+            VM-->>SS: status = Failed
+            SS-->>U: generic message + Show details
+        end
+    end
+    VM->>K: set(provider, key) (encrypted with a Keystore key)
+    VM->>S: select(provider, model)
+    opt first run
+        VM->>S: setShareUsage(on/off)
+        VM->>S: completeOnboarding()
+        VM->>T: setSharing(on/off) (see section 9)
+    end
+    alt storage write failed
+        VM-->>SS: status = Failed("storage")
+    else saved
+        VM-->>SS: status = Saved
+        SS->>NAV: onSaved(changed)
+        NAV->>NAV: open Home
+    end
+```
+
+In edit mode (Settings, until the Settings screen arrives in 1.4) the same
+flow runs, with two differences: there is a Back button, and a change of
+provider or model asks first when a conversation exists. Section 8 shows that
+case.
+
+---
+
+## 3. Choose or take a photo
+
+`features/image/Pick.kt`, `features/session/SessionViewModel.kt`
+(`photoChosen`, `prepare`), `features/image/ImagePipeline.kt`.
+
+Two copies come from one photo. The display copy stays in memory. The send
+copy is a JPEG with no metadata, written to `cache/send`, and deleted when the
+conversation ends.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant H as HomeScreen
+    participant P as Photo picker / Camera
+    participant VM as SessionViewModel
+    participant SC as SessionController
+    participant IP as ImagePipeline
+    participant FS as cache/send
+    participant T as Telemetry
+
+    alt Choose from Photos
+        U->>H: tap "Choose from Photos"
+        H->>P: system photo picker
+        P-->>H: content URI
+    else Take photo
+        U->>H: tap "Take photo"
+        H->>P: camera intent with a FileProvider URI in cache/camera
+        P-->>H: capture saved
+    end
+    H->>VM: photoChosen(uri, captureFile)
+    VM->>VM: endConversation() (section 8)
+    VM->>SC: dispatch(PhotoChosen(imageVersionId))
+    Note over SC: phase = PREPARING
+    VM->>IP: decodeForDisplay(uri, displayMaxPx)
+    IP-->>VM: Bitmap or null
+    VM-->>H: photo (full screen, pinch zoom)
+    VM->>VM: await selectionLoaded (saved provider and model)
+    VM->>IP: prepare(uri, maxLongEdgePx, maxBytes, imageDetail)
+    IP->>IP: sniff format, decode downsampled, apply EXIF orientation
+    IP->>IP: JPEG at JPEG_QUALITY, retry at 60 if over maxBytes
+    alt fits
+        IP->>FS: write send-<uuid>.jpg
+        IP-->>VM: Ready(copy, format, ms)
+        alt photo was replaced meanwhile
+            VM->>FS: delete this copy
+        else still the current photo
+            VM->>SC: dispatch(PhotoReady)
+            Note over SC: phase = READY
+            VM->>T: pc_session_start, pc_image_prepared
+        end
+    else unreadable, unsupported, too large or out of memory
+        IP-->>VM: Failed(reason)
+        VM->>SC: dispatch(PhotoFailed(error))
+        Note over SC: phase = IMAGE_ERROR
+    end
+    SC-->>H: state (status line, starter chips, composer)
+```
+
+---
+
+## 4. Ask a question: the consent gate
+
+`features/session/SessionViewModel.kt` (`ask`, `agreeConsent`,
+`declineConsent`), `core/consent/ConsentRules.kt`,
+`platform/storage/ConsentStore.kt`, `ui/ConsentSheet.kt`.
+
+The first send to a provider whose data leaves the device needs consent for
+the current consent-text version. The answer starts only after the consent
+record is saved.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant H as HomeScreen / Composer
+    participant VM as SessionViewModel
+    participant CS as ConsentStore
+    participant CR as ConsentRules
+    participant SC as SessionController
+    participant SH as ConsentSheet
+
+    U->>H: tap Identify / Explain / Copy text, or type and Send
+    H->>VM: ask(question, kind)
+    VM->>VM: await selectionLoaded
+    VM->>CS: current(provider)
+    CS-->>VM: record or null
+    VM->>CR: canSend(capabilities, grantedVersion, requiredVersion)
+    CR-->>VM: true / false
+    VM->>SC: dispatch(Ask(question, kind, needsConsent))
+    alt consent already given for this version
+        Note over SC: phase = SENDING, message added
+        VM->>VM: startAnswer() (section 5)
+    else consent needed
+        Note over SC: phase = AWAITING_CONSENT, question kept as pending
+        SC-->>H: state
+        H->>SH: show sheet (summary, date, policy links)
+        alt Agree and send
+            U->>SH: tap "Agree and send"
+            SH->>VM: agreeConsent()
+            VM->>CS: record(provider, version, granted = true)
+            alt saved
+                CS-->>VM: true
+                VM->>SC: dispatch(ConsentAgreed)
+                Note over SC: phase = SENDING, message added
+                VM->>VM: startAnswer() (section 5)
+            else write failed
+                CS-->>VM: false
+                VM->>SC: dispatch(ConsentWriteFailed)
+                Note over SC: phase = ERROR, nothing is sent
+            end
+        else Not now, or sheet dismissed
+            U->>SH: tap "Not now" / swipe down
+            SH->>VM: declineConsent()
+            VM->>SC: dispatch(ConsentDeclined)
+            Note over SC: phase = READY, nothing recorded,<br/>question stays in the composer
+        end
+    end
+```
+
+---
+
+## 5. Stream an answer from Gemini
+
+`features/session/SessionViewModel.kt` (`startAnswer`),
+`core/session/SessionMachine.kt` (`SessionController.run`),
+`core/providers/gemini/GeminiClient.kt` (`send`), `core/net/ProviderHttp.kt`,
+`core/net/Sse.kt`, `core/providers/shared/ExtractedText.kt`.
+
+Every event carries the message ID, so an event for a message that is no
+longer being answered changes nothing. Only a finished answer is added to
+history.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant VM as SessionViewModel
+    participant K as SecureKeys
+    participant FS as cache/send
+    participant T as Telemetry
+    participant SC as SessionController
+    participant G as GeminiClient
+    participant HTTP as ProviderHttp (OkHttp)
+    participant API as Gemini API
+    participant UI as MessageList
+
+    VM->>K: get(provider)
+    VM->>FS: load send copy
+    alt key or send copy missing
+        VM->>SC: run(Error(local))
+        Note over SC: phase = ERROR, message FAILED
+    else ready
+        VM->>T: pc_question_sent(kind, turn_index)
+        VM->>G: send(TurnRequest(model, history, question, image, kind), key)
+        VM->>SC: run(stream, onEnd)
+        SC->>G: collect
+        G->>HTTP: exchange(request)
+        HTTP->>HTTP: allowlist check on the host
+        HTTP->>API: POST :streamGenerateContent?alt=sse<br/>x-goog-api-key, system prompt, history,<br/>image + question, thinkingConfig
+        alt non-2xx status
+            API-->>HTTP: error body
+            HTTP-->>G: Head(status, errorBody)
+            G-->>SC: Error(BEFORE_RESPONSE)
+        else 200
+            API-->>HTTP: Head 200
+            loop each SSE event
+                API-->>HTTP: data line
+                HTTP-->>G: Line
+                G->>G: parse chunk, skip thought parts
+                G-->>SC: Text(delta)
+                SC->>SC: reduce(Delta(id, text))
+                Note over SC: phase = STREAMING, answer grows
+                SC-->>UI: state
+                UI->>UI: ExtractedText.parse(answer)<br/>text fences become "Text in photo" cards
+            end
+            alt finishReason STOP or MAX_TOKENS
+                G-->>SC: Done(reason, servedModel, responseId)
+                SC->>SC: reduce(Finished(id))
+                Note over SC: phase = READY, message DONE,<br/>turn added to history (cap HISTORY_TURNS_CAP)
+            else SAFETY, block reason, error event, bad JSON
+                G-->>SC: Error(FINISH or MID_STREAM)
+                SC->>SC: reduce(Failed(id, error))
+            else connection drops
+                HTTP-->>G: IOException
+                G-->>SC: Error(MID_STREAM)
+            else stream ends with no finish reason
+                G-->>SC: Error(MID_STREAM)
+            end
+        end
+        opt the flow ended with no Done or Error
+            SC->>SC: reduce(Failed(id, incomplete))
+        end
+        SC->>VM: onEnd(last event)
+        VM->>T: pc_answer_received or pc_request_failed
+    end
+```
+
+The key goes only in the `x-goog-api-key` header. `ToPcError` removes it from
+every error message before the error reaches the screen or telemetry.
+
+---
+
+## 6. Stop an answer
+
+`core/session/SessionMachine.kt` (`SessionController.stop`).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant C as Composer
+    participant VM as SessionViewModel
+    participant SC as SessionController
+    participant G as GeminiClient / OkHttp
+    participant UI as MessageList
+
+    Note over SC: phase = SENDING or STREAMING
+    U->>C: tap Stop (replaces Send while answering)
+    C->>VM: stop()
+    VM->>SC: stop()
+    SC->>G: cancel the collecting job
+    G->>G: OkHttp call cancelled, socket closed
+    SC->>SC: reduce(Stopped(id))
+    Note over SC: phase = READY, message STOPPED,<br/>partial text kept, not added to history
+    SC-->>UI: state ("Stopped" tag)
+    Note over SC: a late Text/Done for this id is ignored,<br/>and onEnd logs nothing for a stopped answer
+```
+
+---
+
+## 7. Errors, Show details and Dismiss
+
+`ui/design/Components.kt` (`ErrorBlock`, `ErrorDetailsDialog`),
+`ui/MessageList.kt`, `core/session/SessionMachine.kt`.
+
+There is no Retry. The user asks again, which sends a new request.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant UI as ErrorBlock
+    participant D as ErrorDetailsDialog
+    participant VM as SessionViewModel
+    participant SC as SessionController
+
+    Note over SC: phase = ERROR (answer failed or consent write failed)<br/>or IMAGE_ERROR (photo could not be prepared)
+    SC-->>UI: "Something went wrong. Please try again."
+    opt Show details
+        U->>UI: tap "Show details"
+        UI->>D: open
+        D-->>U: phase, HTTP status, provider code,<br/>request ID, redacted message
+    end
+    U->>UI: tap Dismiss
+    UI->>VM: dismiss()
+    VM->>SC: dispatch(Dismiss)
+    alt phase was ERROR
+        Note over SC: phase = READY, failed message stays in the list
+    else phase was IMAGE_ERROR
+        Note over SC: back to NO_PHOTO
+    end
+```
+
+---
+
+## 8. New photo, or a change in Settings
+
+`ui/HomeScreen.kt`, `ui/AppNavigation.kt` (`SetupRoute`),
+`features/session/SessionViewModel.kt` (`newPhoto`, `endConversation`),
+`features/image/Cleanup.kt`.
+
+A conversation ends on New photo, on a provider or model change, and when the
+ViewModel is cleared. Nothing is restored after the process dies.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant H as HomeScreen
+    participant NAV as AppNavigation / StartupViewModel
+    participant SS as SetupScreen (edit)
+    participant SVM as SetupViewModel
+    participant VM as SessionViewModel
+    participant SC as SessionController
+    participant CL as Cleanup
+
+    alt New photo
+        U->>H: tap New photo
+        opt a question was asked
+            H-->>U: "This conversation will be cleared" confirmation
+            U->>H: confirm
+        end
+        H->>VM: newPhoto()
+    else Settings, then a provider or model change
+        U->>H: tap Settings
+        H->>NAV: openSettings(snapshot)
+        NAV->>SS: Setup(edit = true, visit = n)
+        U->>SS: pick another model, tap Save
+        SS->>SVM: changesSelection()
+        opt changes it and a conversation exists
+            SS-->>U: "This conversation will be cleared" confirmation
+            U->>SS: confirm
+        end
+        SS->>SVM: save() (section 2)
+        SVM-->>SS: Saved
+        SS->>NAV: onSaved(changed = true)
+        NAV->>VM: newPhoto()
+        NAV->>VM: refreshSelection()
+        NAV->>H: open Home
+    end
+    VM->>SC: clear()
+    SC->>SC: cancel any answer, reduce(Cleared)
+    Note over SC: phase = NO_PHOTO, messages and history gone
+    VM->>CL: conversationEnded(record, cameraFile)
+    CL->>CL: delete the send copy and the camera capture
+    VM->>VM: drop the display bitmap
+```
+
+---
+
+## 9. Usage and crash data sharing
+
+`platform/telemetry/Telemetry.kt`, `features/session/SessionTelemetry.kt`.
+
+Collection is off in the manifest. Only the "Share usage and crash data"
+switch turns it on. In 1.2 the switch is on the first-run setup screen; the
+Settings screen in 1.4 gets it too.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant VM as SetupViewModel / Startup
+    participant T as Telemetry
+    participant B as FirebaseTelemetryBackend
+    participant A as Firebase Analytics
+    participant CR as Crashlytics
+    participant ANY as SessionTelemetry, Startup
+
+    VM->>T: setSharing(on)
+    T->>B: setCollection(on)
+    B->>A: setAnalyticsCollectionEnabled(on)
+    B->>CR: setCrashlyticsCollectionEnabled(on)
+    alt on
+        T->>B: appInstanceId()
+        B->>A: get app instance ID
+        A-->>T: instance ID
+        T->>B: setUserId(instance ID)
+        B->>A: setUserId
+        B->>CR: setUserId
+    else off
+        T->>B: setUserId(null)
+    end
+    ANY->>T: log(event, params)
+    T->>T: check the params match the event exactly
+    alt sharing off
+        Note over T: event dropped
+    else sharing on
+        T->>T: redact every string, cut to 100 chars
+        T->>B: logEvent(name, bundle)
+        B->>A: logEvent
+    end
+    Note over CR: crashes: RedactingExceptionHandler<br/>redacts messages, keeps class names and stacks
+```
+
+---
+
+## 10. Report an answer (Phase 1.4, not built)
+
+Design §10 and CUJ 6. The report holds text only: no photo and no key. The
+instance ID is included only when sharing is on.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant M as MessageList
+    participant R as Report sheet
+    participant RB as core/report builder
+    participant RS as ReportStore
+    participant T as Telemetry
+    participant FS as Firestore (memory cache only)
+
+    U->>M: tap Report on an answer
+    M->>R: open (category, note)
+    RS-->>R: countToday()
+    alt offline, reportsDisabled, or daily limit reached
+        R-->>U: Send report disabled, or "daily limit reached"
+    else can send
+        U->>R: pick category, write note, tap Send report
+        opt sharing on
+            R->>T: instanceIdOrNull()
+        end
+        R->>RB: build(conversation, turn, category, note, settings, redacted error)
+        RB-->>R: document (conversation capped at MAX_REPORT_CONVERSATION_CHARS)
+        R->>FS: create reports/{reportId}
+        alt server confirms within REPORT_WRITE_TIMEOUT_MS
+            FS-->>R: ok
+            R->>RS: recordSent(reportId)
+            R-->>U: report ID, "Sent"
+        else rules reject, or timeout
+            R-->>U: report ID, "Failed" (nothing saved to send later)
+        end
+    end
+```
+
+Firestore security rules will allow `create` only and check every field.
+Until then the dev database should get deny-all rules; it is in test mode
+(open to anyone) until 2026-12-18.
