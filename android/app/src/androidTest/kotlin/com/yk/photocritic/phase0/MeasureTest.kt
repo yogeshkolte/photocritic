@@ -58,7 +58,7 @@ class MeasureTest {
 
     private fun photos(): List<File> =
         dir
-            .listFiles { f -> f.name.endsWith(".jpg") }
+            .listFiles { f -> f.extension in setOf("jpg", "png") }
             .orEmpty()
             .sortedBy { it.name }
 
@@ -235,6 +235,21 @@ class MeasureTest {
             }
         }
 
+    /** The app pipeline's send copies, saved for comparison with the harness's `prepare` output (file 40). */
+    @Test
+    fun pipelineCopies() =
+        runBlocking(Dispatchers.Default) {
+            assumeTrue(photos().isNotEmpty())
+            for (edge in COMPARE_EDGES) {
+                val out = File(dir, "out/$edge").apply { mkdirs() }
+                for (photo in photos()) {
+                    val (copy, info) = prepared(photo, edge, "MEDIA_RESOLUTION_HIGH")
+                    File(out, photo.nameWithoutExtension + ".jpg").writeBytes(copy.jpeg)
+                    emit(mapOf("kind" to "copy", "photo" to photo.name, "edge" to edge) + info)
+                }
+            }
+        }
+
     private companion object {
         const val TAG = "PC-MEASURE"
         const val MODEL = "gemini-4-hydrogen"
@@ -245,6 +260,7 @@ class MeasureTest {
         const val EXTRACT_QUESTION = "Copy all the text in this photo exactly, line by line."
         val LONG_EDGES = listOf(768, 1024, 1536, 2048)
         val HISTORY_SIZES = listOf(0, 5, 10, 20)
+        val COMPARE_EDGES = listOf(1024, 2048)
         val ANSWER = "The line reads as a list of codes and numbers. ".repeat(12)
     }
 }

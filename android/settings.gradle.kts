@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "photocritic"
-include(":core", ":app")
+include(":core", ":app", ":harness")
