@@ -5,12 +5,44 @@ import Foundation
 /// request-ID header: the request ID is the body's `responseId`.
 public struct GeminiClient: Provider {
     public let id = ProviderID.gemini
+    public let capabilities = Capabilities(
+        acceptsImages: true, imagePlacement: .anyTurn, streaming: .tokens, usageReporting: false, dataLeavesDevice: true
+    )
     private let http: ProviderHTTP
     private let baseURL: String
 
     public init(http: ProviderHTTP, baseURL: String = Allowlist.baseURLs["gemini"]!) {
         self.http = http
         self.baseURL = baseURL
+    }
+
+    /// A minimal text-only `generateContent` call (§3): a model list does not
+    /// prove inference is enabled. Only the response status is read; the
+    /// setup screen says this uses a few tokens.
+    public func checkKey(_ apiKey: String, model: ModelSettings) async -> KeyCheckResult {
+        func failed(_ status: Int?, _ code: String?, _ message: String) -> KeyCheckResult {
+            .failed(ToPcError.make(
+                phase: .beforeResponse, httpStatus: status, providerCode: code, requestID: nil, message: message, apiKey: apiKey
+            ))
+        }
+        guard let url = URL(string: "\(baseURL)/v1beta/models/\(model.modelID):generateContent"),
+              let body = try? GeminiWire.keyCheckBody(model)
+        else { return failed(nil, "bad-request", "The key check could not be built.") }
+        let request = ProviderRequest(url: url, headers: ["x-goog-api-key": apiKey], jsonBody: body, requestIDHeader: nil)
+        do {
+            for try await chunk in http.exchange(request) {
+                guard case let .head(status, _, errorBody) = chunk else { continue }
+                guard let errorBody else { return .ok }
+                let error = try? JSONDecoder().decode(GeminiWire.ErrorEnvelope.self, from: Data(errorBody.utf8)).error
+                return failed(status, error?.status, error?.message ?? "HTTP \(status)")
+            }
+            return failed(nil, nil, "No response.")
+        } catch let error as HostNotAllowedError {
+            return failed(nil, "host-not-allowed", "host not allowed: \(error.host)")
+        } catch {
+            let code = (error as? URLError).map { "URLError.\($0.code.rawValue)" } ?? String(describing: type(of: error))
+            return failed(nil, code, error.localizedDescription)
+        }
     }
 
     public func send(_ request: TurnRequest, apiKey: String) -> AsyncStream<TurnEvent> {

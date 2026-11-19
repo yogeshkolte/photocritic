@@ -1,21 +1,19 @@
+import FirebaseCore
 import SwiftUI
 
-/// Phase 0 placeholder; the startup sequence and routing arrive in Phase 1
-/// (design file 46).
+/// The app entry: Firebase, the container, and the startup route (design file 46).
 @main
 struct PhotoCriticApp: App {
+    @State private var app: AppModel
+
+    init() {
+        FirebaseApp.configure()
+        _app = State(initialValue: AppModel(container: AppContainer.live()))
+    }
+
     var body: some Scene {
         WindowGroup {
-            PlaceholderView()
-        }
-    }
-}
-
-struct PlaceholderView: View {
-    var body: some View {
-        ZStack {
-            Tokens.bg.ignoresSafeArea()
-            Text("Phase 0 build").foregroundStyle(Tokens.text)
+            RootView(app: app)
         }
     }
 }

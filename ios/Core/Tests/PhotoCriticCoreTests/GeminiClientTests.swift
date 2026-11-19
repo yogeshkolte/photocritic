@@ -153,3 +153,50 @@ struct GeminiClientTests {
         #expect(StubProtocol.requests(host: host).isEmpty)
     }
 }
+
+/// The key check (§3): a tiny text-only call; only the status matters.
+struct GeminiKeyCheckTests {
+    let host = StubProtocol.newHost()
+    let key = "AQ.test-key-0123456789abcdefghij"
+    let model = ModelSettings(modelID: "gemini-4-hydrogen", maxOutputTokens: 8192, contextTokens: 1_000_000, thinkingLevel: "low")
+
+    private func client() -> GeminiClient {
+        let policy = HostPolicy(hosts: [host], requireHTTPS: false)
+        let http = ProviderHTTP(policy: policy, requestTimeoutMs: 5000, protocolClasses: [StubProtocol.self])
+        return GeminiClient(http: http, baseURL: "http://\(host)")
+    }
+
+    @Test func anOKStatusPasses() async throws {
+        StubProtocol.enqueue(.init(status: 200, body: Data(#"{"candidates":[]}"#.utf8)), host: host)
+        #expect(await client().checkKey(key, model: model) == .ok)
+        let sent = try #require(StubProtocol.requests(host: host).first)
+        #expect(sent.request.url?.path == "/v1beta/models/gemini-4-hydrogen:generateContent")
+        #expect(sent.request.value(forHTTPHeaderField: "x-goog-api-key") == key)
+        let body = String(decoding: sent.body, as: UTF8.self)
+        #expect(body.contains("Reply with OK."))
+        #expect(body.contains(#""thinkingLevel":"low""#))
+        #expect(!body.contains("systemInstruction"))
+    }
+
+    @Test func aRejectedKeyFailsWithoutTheKey() async throws {
+        let error = #"{"error":{"code":400,"message":"API key not valid: \#(key)","status":"INVALID_ARGUMENT"}}"#
+        StubProtocol.enqueue(.init(status: 400, body: Data(error.utf8)), host: host)
+        guard case let .failed(e) = await client().checkKey(key, model: model) else {
+            Issue.record("accepted")
+            return
+        }
+        #expect(e.httpStatus == 400)
+        #expect(e.providerCode == "INVALID_ARGUMENT")
+        #expect(!e.detail.contains(key))
+    }
+
+    @Test func aHostOutsideTheAllowlistFails() async {
+        let policy = HostPolicy(hosts: [], requireHTTPS: false)
+        let http = ProviderHTTP(policy: policy, requestTimeoutMs: 5000, protocolClasses: [StubProtocol.self])
+        guard case let .failed(e) = await GeminiClient(http: http, baseURL: "http://\(host)").checkKey(key, model: model) else {
+            Issue.record("accepted")
+            return
+        }
+        #expect(e.providerCode == "host-not-allowed")
+    }
+}

@@ -88,6 +88,14 @@ public struct PcError: Equatable, Sendable {
     public let requestID: String?
     /// Redacted, at most 200 characters.
     public let detail: String
+
+    public init(phase: PcPhase, httpStatus: Int?, providerCode: String?, requestID: String?, detail: String) {
+        self.phase = phase
+        self.httpStatus = httpStatus
+        self.providerCode = providerCode
+        self.requestID = requestID
+        self.detail = detail
+    }
 }
 
 public enum TurnEvent: Equatable, Sendable {
@@ -96,10 +104,55 @@ public enum TurnEvent: Equatable, Sendable {
     case error(PcError)
 }
 
+/// Where the image may go in a conversation (§3).
+public enum ImagePlacement: Sendable { case anyTurn, finalTurnOnly }
+
+/// Whether the answer arrives as tokens or all at once (§3).
+public enum Streaming: Sendable { case tokens, whole }
+
+/// What a provider can do; the session and the consent gate read this (§3, G13).
+public struct Capabilities: Equatable, Sendable {
+    public let acceptsImages: Bool
+    public let imagePlacement: ImagePlacement
+    public let streaming: Streaming
+    public let usageReporting: Bool
+    /// True for every cloud provider: the consent sheet runs before the first send.
+    public let dataLeavesDevice: Bool
+
+    public init(acceptsImages: Bool, imagePlacement: ImagePlacement, streaming: Streaming, usageReporting: Bool, dataLeavesDevice: Bool) {
+        self.acceptsImages = acceptsImages
+        self.imagePlacement = imagePlacement
+        self.streaming = streaming
+        self.usageReporting = usageReporting
+        self.dataLeavesDevice = dataLeavesDevice
+    }
+}
+
+public enum KeyCheckResult: Equatable, Sendable {
+    case ok
+    case failed(PcError)
+}
+
 /// A provider client (§3). `send` yields text deltas, then exactly one `.done` or
 /// `.error`. Cancelling the consuming task cancels the request (Stop).
-/// Availability, key checks and capabilities arrive with the Phase 2 interface.
+/// Availability, prepare and dispose arrive with on-device models in Phase 2.
 public protocol Provider: Sendable {
     var id: ProviderID { get }
+    var capabilities: Capabilities { get }
+    /// A minimal call that proves the key can run inference (§3).
+    func checkKey(_ apiKey: String, model: ModelSettings) async -> KeyCheckResult
     func send(_ request: TurnRequest, apiKey: String) -> AsyncStream<TurnEvent>
+}
+
+/// The provider clients this build has, by ID.
+public struct ProviderRegistry: Sendable {
+    private let byID: [ProviderID: any Provider]
+
+    public init(_ providers: [any Provider]) {
+        byID = Dictionary(uniqueKeysWithValues: providers.map { ($0.id, $0) })
+    }
+
+    public func get(_ id: ProviderID) -> (any Provider)? { byID[id] }
+
+    public var ids: Set<ProviderID> { Set(byID.keys) }
 }

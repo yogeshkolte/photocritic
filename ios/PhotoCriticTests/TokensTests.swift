@@ -4,7 +4,11 @@ import Testing
 
 @MainActor
 struct TokensTests {
-    @Test func placeholderViewBuilds() {
-        _ = PlaceholderView().body
+    @Test func panelSizesStepOneAtATime() {
+        #expect(PanelSize.minimized.larger == .collapsed)
+        #expect(PanelSize.collapsed.larger == .expanded)
+        #expect(PanelSize.expanded.larger == .expanded)
+        #expect(PanelSize.expanded.smaller == .collapsed)
+        #expect(PanelSize.minimized.smaller == .minimized)
     }
 }

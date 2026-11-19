@@ -3,7 +3,7 @@ import Foundation
 /// Gemini `streamGenerateContent` request and stream types (§3a). They stay in this folder.
 enum GeminiWire {
     struct GenerateRequest: Encodable {
-        let systemInstruction: Content
+        let systemInstruction: Content?
         let contents: [Content]
         let generationConfig: GenerationConfig
     }
@@ -88,4 +88,20 @@ enum GeminiWire {
         )
         return try JSONEncoder().encode(body)
     }
+
+    /// The key check (§3): a text-only request with a tiny answer budget.
+    static func keyCheckBody(_ model: ModelSettings) throws -> Data {
+        let body = GenerateRequest(
+            systemInstruction: nil,
+            contents: [Content(role: "user", parts: [Part(text: "Reply with OK.")])],
+            generationConfig: GenerationConfig(
+                maxOutputTokens: keyCheckMaxTokens,
+                mediaResolution: nil,
+                thinkingConfig: model.thinkingLevel.isEmpty ? nil : ThinkingConfig(thinkingLevel: model.thinkingLevel)
+            )
+        )
+        return try JSONEncoder().encode(body)
+    }
+
+    static let keyCheckMaxTokens = 16
 }

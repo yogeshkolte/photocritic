@@ -40,5 +40,6 @@ function_parameter_count:
 cyclomatic_complexity:
   warning: 15
   error: 15
+# Short names (s, e, m, ok) match the Kotlin code, which detekt allows.
 identifier_name:
-  excluded: [bg, id]
+  min_length: 1
