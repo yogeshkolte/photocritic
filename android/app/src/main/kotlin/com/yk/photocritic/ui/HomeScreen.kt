@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,8 +27,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -82,9 +85,10 @@ private const val EXPANDED_TINT = 0.94f
 
 /**
  * Home, phone layout (file 38, G19): the photo fills the screen; the top
- * bar has only Settings and New photo; the conversation panel has two
- * heights, collapsed (sized to its content up to a limit) and expanded,
- * on a 72% or 94% dark tint. The wide two-pane layout arrives in Phase 1.4.
+ * bar has only Settings and New photo; the conversation panel can be
+ * minimized (bar and composer only, no tint), collapsed (sized to its content up to
+ * a limit) or expanded, on a 72% or 94% dark tint. Tapping the photo
+ * minimizes it; Back shrinks an expanded panel. The wide two-pane layout arrives in Phase 1.4.
  */
 @Composable
 fun HomeScreen(
@@ -100,7 +104,7 @@ fun HomeScreen(
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var question by rememberSaveable { mutableStateOf("") }
-    var expanded by rememberSaveable { mutableStateOf(false) }
+    var size by rememberSaveable { mutableStateOf(PanelSize.COLLAPSED) }
     var details by remember { mutableStateOf<PcError?>(null) }
     var confirmNewPhoto by remember { mutableStateOf(false) }
     val noCamera = stringResource(R.string.camera_unavailable)
@@ -117,7 +121,8 @@ fun HomeScreen(
         PanelActions(
             onQuestion = { question = it },
             onAsk = { text, kind ->
-                if (kind == PromptKind.EXTRACT) expanded = true
+                // A new answer is shown: Copy text opens the panel fully, any other question at least partly.
+                size = if (kind == PromptKind.EXTRACT) PanelSize.EXPANDED else maxOf(size, PanelSize.COLLAPSED)
                 vm.ask(text, kind)
             },
             onStop = vm::stop,
@@ -126,7 +131,11 @@ fun HomeScreen(
         )
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black)) {
-        if (session.phase == Phase.NO_PHOTO) EmptyState(onTake = camera, onChoose = pick) else photo?.let { PhotoView(it) }
+        if (session.phase == Phase.NO_PHOTO) {
+            EmptyState(onTake = camera, onChoose = pick)
+        } else {
+            photo?.let { PhotoView(it, onTap = { size = PanelSize.MINIMIZED }) }
+        }
         TopControls(
             hasPhoto = session.phase != Phase.NO_PHOTO,
             banner = vm.bannerMessage,
@@ -137,8 +146,8 @@ fun HomeScreen(
         if (session.phase != Phase.NO_PHOTO) {
             ConversationPanel(
                 maxHeight = maxHeight,
-                expanded = expanded,
-                onExpanded = { expanded = it },
+                size = size,
+                onSize = { size = it },
                 session = session,
                 online = online,
                 question = question,
@@ -157,7 +166,7 @@ fun HomeScreen(
         ConfirmClearDialog(
             onConfirm = {
                 confirmNewPhoto = false
-                expanded = false
+                size = PanelSize.COLLAPSED
                 vm.newPhoto()
             },
             onCancel = { confirmNewPhoto = false },
@@ -209,32 +218,37 @@ private fun TopControls(
 @Composable
 private fun BoxWithConstraintsScope.ConversationPanel(
     maxHeight: Dp,
-    expanded: Boolean,
-    onExpanded: (Boolean) -> Unit,
+    size: PanelSize,
+    onSize: (PanelSize) -> Unit,
     session: SessionState,
     online: Boolean,
     question: String,
     messageActions: MessageActions,
     panel: PanelActions,
 ) {
+    val expanded = size == PanelSize.EXPANDED
     val height by animateDpAsState(maxHeight * (if (expanded) EXPANDED_SHARE else COLLAPSED_SHARE), label = "panel")
+    BackHandler(enabled = expanded) { onSize(PanelSize.COLLAPSED) }
     Column(
         Modifier
             .align(Alignment.BottomCenter)
             .fillMaxWidth()
             .then(if (expanded) Modifier.height(height) else Modifier.heightIn(max = height))
-            .background(Tokens.bg.copy(alpha = if (expanded) EXPANDED_TINT else COLLAPSED_TINT), Radii.sheet)
+            // Minimized, nothing covers the photo; the bar's controls carry their own backing.
+            .background(Tokens.bg.copy(alpha = panelTint(size)), Radii.sheet)
             .navigationBarsPadding()
             .imePadding()
             .padding(horizontal = Spacing.l),
     ) {
-        Handle(expanded, onExpanded)
+        PanelBar(size, hiddenMessages = size == PanelSize.MINIMIZED && session.messages.isNotEmpty(), onSize)
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.m), modifier = Modifier.padding(bottom = Spacing.m)) {
-            MessageList(session.messages, messageActions, Modifier.weight(1f, fill = false))
+            if (size != PanelSize.MINIMIZED) MessageList(session.messages, messageActions, Modifier.weight(1f, fill = false))
             PhaseStatus(session, panel)
             if (session.hasPhoto) {
                 val canSend = session.canSend && online
-                if (!session.answering) StarterChips(enabled = canSend) { label, kind -> panel.onAsk(label, kind) }
+                if (!session.answering && size != PanelSize.MINIMIZED) {
+                    StarterChips(enabled = canSend) { label, kind -> panel.onAsk(label, kind) }
+                }
                 Composer(
                     text = question,
                     onText = panel.onQuestion,
@@ -271,28 +285,100 @@ private fun PhaseStatus(
     }
 }
 
-/** Tap or drag to switch between the two heights. */
+/**
+ * The panel's bar: drag it up or down, or tap it, to change size one step;
+ * the arrows do the same and are there for people who do not drag.
+ */
 @Composable
-private fun Handle(
-    expanded: Boolean,
-    onChange: (Boolean) -> Unit,
+private fun PanelBar(
+    size: PanelSize,
+    hiddenMessages: Boolean,
+    onSize: (PanelSize) -> Unit,
 ) {
+    val handle = stringResource(R.string.panel_handle)
+    val minimized = size == PanelSize.MINIMIZED
+    val tapTo = if (size == PanelSize.EXPANDED) PanelSize.COLLAPSED else size.larger()
     Box(
         Modifier
             .fillMaxWidth()
-            .height(28.dp)
-            .clickable { onChange(!expanded) }
-            .pointerInput(expanded) {
-                detectVerticalDragGestures { _, drag ->
-                    if (drag < -DRAG_THRESHOLD) onChange(true)
-                    if (drag > DRAG_THRESHOLD) onChange(false)
-                }
+            .heightIn(min = 40.dp)
+            .clickable { onSize(tapTo) }
+            .semantics { contentDescription = handle }
+            .pointerInput(size) {
+                var total = 0f
+                val threshold = DRAG_THRESHOLD.toPx()
+                detectVerticalDragGestures(
+                    onDragStart = { total = 0f },
+                    onDragEnd = {
+                        if (total < -threshold) onSize(size.larger())
+                        if (total > threshold) onSize(size.smaller())
+                    },
+                ) { _, drag -> total += drag }
             },
-        contentAlignment = Alignment.Center,
-    ) { Box(Modifier.width(36.dp).height(4.dp).background(Tokens.muted, Radii.pill)) }
+    ) {
+        Box(
+            Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = Spacing.s)
+                .width(36.dp)
+                .height(4.dp)
+                .background(if (minimized) Tokens.text else Tokens.muted, Radii.pill),
+        )
+        if (hiddenMessages) {
+            Text(
+                stringResource(R.string.panel_hidden),
+                color = Tokens.text,
+                fontSize = 13.sp,
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(top = Spacing.s)
+                        .background(Color.Black.copy(alpha = PHOTO_CONTROL_ALPHA), Radii.pill)
+                        .padding(horizontal = Spacing.m, vertical = 6.dp),
+            )
+        }
+        Row(Modifier.align(Alignment.CenterEnd)) {
+            if (size !=
+                PanelSize.EXPANDED
+            ) {
+                BarArrow(R.drawable.ic_chevron_up, R.string.panel_show_more, minimized) { onSize(size.larger()) }
+            }
+            if (size !=
+                PanelSize.MINIMIZED
+            ) {
+                BarArrow(R.drawable.ic_chevron_down, R.string.panel_show_less, minimized) { onSize(size.smaller()) }
+            }
+        }
+    }
 }
 
-private const val DRAG_THRESHOLD = 8f
+@Composable
+private fun BarArrow(
+    icon: Int,
+    label: Int,
+    overPhoto: Boolean,
+    onClick: () -> Unit,
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.size(40.dp).background(Color.Black.copy(alpha = if (overPhoto) PHOTO_CONTROL_ALPHA else 0f), CircleShape),
+    ) {
+        Icon(painterResource(icon), contentDescription = stringResource(label), tint = if (overPhoto) Tokens.text else Tokens.muted)
+    }
+}
+
+/** The panel's tint over the photo: none when minimized. */
+private fun panelTint(size: PanelSize) =
+    when (size) {
+        PanelSize.MINIMIZED -> 0f
+        PanelSize.COLLAPSED -> COLLAPSED_TINT
+        PanelSize.EXPANDED -> EXPANDED_TINT
+    }
+
+/** The same backing as the photo's icon buttons. */
+private const val PHOTO_CONTROL_ALPHA = 0.65f
+
+private val DRAG_THRESHOLD = 24.dp
 
 @Composable
 private fun Banner(

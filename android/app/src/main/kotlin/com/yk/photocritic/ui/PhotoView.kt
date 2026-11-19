@@ -25,11 +25,15 @@ import com.yk.photocritic.R
 
 private const val MAX_ZOOM = 5f
 
-/** The original photo at its own aspect ratio, fitted whole, black around it; pinch to zoom, double tap to reset (file 38). */
+/**
+ * The original photo at its own aspect ratio, fitted whole, black around it;
+ * pinch to zoom, double tap to reset (file 38); a single tap calls [onTap].
+ */
 @Composable
 fun PhotoView(
     bitmap: Bitmap,
     modifier: Modifier = Modifier,
+    onTap: () -> Unit = {},
 ) {
     var scale by remember(bitmap) { mutableFloatStateOf(1f) }
     var offset by remember(bitmap) { mutableStateOf(Offset.Zero) }
@@ -44,7 +48,7 @@ fun PhotoView(
                     offset = if (scale == 1f) Offset.Zero else offset + pan
                 }
             }.pointerInput(bitmap) {
-                detectTapGestures(onDoubleTap = {
+                detectTapGestures(onTap = { onTap() }, onDoubleTap = {
                     scale = 1f
                     offset = Offset.Zero
                 })
